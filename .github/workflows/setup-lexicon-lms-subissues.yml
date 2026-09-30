@@ -23,9 +23,6 @@ jobs:
           gh auth status
           $repo = $env:REPO
 
-          # Existing US00 tasks are already ordinary issues #19-#23. Link them under US00 (#1).
-          gh issue edit 1 --repo $repo --add-sub-issue 19,20,21,22,23
-
           $tasks = @'
 [
   {
