@@ -3,6 +3,7 @@ name: Setup Lexicon LMS sub-issues
 on:
   push:
     branches: [development]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -1339,10 +1340,10 @@ Create a feature branch, implement the task, open a PR to `development`, request
               Write-Host "Already exists: #$number $title"
               gh issue edit $number --repo $repo --parent $parent
             } else {
-              $url = gh issue create --repo $repo --title $title --body $body --parent $parent --project "Lexicon LMS"
+              $url = gh issue create --repo $repo --title $title --body $body --parent $parent
               Write-Host "Created: $url"
               if ($url -match '/issues/(\d+)$') { $number = [int]$Matches[1]; $existing[$title] = $number }
             }
           }
 
-          Write-Host "DONE: all US01-US17 tasks were created/linked as sub-issues and added to Lexicon LMS project."
+          Write-Host "DONE: all US01-US17 tasks were created/linked as sub-issues. Project fields are configured separately because GITHUB_TOKEN cannot access user Projects."
