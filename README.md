@@ -1,89 +1,165 @@
+
 ````markdown
-# Lexicon LMS
+# 🎓 Lexicon LMS
 
-Lexicon LMS slutprojekt 2026.
+Lexicon LMS är vårt slutprojekt på Lexicon 2026.
 
-## GitHub Workflow
+Projektet utvecklas tillsammans i GitHub och vi använder GitHub Projects för att planera och följa vårt arbete.
 
-Vi arbetar tillsammans genom GitHub och använder samma arbetsflöde för alla tasks.
+---
 
-### 1. Ta en task
+## 📋 Projektstruktur
 
-Alla tasks finns i vårt GitHub Project.
+Vi arbetar med **User Stories** och **Development Tasks**.
 
-När en task är redo att börja arbetar vi enligt:
+- **User Story** = Vad användaren ska kunna göra
+- **Development Task** = Vad vi behöver utveckla för att uppfylla User Storyn
+- **Sprint** = Vilken sprint arbetet tillhör
+- **Pull Request** = Används för code review innan merge
 
-**Backlog → Ready → In Progress**
+---
 
-När du tar en task flyttar du den till **In Progress**.
+# 🔄 GitHub Workflow
 
-Varje utvecklare arbetar på sin egen feature-branch.
+Vi använder följande arbetsflöde:
 
-### 2. Skapa en branch
+```text
+Backlog
+   ↓
+Ready
+   ↓
+In Progress
+   ↓
+In Review
+   ↓
+Done
+````
+
+---
+
+## 1. 📝 Ta en task
+
+Alla våra User Stories och Development Tasks finns i vårt **GitHub Project**.
+
+När du vill börja arbeta med en task:
+
+1. Välj en task från **Ready**.
+2. Flytta tasken till **In Progress**.
+3. Kontrollera vad som behöver göras och vilka Acceptance Criteria som finns.
+4. Skapa en egen feature-branch.
+
+---
+
+## 2. 🌿 Skapa en feature-branch
 
 Vi arbetar inte direkt på `main` eller `development`.
 
-När du tar en task:
+Alla utvecklare arbetar på sin egen branch.
 
-1. Börja från `development`.
-2. Skapa en egen feature-branch.
-3. Arbeta med din task på den branchen.
+En ny branch ska skapas från:
+
+```text
+development
+```
 
 Exempel:
 
 ```text
 development
-    ↓
+      ↓
 feature/user-controller
-````
+```
 
-Försök att använda ett enkelt branch-namn som visar vad du arbetar med.
+Branch-namnet ska helst beskriva vad du arbetar med.
 
-### 3. När du är klar med din task
+Exempel:
 
-När implementationen är klar:
+```text
+feature/course-controller
+feature/login
+feature/student-dashboard
+feature/document-upload
+```
 
-1. Testa att koden fungerar lokalt.
-2. Kontrollera att projektet bygger utan fel.
+---
+
+## 3. 💻 Arbeta med tasken
+
+När branchen är skapad arbetar du med din task.
+
+Under utvecklingen ska du:
+
+* Följa User Story och Acceptance Criteria
+* Skriva nödvändig kod
+* Göra validation där det behövs
+* Kontrollera authorization där det behövs
+* Skriva relevanta tester
+* Testa funktionen lokalt
+* Kontrollera att projektet bygger utan fel
+
+När du arbetar med tasken ligger den i:
+
+**In Progress**
+
+---
+
+## 4. 🚀 Skapa Pull Request
+
+När du är klar med implementationen:
+
+1. Testa koden lokalt.
+2. Kontrollera att projektet bygger.
 3. Kör relevanta tester.
 4. Pusha din branch till GitHub.
-5. Skapa en Pull Request mot `development`.
-6. Flytta tasken till **In review**.
+5. Skapa en **Pull Request** mot `development`.
+6. Flytta tasken till **In Review**.
 
-### 4. Code Review och Test
+Exempel:
 
-När en Pull Request är skapad ska en annan person i gruppen granska koden.
+```text
+feature/user-controller
+          ↓
+     Pull Request
+          ↓
+     development
+```
 
-Vi ska både läsa koden och testa funktionen.
+---
 
-Under review kontrollerar vi till exempel:
+# 👀 Code Review
 
-* Fungerar funktionen enligt User Story och Acceptance Criteria?
+En annan teammedlem ska granska Pull Requesten.
+
+Under review kontrollerar vi bland annat:
+
+* Fungerar implementationen?
+* Är Acceptance Criteria uppfyllda?
 * Fungerar validation?
 * Fungerar authorization?
-* Finns det buggar eller fel?
+* Finns det buggar?
 * Är koden lätt att förstå?
 * Finns relevanta tester?
 * Bygger projektet utan fel?
 
-Om något behöver ändras skriver vi en kommentar på Pull Requesten.
+Om något behöver ändras skriver vi en kommentar i Pull Requesten.
 
-Utvecklaren gör ändringarna på sin egen branch och pushar igen.
+Utvecklaren gör ändringarna på sin branch och pushar igen.
 
-Sedan testar och granskar vi igen.
+Sedan granskas och testas ändringarna igen.
 
-### 5. När Pull Request är godkänd
+---
 
-När:
+## ✅ När Pull Request är godkänd
 
-* koden fungerar
+Pull Request kan mergas när:
+
+* implementationen fungerar
 * testerna fungerar
-* review är klar
-* alla review-kommentarer är hanterade
+* code review är klar
+* review-kommentarer är hanterade
+* Acceptance Criteria är uppfyllda
 
-kan Pull Requesten godkännas.
-
-Därefter mergas den till:
+Pull Requesten mergas då till:
 
 ```text
 development
@@ -93,82 +169,120 @@ När tasken är färdig flyttas den till:
 
 **Done**
 
-### 6. Från development till main
+---
+
+# 🔀 Development → Main
 
 Vi mergar inte direkt från en feature-branch till `main`.
 
 När en större del av arbetet är färdig och `development` är testad skapar vi en Pull Request:
 
 ```text
-development → main
+development
+      ↓
+ Pull Request
+      ↓
+     main
 ```
 
-Vi testar och kontrollerar att allt fungerar innan Pull Requesten mergas.
+Vi testar och kontrollerar att projektet fungerar innan Pull Requesten mergas.
 
 `main` ska innehålla en fungerande version av projektet.
 
-### 7. Azure och CI/CD
+---
+
+# ☁️ Azure & CI/CD
 
 Vår `main`-branch är kopplad till Azure genom CI/CD.
 
-När ändringar mergas till `main` startar CI/CD-flödet och projektet deployas till Azure enligt vår konfiguration.
+När ändringar mergas till `main` startar vårt CI/CD-flöde och projektet deployas till Azure enligt vår konfiguration.
 
-Vi behöver därför inte göra deployment manuellt varje gång.
-
-Vårt arbetsflöde ser ut så här:
+Det betyder att deployment kan ske automatiskt istället för att vi behöver göra det manuellt varje gång.
 
 ```text
-Task
-  ↓
-Feature branch
-  ↓
+Feature Branch
+      ↓
 Pull Request
-  ↓
-Code Review + Test
-  ↓
+      ↓
+Code Review
+      ↓
 development
-  ↓
+      ↓
 Test
-  ↓
+      ↓
 Pull Request
-  ↓
+      ↓
 main
-  ↓
+      ↓
 CI/CD
-  ↓
+      ↓
 Azure
 ```
 
-### 8. Viktiga regler
+---
 
-* Ingen pushar direkt till `main`.
-* Ingen arbetar direkt på `main`.
-* Alla arbetar på sin egen feature-branch.
-* Feature-branch skapas från `development`.
-* Alla ändringar går genom Pull Request.
-* En annan teammedlem ska göra code review.
-* Vi testar innan vi mergar.
-* Review-kommentarer ska hanteras innan merge.
-* `development` används för gemensam utveckling.
-* `main` ska innehålla en fungerande version.
-* Azure deployment sker genom CI/CD från `main`.
+# 📌 Viktiga regler
 
-## Definition of Done
+> **Vi använder Pull Requests för alla ändringar.**
 
-En task är klar när:
+* ❌ Ingen push direkt till `main`
+* ❌ Ingen arbetar direkt på `main`
+* ❌ Ingen arbetar direkt på `development`
+* ✅ Alla arbetar på sin egen feature-branch
+* ✅ Feature-branch skapas från `development`
+* ✅ Pull Request används för merge
+* ✅ En annan teammedlem gör code review
+* ✅ Vi testar innan merge
+* ✅ Review-kommentarer ska hanteras
+* ✅ `development` används för gemensam utveckling
+* ✅ `main` ska innehålla en fungerande version
 
-* implementationen är färdig
-* Acceptance Criteria är uppfyllda
-* projektet bygger och körs utan fel
-* nödvändig validation och authorization finns
-* relevanta tester är genomförda
-* Pull Request är skapad
-* code review är genomförd
-* review-kommentarer är hanterade
-* Pull Request är mergad till `development`
-* task/sub-issue är klar
-* README uppdateras om dokumentationen påverkas
+---
+
+# 🏁 Definition of Done
+
+En task är **Done** när:
+
+* [ ] Implementation är färdig
+* [ ] Acceptance Criteria är uppfyllda
+* [ ] Projektet bygger utan fel
+* [ ] Projektet fungerar lokalt
+* [ ] Nödvändig validation finns
+* [ ] Nödvändig authorization finns
+* [ ] Relevanta tester är genomförda
+* [ ] Pull Request är skapad
+* [ ] Code review är genomförd
+* [ ] Review-kommentarer är hanterade
+* [ ] Pull Request är mergad till `development`
+* [ ] Task/Sub-issue är klar
+* [ ] README uppdateras om dokumentationen påverkas
+
+---
+
+## 🏃 Sprints
+
+Projektet är uppdelat i fyra sprints:
+
+| Sprint       | User Stories |
+| ------------ | ------------ |
+| **Sprint 1** | US00 – US04  |
+| **Sprint 2** | US05 – US08  |
+| **Sprint 3** | US09 – US13  |
+| **Sprint 4** | US14 – US17  |
+
+---
+
+## 🛠️ Projektverktyg
+
+Vi använder bland annat:
+
+* **GitHub** – kod och Pull Requests
+* **GitHub Projects** – planering och Kanban-board
+* **GitHub Issues** – User Stories och Development Tasks
+* **Azure** – deployment
+* **CI/CD** – automatiserad build och deployment
 
 ```
 
 
+```
