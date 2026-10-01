@@ -1,5 +1,3 @@
-
-````markdown
 # 🎓 Lexicon LMS
 
 Lexicon LMS är vårt slutprojekt på Lexicon 2026.
@@ -12,14 +10,14 @@ Projektet utvecklas tillsammans i GitHub och vi använder GitHub Projects för a
 
 Vi arbetar med **User Stories** och **Development Tasks**.
 
-- **User Story** = Vad användaren ska kunna göra
-- **Development Task** = Vad vi behöver utveckla för att uppfylla User Storyn
-- **Sprint** = Vilken sprint arbetet tillhör
-- **Pull Request** = Används för code review innan merge
+* **User Story** = Vad användaren ska kunna göra
+* **Development Task** = Vad vi behöver utveckla för att uppfylla User Storyn
+* **Sprint** = Vilken sprint arbetet tillhör
+* **Pull Request** = Används för code review innan merge
 
 ---
 
-# 🔄 GitHub Workflow
+## 🔄 GitHub Workflow
 
 Vi använder följande arbetsflöde:
 
@@ -33,7 +31,7 @@ In Progress
 In Review
    ↓
 Done
-````
+```
 
 ---
 
@@ -126,7 +124,7 @@ feature/user-controller
 
 ---
 
-# 👀 Code Review
+## 👀 Code Review
 
 En annan teammedlem ska granska Pull Requesten.
 
@@ -171,7 +169,7 @@ När tasken är färdig flyttas den till:
 
 ---
 
-# 🔀 Development → Main
+## 🔀 Development → Main
 
 Vi mergar inte direkt från en feature-branch till `main`.
 
@@ -191,7 +189,7 @@ Vi testar och kontrollerar att projektet fungerar innan Pull Requesten mergas.
 
 ---
 
-# ☁️ Azure & CI/CD
+## ☁️ Azure & CI/CD
 
 Vår `main`-branch är kopplad till Azure genom CI/CD.
 
@@ -221,7 +219,7 @@ Azure
 
 ---
 
-# 📌 Viktiga regler
+## 📌 Viktiga regler
 
 > **Vi använder Pull Requests för alla ändringar.**
 
@@ -239,7 +237,7 @@ Azure
 
 ---
 
-# 🏁 Definition of Done
+## 🏁 Definition of Done
 
 En task är **Done** när:
 
@@ -281,8 +279,3 @@ Vi använder bland annat:
 * **GitHub Issues** – User Stories och Development Tasks
 * **Azure** – deployment
 * **CI/CD** – automatiserad build och deployment
-
-```
-
-
-```
