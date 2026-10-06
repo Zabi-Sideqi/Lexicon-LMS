@@ -1,0 +1,80 @@
+/* CSS for Users component */
+.users-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 0;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+    .page-header h1 {
+        margin: 0;
+        color: #0f2447;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+.filters {
+    display: grid;
+    grid-template-columns: 1fr 180px 180px;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.users-card {
+    border: 1px solid #e3e9f2;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.users-table th {
+    color: #6b7a90;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.users-table td {
+    vertical-align: middle;
+}
+
+.users-table tbody tr:hover {
+    background-color: #f8faff;
+}
+
+.role-student {
+    background-color: #e0e9ff;
+    color: #1d4ed8;
+}
+
+.role-teacher {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.status-active {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+@media (max-width: 768px) {
+
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .filters {
+        grid-template-columns: 1fr;
+    }
+
+    .users-page {
+        padding: 1rem 0;
+    }
+}

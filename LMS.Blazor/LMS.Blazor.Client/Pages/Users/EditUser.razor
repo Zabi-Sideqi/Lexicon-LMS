@@ -1,0 +1,69 @@
+﻿@page "/users/edit/{id}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Teacher")]
+
+<PageTitle>Redigera användare</PageTitle>
+
+<div class="users-page">
+
+    <div class="page-header">
+        <div>
+            <h1>Redigera användare</h1>
+            <p class="text-muted mb-0">
+                Uppdatera användarens information, roll och kurs.
+            </p>
+        </div>
+
+        <a class="btn btn-outline-primary" href="/users">
+            Tillbaka
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                Användaruppgifter
+            </h5>
+
+            <div class="mb-3">
+                <label class="form-label">E-post</label>
+                <input class="form-control"
+                       type="email"
+                       placeholder="student@lexicon.se" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Roll</label>
+                <select class="form-select">
+                    <option value="">Välj roll</option>
+                    <option value="Student">Student</option>
+                    <option value="Teacher">Teacher</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Kurs</label>
+                <select class="form-select">
+                    <option value="">Välj kurs</option>
+                    <option>C# Backend</option>
+                    <option>Frontend</option>
+                    <option>Databaser</option>
+                </select>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-secondary"
+                   href="/users">
+                    Avbryt
+                </a>
+                <a class="btn btn-sm btn-outline-primary me-1"
+                   href="/users/edit/1">
+                    Redigera
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
