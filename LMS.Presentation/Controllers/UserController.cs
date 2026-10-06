@@ -13,4 +13,16 @@ public class UserController : ControllerBase
     {
         return Ok("User endpoint is working.");
     }
+
+    [HttpPost]
+    public IActionResult CreateUser()
+    {
+        return Ok("User created successfully.");
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult UpdateUser(string id)
+    {
+        return Ok($"User {id} updated successfully.");
+    }
 }
