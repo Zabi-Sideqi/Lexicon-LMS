@@ -7,4 +7,7 @@ public class ApplicationUser : IdentityUser
     public string? RefreshToken { get; set; }
     public DateTime RefreshTokenExpireTime { get; set; }
 
+
+    public int? CourseId { get; set; }
+    public Course? Course { get; set; }
 }
