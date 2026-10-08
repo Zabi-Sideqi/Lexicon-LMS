@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 
 <header class="topbar">
@@ -36,9 +36,14 @@
             </AuthorizeView>
         </div>
 
-        <button class="icon-btn" type="button">
-            ↪
-        </button>
+        <form action="Account/Logout" method="post" class="topbar-logout-form">
+            <AntiforgeryToken />
+            <input type="hidden" name="ReturnUrl" value="Account/Login" />
+
+            <button class="icon-btn" type="submit" aria-label="Logga ut" title="Logga ut">
+                ↪
+            </button>
+        </form>
 
         <button class="icon-btn" type="button">
             ☾
