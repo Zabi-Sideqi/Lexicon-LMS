@@ -229,3 +229,46 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
     }
+
+.dark-mode ::deep .dashboard {
+    color: #f3f4f6;
+}
+
+.dark-mode ::deep .page-head h1,
+.dark-mode ::deep .section-head h2,
+.dark-mode ::deep .activity-card h2,
+.dark-mode ::deep .course-card h3,
+.dark-mode ::deep .stat-card strong,
+.dark-mode ::deep .activity strong {
+    color: #f3f4f6;
+}
+
+.dark-mode ::deep .page-head p,
+.dark-mode ::deep .course-code,
+.dark-mode ::deep .course-card p,
+.dark-mode ::deep .stat-card span:last-child,
+.dark-mode ::deep .course-info span,
+.dark-mode ::deep .activity span {
+    color: #cbd5e1;
+}
+
+.dark-mode ::deep .stat-card,
+.dark-mode ::deep .course-card,
+.dark-mode ::deep .activity-card {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode ::deep .course-info div {
+    background: #374151;
+}
+
+.dark-mode ::deep .activity {
+    border-bottom-color: #374151;
+}
+
+.dark-mode ::deep .role-badge {
+    background: #3730a3;
+    color: #eef2ff;
+}
