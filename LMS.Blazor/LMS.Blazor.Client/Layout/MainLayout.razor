@@ -1,70 +1,84 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 
-<header class="topbar">
-    <div class="top-left">
+<div class="app-shell @(isDarkMode ? "dark-mode" : "")">
 
-        <button class="icon-btn hamburger-btn"
-                type="button"
-                aria-label="Öppna meny"
-                @onclick="ToggleSidebar">
-            ☰
-        </button>
+    <header class="topbar">
+        <div class="top-left">
 
-        <span class="hide-mobile">Lexicon LMS</span>
-    </div>
+            <button class="icon-btn hamburger-btn"
+                    type="button"
+                    aria-label="Öppna meny"
+                    @onclick="ToggleSidebar">
+                ☰
+            </button>
 
-    <div class="top-right">
-
-        <button class="icon-btn" type="button">
-            🔔
-        </button>
-
-        <div class="user-chip">
-            ♙
-
-            <AuthorizeView Roles="Teacher">
-                <Authorized>
-                    <span>Lärare</span>
-                </Authorized>
-            </AuthorizeView>
-
-            <AuthorizeView Roles="Student">
-                <Authorized>
-                    <span>Elev</span>
-                </Authorized>
-            </AuthorizeView>
+            <span class="hide-mobile">Lexicon LMS</span>
         </div>
 
-        <form action="Account/Logout" method="post" class="topbar-logout-form">
-            <AntiforgeryToken />
-            <input type="hidden" name="ReturnUrl" value="Account/Login" />
+        <div class="top-right">
 
-            <button class="icon-btn" type="submit" aria-label="Logga ut" title="Logga ut">
-                ↪
+            <button class="icon-btn" type="button" aria-label="Notiser">
+                🔔
             </button>
-        </form>
 
-        <button class="icon-btn" type="button">
-            ☾
-        </button>
+            <div class="user-chip">
+                ♙
 
-    </div>
-</header>
+                <AuthorizeView Roles="Teacher">
+                    <Authorized>
+                        <span>Lärare</span>
+                    </Authorized>
+                </AuthorizeView>
 
-<aside class="sidebar @(isSidebarOpen ? "sidebar-open" : "")">
-    <NavMenu />
-</aside>
+                <AuthorizeView Roles="Student">
+                    <Authorized>
+                        <span>Elev</span>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
 
-<main class="main">
-    @Body
-</main>
+            <form action="Account/Logout" method="post" class="topbar-logout-form">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="Account/Login" />
+
+                <button class="icon-btn" type="submit" aria-label="Logga ut" title="Logga ut">
+                    ↪
+                </button>
+            </form>
+
+            <button class="icon-btn"
+                    type="button"
+                    aria-label="Byt tema"
+                    title="Byt tema"
+                    @onclick="ToggleDarkMode">
+                @(isDarkMode ? "☀" : "☾")
+            </button>
+
+        </div>
+    </header>
+
+    <aside class="sidebar @(isSidebarOpen ? "sidebar-open" : "")">
+        <NavMenu />
+    </aside>
+
+    <main class="main">
+        @Body
+    </main>
+
+</div>
 
 @code {
     private bool isSidebarOpen;
+    private bool isDarkMode;
 
     private void ToggleSidebar()
     {
         isSidebarOpen = !isSidebarOpen;
+    }
+
+    private void ToggleDarkMode()
+    {
+        isDarkMode = !isDarkMode;
     }
 }
