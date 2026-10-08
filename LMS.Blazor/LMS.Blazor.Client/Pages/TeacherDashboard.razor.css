@@ -15,12 +15,12 @@
         margin: 0;
         font-size: 34px;
         font-weight: 500;
-        color: #27272a;
+        color: var(--lms-text);
     }
 
     .page-head p {
         margin: 7px 0 0;
-        color: #6b6b72;
+        color: var(--lms-text-muted);
     }
 
 .role-badge {
@@ -45,8 +45,8 @@
     justify-content: center;
     padding: 22px;
     border-radius: 10px;
-    background: #ffffff;
-    border: 1px solid #e4e4e8;
+    background: var(--lms-surface);
+    border: 1px solid var(--lms-border);
     box-shadow: 0 2px 7px rgba(0, 0, 0, 0.08);
 }
 
@@ -58,11 +58,11 @@
 .stat-card strong {
     margin-top: 10px;
     font-size: 32px;
-    color: #27272a;
+    color: var(--lms-text);
 }
 
 .stat-card span:last-child {
-    color: #6b6b72;
+    color: var(--lms-text-muted);
     margin-top: 3px;
 }
 
@@ -78,7 +78,7 @@
         margin: 0;
         font-size: 22px;
         font-weight: 500;
-        color: #27272a;
+        color: var(--lms-text);
     }
 
 .course-grid {
@@ -89,8 +89,8 @@
 
 .course-card {
     padding: 24px;
-    background: #ffffff;
-    border: 1px solid #e4e4e8;
+    background: var(--lms-surface);
+    border: 1px solid var(--lms-border);
     border-radius: 10px;
     box-shadow: 0 2px 7px rgba(0, 0, 0, 0.08);
 }
@@ -98,13 +98,13 @@
     .course-card h3 {
         margin: 0;
         font-size: 21px;
-        color: #27272a;
+        color: var(--lms-text);
     }
 
 .course-code {
     display: inline-block;
     margin-top: 6px;
-    color: #6b6b72;
+    color: var(--lms-text-muted);
     font-size: 14px;
 }
 
@@ -117,7 +117,7 @@
 
     .course-info div {
         padding: 15px;
-        background: #f8f8fa;
+        background: var(--lms-surface-soft);
         border-radius: 8px;
     }
 
@@ -128,12 +128,12 @@
     }
 
     .course-info span {
-        color: #6b6b72;
+        color: var(--lms-text-muted);
         font-size: 13px;
     }
 
 .course-card p {
-    color: #6b6b72;
+    color: var(--lms-text-muted);
 }
 
 .btn-primary-demo {
@@ -153,8 +153,8 @@
 .activity-card {
     margin-top: 28px;
     padding: 24px;
-    background: #ffffff;
-    border: 1px solid #e4e4e8;
+    background: var(--lms-surface);
+    border: 1px solid var(--lms-border);
     border-radius: 10px;
     box-shadow: 0 2px 7px rgba(0, 0, 0, 0.08);
 }
@@ -164,7 +164,7 @@
     justify-content: space-between;
     gap: 20px;
     padding: 17px 0;
-    border-bottom: 1px solid #e4e4e8;
+    border-bottom: 1px solid var(--lms-border);
 }
 
     .activity:last-child {
@@ -172,11 +172,11 @@
     }
 
     .activity strong {
-        color: #27272a;
+        color: var(--lms-text);
     }
 
     .activity span {
-        color: #6b6b72;
+        color: var(--lms-text-muted);
         font-size: 14px;
     }
 
@@ -229,46 +229,3 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
     }
-
-.dark-mode ::deep .dashboard {
-    color: #f3f4f6;
-}
-
-.dark-mode ::deep .page-head h1,
-.dark-mode ::deep .section-head h2,
-.dark-mode ::deep .activity-card h2,
-.dark-mode ::deep .course-card h3,
-.dark-mode ::deep .stat-card strong,
-.dark-mode ::deep .activity strong {
-    color: #f3f4f6;
-}
-
-.dark-mode ::deep .page-head p,
-.dark-mode ::deep .course-code,
-.dark-mode ::deep .course-card p,
-.dark-mode ::deep .stat-card span:last-child,
-.dark-mode ::deep .course-info span,
-.dark-mode ::deep .activity span {
-    color: #cbd5e1;
-}
-
-.dark-mode ::deep .stat-card,
-.dark-mode ::deep .course-card,
-.dark-mode ::deep .activity-card {
-    background: #1f2937;
-    border-color: #374151;
-    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
-}
-
-.dark-mode ::deep .course-info div {
-    background: #374151;
-}
-
-.dark-mode ::deep .activity {
-    border-bottom-color: #374151;
-}
-
-.dark-mode ::deep .role-badge {
-    background: #3730a3;
-    color: #eef2ff;
-}
