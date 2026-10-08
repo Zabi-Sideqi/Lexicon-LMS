@@ -1,0 +1,50 @@
+﻿@page "/courses"
+@using LMS.Shared.DTOs.CourseDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@inject IApiProxyClient Proxy
+
+<PageTitle>Courses</PageTitle>
+
+<h1>Courses</h1>
+
+@if (courses is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!courses.Any())
+{
+    <p>No courses found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>End</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var course in courses)
+            {
+                <tr>
+                    <td>@course.Name</td>
+                    <td>@course.Description</td>
+                    <td>@course.StartDate.ToShortDateString()</td>
+                    <td>@course.EndDate.ToShortDateString()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<CourseDto>? courses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await Proxy.GetAsync<IEnumerable<CourseDto>>("courses");
+    }
+}
