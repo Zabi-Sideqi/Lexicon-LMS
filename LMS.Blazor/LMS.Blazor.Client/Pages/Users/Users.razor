@@ -1,5 +1,9 @@
 ﻿@page "/users"
+
+@using LMS.Shared.DTOs.UserDtos
 @using Microsoft.AspNetCore.Authorization
+@using LMS.Blazor.Client.Services.ApiProxy
+
 @attribute [Authorize(Roles = "Teacher")]
 
 <PageTitle>Användare</PageTitle>
@@ -25,142 +29,193 @@
 
             <input class="form-control"
                    type="search"
-                   placeholder="Sök namn eller e-post..." />
+                   @bind="searchText"
+                   placeholder="Sök användarnamn eller e-post..." />
 
-            <select class="form-select">
+            <select class="form-select"
+                    @bind="selectedRole">
                 <option value="">Alla roller</option>
                 <option value="Student">Student</option>
                 <option value="Teacher">Teacher</option>
             </select>
 
-            <button class="btn btn-primary" type="button">
+            <button class="btn btn-primary"
+                    type="button"
+                    @onclick="ApplyFilter">
                 Sök
             </button>
 
         </div>
 
-        <div class="table-responsive">
+        @if (isLoading)
+        {
+            <div class="p-4 text-center">
+                <span>Laddar användare...</span>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger m-4">
+                @errorMessage
+            </div>
+        }
+        else if (filteredUsers.Count == 0)
+        {
+            <div class="p-4 text-center text-muted">
+                Inga användare hittades.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
 
-            <table class="table users-table mb-0">
+                <table class="table users-table mb-0">
 
-                <thead>
-                    <tr>
-                        <th>Namn</th>
-                        <th>E-post</th>
-                        <th>Roll</th>
-                        <th>Kurs</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
+                    <thead>
+                        <tr>
+                            <th>Användarnamn</th>
+                            <th>E-post</th>
+                            <th>Roll</th>
+                            <th>Kurs</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
 
-                <tbody>
+                    <tbody>
 
-                    <tr>
-                        <td>
-                            <strong>Anna Andersson</strong>
-                        </td>
+                        @foreach (var user in filteredUsers)
+                        {
+                            <tr>
 
-                        <td>
-                            anna@example.com
-                        </td>
+                                <td>
+                                    <strong>@user.UserName</strong>
+                                </td>
 
-                        <td>
-                            <span class="badge role-student">
-                                Student
-                            </span>
-                        </td>
+                                <td>
+                                    @user.Email
+                                </td>
 
-                        <td>
-                            FED101
-                        </td>
+                                <td>
+                                    @if (user.Role == "Student")
+                                    {
+                                        <span class="badge role-student">
+                                            Student
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge role-teacher">
+                                            Teacher
+                                        </span>
+                                    }
+                                </td>
 
-                        <td>
-                            <span class="badge status-active">
-                                Aktiv
-                            </span>
-                        </td>
+                                <td>
+                                    @(user.CourseId?.ToString() ?? "–")
+                                </td>
 
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary"
-                               href="/users/edit/1">
-                                Redigera
-                            </a>
-                        </td>
-                    </tr>
+                                <td>
+                                    <span class="badge status-active">
+                                        Aktiv
+                                    </span>
+                                </td>
 
-                    <tr>
-                        <td>
-                            <strong>Sara Lindberg</strong>
-                        </td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       href="@($"/users/edit/{user.Id}")">
+                                        Redigera
+                                    </a>
+                                </td>
 
-                        <td>
-                            sara@example.com
-                        </td>
+                            </tr>
+                        }
 
-                        <td>
-                            <span class="badge role-student">
-                                Student
-                            </span>
-                        </td>
+                    </tbody>
 
-                        <td>
-                            FED101
-                        </td>
+                </table>
 
-                        <td>
-                            <span class="badge status-active">
-                                Aktiv
-                            </span>
-                        </td>
-
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary"
-                               href="/users/edit/2">
-                                Redigera
-                            </a>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            <strong>Maria Lärare</strong>
-                        </td>
-
-                        <td>
-                            maria@example.com
-                        </td>
-
-                        <td>
-                            <span class="badge role-teacher">
-                                Teacher
-                            </span>
-                        </td>
-
-                        <td>
-                            –
-                        </td>
-
-                        <td>
-                            <span class="badge status-active">
-                                Aktiv
-                            </span>
-                        </td>
-
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary"
-                               href="/users/edit/3">
-                                Redigera
-                            </a>
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
+            </div>
+        }
 
     </div>
 
 </div>
+
+@code {
+
+    [Inject]
+    private IApiProxyClient ApiProxyClient { get; set; } = default!;
+
+    private List<UserResponseDto> users = new();
+    private List<UserResponseDto> filteredUsers = new();
+
+    private string searchText = string.Empty;
+    private string selectedRole = string.Empty;
+
+    private bool isLoading;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var result = await ApiProxyClient.GetAsync<UserResponseDto[]>("users");
+
+            users = result?.ToList() ?? new List<UserResponseDto>();
+
+            ApplyFilter();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Det gick inte att hämta användare: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ett fel uppstod: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        IEnumerable<UserResponseDto> result = users;
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            result = result.Where(user =>
+                user.UserName.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase)
+                ||
+                user.Email.Contains(
+                    searchText,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedRole))
+        {
+            result = result.Where(user =>
+                user.Role.Equals(
+                    selectedRole,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        filteredUsers = result.ToList();
+    }
+}

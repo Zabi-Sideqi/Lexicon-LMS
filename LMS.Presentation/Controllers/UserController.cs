@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿
+﻿using LMS.Shared.DTOs.UserDtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Service.Contracts;
 
 namespace LMS.Presentation.Controllers;
 
@@ -8,27 +11,82 @@ namespace LMS.Presentation.Controllers;
 [Authorize(Roles = "Teacher")]
 public class UserController : ControllerBase
 {
+    private readonly IServiceManager _serviceManager;
+
+    public UserController(IServiceManager serviceManager)
+    {
+        _serviceManager = serviceManager;
+    }
+
+    // GET: api/users
     [HttpGet]
-    public IActionResult GetUsers()
+    public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
     {
-        return Ok("User endpoint is working.");
+        var users = await _serviceManager.UserService.GetAllUsersAsync();
+
+        return Ok(users);
     }
 
+    // GET: api/users/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<UserResponseDto>> GetUser(string id)
+    {
+        try
+        {
+            var user = await _serviceManager.UserService.GetUserByIdAsync(id);
+
+            return Ok(user);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound("User not found.");
+        }
+    }
+
+    // POST: api/users
     [HttpPost]
-    public IActionResult CreateUser()
+    public async Task<ActionResult<UserResponseDto>> CreateUser(
+       [FromBody] UserCreateDto userDto)
     {
-        return Ok("User created successfully.");
+        try
+        {
+            var createdUser =
+                await _serviceManager.UserService.CreateUserAsync(userDto);
+
+            return Ok(createdUser);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
+    // PUT: api/users/{id}
     [HttpPut("{id}")]
-    public IActionResult UpdateUser(string id)
+    public async Task<ActionResult<UserResponseDto>> UpdateUser(
+    string id,
+    [FromBody] UserUpdateDto userDto)
     {
-        return Ok($"User {id} updated successfully.");
+        try
+        {
+            var updatedUser =
+                await _serviceManager.UserService.UpdateUserAsync(id, userDto);
+
+            return Ok(updatedUser);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound("User not found.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }
-
-
-
-
-
-//Zabi
