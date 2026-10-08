@@ -3,9 +3,19 @@
    ========================================================= */
 
 .app-shell {
+    --lms-page-bg: #f5f6f8;
+    --lms-surface: #ffffff;
+    --lms-surface-soft: #f8f8fa;
+    --lms-text: #27272a;
+    --lms-text-muted: #6b6b72;
+    --lms-border: #e4e4e8;
+    --lms-border-strong: #d4d4d8;
+    --lms-sidebar: #ffffff;
+    --lms-hover: #f3f4f6;
+
     min-height: 100vh;
-    background: #f5f6f8;
-    color: #27272a;
+    background: var(--lms-page-bg);
+    color: var(--lms-text);
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -76,8 +86,8 @@
     bottom: 0;
     width: 332px;
     z-index: 900;
-    background: #ffffff;
-    border-right: 1px solid #e4e4e8;
+    background: var(--lms-sidebar);
+    border-right: 1px solid var(--lms-border);
     overflow-y: auto;
     overflow-x: hidden;
     transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -87,24 +97,21 @@
     min-height: 100vh;
     margin-left: 332px;
     padding: 88px 36px 50px;
-    background: #f5f6f8;
-    color: #27272a;
+    background: var(--lms-page-bg);
+    color: var(--lms-text);
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .dark-mode {
-    background: #111827;
-    color: #f3f4f6;
-}
-
-.dark-mode .sidebar {
-    background: #1f2937;
-    border-right-color: #374151;
-}
-
-.dark-mode .main {
-    background: #111827;
-    color: #f3f4f6;
+    --lms-page-bg: #111827;
+    --lms-surface: #1f2937;
+    --lms-surface-soft: #374151;
+    --lms-text: #f3f4f6;
+    --lms-text-muted: #cbd5e1;
+    --lms-border: #374151;
+    --lms-border-strong: #4b5563;
+    --lms-sidebar: #1f2937;
+    --lms-hover: #374151;
 }
 
 .dark-mode ::deep .nav-item .nav-link {
