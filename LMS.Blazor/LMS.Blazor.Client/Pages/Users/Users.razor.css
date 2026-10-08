@@ -1,0 +1,123 @@
+.users-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 0;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+    .page-header h1 {
+        margin: 0;
+        color: #0f2447;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+.users-card {
+    border: 1px solid #e3e9f2;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+/* Sökning */
+
+.searchbar {
+    display: grid;
+    grid-template-columns: 1fr 200px auto;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid #e3e9f2;
+}
+
+/* Tabell */
+
+.users-table {
+    margin-bottom: 0;
+}
+
+    .users-table th {
+        color: #6b7a90;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 1rem;
+    }
+
+    .users-table td {
+        vertical-align: middle;
+        padding: 1rem;
+    }
+
+    .users-table tbody tr:hover {
+        background-color: #f8faff;
+    }
+
+    /* Roll-badges */
+
+    .users-table .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .users-table .role-student {
+        background-color: #e0e9ff;
+        color: #1d4ed8;
+    }
+
+    .users-table .role-teacher {
+        background-color: #f3e8ff;
+        color: #7e22ce;
+    }
+
+    /* Status-badge */
+
+    .users-table .status-active {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+
+/* Responsiv design */
+
+@media (max-width: 768px) {
+
+    .users-page {
+        padding: 1rem;
+    }
+
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+    .searchbar {
+        grid-template-columns: 1fr;
+    }
+
+        .searchbar .btn {
+            width: 100%;
+        }
+
+    .users-table {
+        min-width: 700px;
+    }
+}
