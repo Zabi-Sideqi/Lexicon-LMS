@@ -24,6 +24,7 @@ else
                 <th>Description</th>
                 <th>Start</th>
                 <th>End</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -34,6 +35,9 @@ else
                     <td>@course.Description</td>
                     <td>@course.StartDate.ToShortDateString()</td>
                     <td>@course.EndDate.ToShortDateString()</td>
+                    <td>
+                        <a href="/courses/edit/@course.Id" class="btn btn-sm btn-secondary">Edit</a>
+                    </td>
                 </tr>
             }
         </tbody>
