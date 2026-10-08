@@ -1,44 +1,55 @@
 ﻿@implements IDisposable
 @inject NavigationManager NavigationManager
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">LMS.Blazor</a>
-    </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+
+
+    
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
-                Home
+                <span class="nav-icon">⌂</span>
+                Dashboard
+                </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="courses">
+                <span class="nav-icon">▣</span>
+                Mina kurser
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span>
-                Counter
+            <NavLink class="nav-link" href="assignments">
+                <span class="nav-icon">▤</span>
+                Uppgifter
             </NavLink>
         </div>
-
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
-                Weather
+            <NavLink class="nav-link" href="documents">
+                <span class="nav-icon">▧</span>
+                Dokument
             </NavLink>
         </div>
-
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span>
-                Auth Required
+            <NavLink class="nav-link" href="calendar">
+                <span class="nav-icon">□</span>
+                Kalender
             </NavLink>
         </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="notifications">
+                <span class="nav-icon">◉</span>
+                Notiser
+            </NavLink>
+        </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="auth">
+                    <span class="nav-icon">⚡</span>
+                    API-test
+                </NavLink>
+            </div>
 
         <AuthorizeView>
             <Authorized>
@@ -47,7 +58,7 @@
                     <Authorized Context="teacherContext">
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="users">
-                                <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span>
+                                <span class="nav-icon">♙</span>
                                 Användare
                             </NavLink>
                         </div>
@@ -86,8 +97,8 @@
 
         </AuthorizeView>
 
-    </nav>
-</div>
+   
+
 
 @code {
     private string? currentUrl;

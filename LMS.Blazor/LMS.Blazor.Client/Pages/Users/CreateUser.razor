@@ -4,14 +4,13 @@
 
 <PageTitle>Skapa användare</PageTitle>
 
-
 <div class="users-page">
 
     <div class="page-header">
         <div>
             <h1>Skapa användare</h1>
             <p class="text-muted mb-0">
-                Skapa en ny användare i LMS.
+                US01 · Validering och kurskoppling
             </p>
         </div>
 
@@ -27,49 +26,63 @@
                 Användaruppgifter
             </h5>
 
-            <div class="mb-3">
-                <label class="form-label">E-post</label>
-                <input class="form-control"
-                       type="email"
-                       placeholder="student@lexicon.se" />
+            <div class="form-grid">
+
+                <div class="mb-3">
+                    <label class="form-label">Förnamn *</label>
+                    <input class="form-control"
+                           type="text"
+                           placeholder="Förnamn" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Efternamn *</label>
+                    <input class="form-control"
+                           type="text"
+                           placeholder="Efternamn" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">E-post *</label>
+                    <input class="form-control"
+                           type="email"
+                           placeholder="anna@example.com" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Roll *</label>
+                    <select class="form-select">
+                        <option value="">Välj roll</option>
+                        <option value="Student">Student</option>
+                        <option value="Teacher">Teacher</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Kurs</label>
+                    <select class="form-select">
+                        <option value="">Välj kurs</option>
+                        <option>Frontend-utvecklare (FED101)</option>
+                        <option>Backend-utvecklare (BED101)</option>
+                    </select>
+                </div>
+
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Lösenord</label>
-                <input class="form-control"
-                       type="password"
-                       placeholder="Lösenord" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Roll</label>
-                <select class="form-select">
-                    <option value="">Välj roll</option>
-                    <option value="Student">Student</option>
-                    <option value="Teacher">Teacher</option>
-                </select>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label">Kurs</label>
-                <select class="form-select">
-                    <option value="">Välj kurs</option>
-                    <option>C# Backend</option>
-                    <option>Frontend</option>
-                    <option>Databaser</option>
-                </select>
+            <div class="alert alert-info">
+                Endast behörig Teacher ska kunna skapa och ändra användare.
+                E-post och obligatoriska fält valideras.
             </div>
 
             <div class="d-flex gap-2">
+                <button class="btn btn-primary" type="button">
+                    Spara användare
+                </button>
+
                 <a class="btn btn-outline-secondary"
                    href="/users">
                     Avbryt
                 </a>
-
-                <button class="btn btn-primary"
-                        type="button">
-                    Skapa användare
-                </button>
             </div>
 
         </div>

@@ -1,0 +1,117 @@
+/* CSS for CreateUser component */
+.users-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1.5rem 0;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+    .page-header h1 {
+        margin: 0;
+        color: #0f2447;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+.card {
+    border: 1px solid #e3e9f2;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-title {
+    color: #0f2447;
+    font-weight: 600;
+}
+
+/* Formulär */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #334155;
+}
+
+.form-control,
+.form-select {
+    min-height: 44px;
+}
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #6c63ff;
+        box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.15);
+    }
+
+/* Kursfältet ska ligga över hela bredden */
+
+.form-grid .mb-4 {
+    grid-column: 1 / -1;
+}
+
+/* Informationsmeddelande */
+
+.alert {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Knappar */
+
+.btn-primary {
+    min-width: 150px;
+}
+
+.btn-outline-secondary {
+    min-width: 100px;
+}
+
+/* Mobil */
+
+@media (max-width: 768px) {
+
+    .users-page {
+        padding: 1rem;
+    }
+
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+        .form-grid .mb-4 {
+            grid-column: auto;
+        }
+
+    .d-flex {
+        flex-direction: column;
+    }
+
+        .d-flex .btn {
+            width: 100%;
+        }
+}

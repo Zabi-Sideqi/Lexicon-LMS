@@ -1,17 +1,7 @@
 ﻿using LMS.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace LMS.API.Services;
-
-//ToDo: Add in UserSecrets (you can change password and secretkey):
-//{
-//  "password": "abc",
-//  "JwtSettings": {
-//    "secretkey" :  "ThisMustNeReallyLong!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-//  }
-//}
-
 
 internal class DataSeedService : IHostedService
 {
@@ -21,8 +11,14 @@ internal class DataSeedService : IHostedService
     private UserManager<ApplicationUser> userManager = null!;
     private RoleManager<IdentityRole> roleManager = null!;
     private string _password = null!;
+
     private const string DemoRole = "Demo";
-    private const string DefaultUserEmail = "DemoUser@Lms.com";
+    private const string TeacherRole = "Teacher";
+    private const string StudentRole = "Student";
+
+    private const string DemoEmail = "DemoUser@Lms.com";
+    private const string TeacherEmail = "teacher@lms.test";
+    private const string StudentEmail = "student@lms.test";
 
     public DataSeedService(IServiceProvider serviceProvider, IConfiguration configuration, ILogger<DataSeedService> logger)
     {
@@ -38,11 +34,6 @@ internal class DataSeedService : IHostedService
         var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
         if (!env.IsDevelopment()) return;
 
-        ApplicationDbContext context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
-                            ?? throw new ArgumentNullException();
-
-        if (await context.Users.AnyAsync(cancellationToken)) return;
-
         userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>()
                             ?? throw new ArgumentNullException();
 
@@ -54,8 +45,13 @@ internal class DataSeedService : IHostedService
 
         try
         {
-            await CreateRolesAsync([DemoRole]);
-            await CreateDefaultUserAsync();
+            await CreateRolesAsync([DemoRole, TeacherRole, StudentRole]);
+
+            // Skapar bara användare som saknas, så det fungerar även om databasen redan har användare
+            await CreateUserIfMissingAsync(DemoEmail, DemoRole);
+            await CreateUserIfMissingAsync(TeacherEmail, TeacherRole);
+            await CreateUserIfMissingAsync(StudentEmail, StudentRole);
+
             logger.LogInformation("Seed complete");
         }
         catch (Exception ex)
@@ -64,7 +60,6 @@ internal class DataSeedService : IHostedService
             throw;
         }
     }
-
 
     private async Task CreateRolesAsync(string[] rolenames)
     {
@@ -78,33 +73,29 @@ internal class DataSeedService : IHostedService
                     (string.Join("\n", res.Errors.Select(e => $"{e.Code}: {e.Description}")));
         }
     }
-    private async Task CreateDefaultUserAsync()
+
+    private async Task CreateUserIfMissingAsync(string email, string role)
     {
-        var user = new ApplicationUser
+        var user = await userManager.FindByEmailAsync(email);
+
+        if (user is null)
         {
-            Email = DefaultUserEmail,
-            UserName = DefaultUserEmail,
-        };
+            user = new ApplicationUser { Email = email, UserName = email };
 
-        await CreateUserAsync(user, DemoRole);
-    }
+            var result = await userManager.CreateAsync(user, _password);
+            if (!result.Succeeded)
+                throw new Exception(string.Join("\n",
+                    result.Errors.Select(e => $"{e.Code}: {e.Description}")));
+        }
 
-    private async Task CreateUserAsync(ApplicationUser user, string role)
-    {
-        var result = await userManager.CreateAsync(user, _password);
-
-        if (!result.Succeeded)
-            throw new Exception(string.Join("\n",
-            result.Errors.Select(e => $"{e.Code}: {e.Description}")));
-
-        var roleResult = await userManager.AddToRoleAsync(user, role);
-
-        if (!roleResult.Succeeded)
-            throw new Exception(string.Join("\n",
-            roleResult.Errors.Select(e => $"{e.Code}: {e.Description}")));
-
+        if (!await userManager.IsInRoleAsync(user, role))
+        {
+            var roleResult = await userManager.AddToRoleAsync(user, role);
+            if (!roleResult.Succeeded)
+                throw new Exception(string.Join("\n",
+                    roleResult.Errors.Select(e => $"{e.Code}: {e.Description}")));
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
 }

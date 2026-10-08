@@ -1,9 +1,5 @@
-﻿@using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "Teacher")]
-@page "/users"
-
-
-
+﻿@page "/users"
+@using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Teacher")]
 
 <PageTitle>Användare</PageTitle>
@@ -14,7 +10,7 @@
         <div>
             <h1>Användare</h1>
             <p class="text-muted mb-0">
-                Hantera användare, roller och kurskopplingar.
+                US01 · Administrera elever och lärare
             </p>
         </div>
 
@@ -23,162 +19,145 @@
         </a>
     </div>
 
-    <div class="filters">
-
-        <div class="search-box">
-            <input class="form-control"
-                   type="search"
-                   placeholder="Sök användare..." />
-        </div>
-
-        <select class="form-select">
-            <option value="">Alla roller</option>
-            <option value="Student">Student</option>
-            <option value="Teacher">Teacher</option>
-        </select>
-
-        <select class="form-select">
-            <option value="">Alla kurser</option>
-        </select>
-
-    </div>
-
     <div class="card users-card">
 
-        <div class="card-body p-0">
+        <div class="searchbar">
 
-            <div class="table-responsive">
+            <input class="form-control"
+                   type="search"
+                   placeholder="Sök namn eller e-post..." />
 
-                <table class="table users-table mb-0">
+            <select class="form-select">
+                <option value="">Alla roller</option>
+                <option value="Student">Student</option>
+                <option value="Teacher">Teacher</option>
+            </select>
 
-                    <thead>
-                        <tr>
-                            <th>Namn</th>
-                            <th>E-post</th>
-                            <th>Roll</th>
-                            <th>Kurs</th>
-                            <th>Status</th>
-                            <th class="text-end">Åtgärd</th>
-                        </tr>
-                    </thead>
+            <button class="btn btn-primary" type="button">
+                Sök
+            </button>
 
-                    <tbody>
+        </div>
 
-                        <tr>
-                            <td>
-                                <strong>Ahmed</strong>
-                            </td>
+        <div class="table-responsive">
 
-                            <td>
-                                ahmed@lexicon.se
-                            </td>
+            <table class="table users-table mb-0">
 
-                            <td>
-                                <span class="badge role-student">
-                                    Student
-                                </span>
-                            </td>
+                <thead>
+                    <tr>
+                        <th>Namn</th>
+                        <th>E-post</th>
+                        <th>Roll</th>
+                        <th>Kurs</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
 
-                            <td>
-                                C# Backend
-                            </td>
+                <tbody>
 
-                            <td>
-                                <span class="badge status-active">
-                                    Aktiv
-                                </span>
-                            </td>
+                    <tr>
+                        <td>
+                            <strong>Anna Andersson</strong>
+                        </td>
 
-                            <td class="text-end">
-                                <a class="btn btn-sm btn-outline-primary me-1"
-                                   href="/users/edit/1">
-                                    Redigera
-                                </a>
+                        <td>
+                            anna@example.com
+                        </td>
 
+                        <td>
+                            <span class="badge role-student">
+                                Student
+                            </span>
+                        </td>
 
-                                <button class="btn btn-sm btn-outline-danger">
-                                    Ta bort
-                                </button>
-                            </td>
-                        </tr>
+                        <td>
+                            FED101
+                        </td>
 
-                        <tr>
-                            <td>
-                                <strong>Maria</strong>
-                            </td>
+                        <td>
+                            <span class="badge status-active">
+                                Aktiv
+                            </span>
+                        </td>
 
-                            <td>
-                                maria@lexicon.se
-                            </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="/users/edit/1">
+                                Redigera
+                            </a>
+                        </td>
+                    </tr>
 
-                            <td>
-                                <span class="badge role-teacher">
-                                    Teacher
-                                </span>
-                            </td>
+                    <tr>
+                        <td>
+                            <strong>Sara Lindberg</strong>
+                        </td>
 
-                            <td>
-                                —
-                            </td>
+                        <td>
+                            sara@example.com
+                        </td>
 
-                            <td>
-                                <span class="badge status-active">
-                                    Aktiv
-                                </span>
-                            </td>
+                        <td>
+                            <span class="badge role-student">
+                                Student
+                            </span>
+                        </td>
 
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary me-1">
-                                    Redigera
-                                </button>
+                        <td>
+                            FED101
+                        </td>
 
-                                <button class="btn btn-sm btn-outline-danger">
-                                    Ta bort
-                                </button>
-                            </td>
-                        </tr>
+                        <td>
+                            <span class="badge status-active">
+                                Aktiv
+                            </span>
+                        </td>
 
-                        <tr>
-                            <td>
-                                <strong>John</strong>
-                            </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="/users/edit/2">
+                                Redigera
+                            </a>
+                        </td>
+                    </tr>
 
-                            <td>
-                                john@lexicon.se
-                            </td>
+                    <tr>
+                        <td>
+                            <strong>Maria Lärare</strong>
+                        </td>
 
-                            <td>
-                                <span class="badge role-student">
-                                    Student
-                                </span>
-                            </td>
+                        <td>
+                            maria@example.com
+                        </td>
 
-                            <td>
-                                Frontend
-                            </td>
+                        <td>
+                            <span class="badge role-teacher">
+                                Teacher
+                            </span>
+                        </td>
 
-                            <td>
-                                <span class="badge status-active">
-                                    Aktiv
-                                </span>
-                            </td>
+                        <td>
+                            –
+                        </td>
 
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary me-1">
-                                    Redigera
-                                </button>
+                        <td>
+                            <span class="badge status-active">
+                                Aktiv
+                            </span>
+                        </td>
 
-                                <button class="btn btn-sm btn-outline-danger">
-                                    Ta bort
-                                </button>
-                            </td>
-                        </tr>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="/users/edit/3">
+                                Redigera
+                            </a>
+                        </td>
+                    </tr>
 
-                    </tbody>
+                </tbody>
 
-                </table>
-
-            </div>
+            </table>
 
         </div>
 

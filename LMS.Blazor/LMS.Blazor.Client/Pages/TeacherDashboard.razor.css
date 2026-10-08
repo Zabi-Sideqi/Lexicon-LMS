@@ -1,0 +1,231 @@
+/* CSS for TeacherDashboard component */
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+    .page-head h1 {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 500;
+        color: #27272a;
+    }
+
+    .page-head p {
+        margin: 7px 0 0;
+        color: #6b6b72;
+    }
+
+.role-badge {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #ecebff;
+    color: #4b46d9;
+    font-weight: 700;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    min-height: 145px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 22px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #e4e4e8;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+    color: #4b46d9;
+    font-size: 22px;
+}
+
+.stat-card strong {
+    margin-top: 10px;
+    font-size: 32px;
+    color: #27272a;
+}
+
+.stat-card span:last-child {
+    color: #6b6b72;
+    margin-top: 3px;
+}
+
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+    .section-head h2,
+    .activity-card h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 500;
+        color: #27272a;
+    }
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.course-card {
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e4e4e8;
+    border-radius: 10px;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.08);
+}
+
+    .course-card h3 {
+        margin: 0;
+        font-size: 21px;
+        color: #27272a;
+    }
+
+.course-code {
+    display: inline-block;
+    margin-top: 6px;
+    color: #6b6b72;
+    font-size: 14px;
+}
+
+.course-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 22px 0;
+}
+
+    .course-info div {
+        padding: 15px;
+        background: #f8f8fa;
+        border-radius: 8px;
+    }
+
+    .course-info strong {
+        display: block;
+        font-size: 24px;
+        color: #4b46d9;
+    }
+
+    .course-info span {
+        color: #6b6b72;
+        font-size: 13px;
+    }
+
+.course-card p {
+    color: #6b6b72;
+}
+
+.btn-primary-demo {
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    background: #4b46d9;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .btn-primary-demo:hover {
+        background: #6658d3;
+    }
+
+.activity-card {
+    margin-top: 28px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e4e4e8;
+    border-radius: 10px;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.08);
+}
+
+.activity {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 17px 0;
+    border-bottom: 1px solid #e4e4e8;
+}
+
+    .activity:last-child {
+        border-bottom: none;
+    }
+
+    .activity strong {
+        color: #27272a;
+    }
+
+    .activity span {
+        color: #6b6b72;
+        font-size: 14px;
+    }
+
+@media (max-width: 900px) {
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .course-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .page-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .activity {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+/* Extra spacing for the dashboard inside MainLayout */
+
+.dashboard {
+    padding-bottom: 40px;
+}
+
+.page-head {
+    padding-top: 10px;
+}
+
+.stat-card,
+.course-card,
+.activity-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .stat-card:hover,
+    .course-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
+    }

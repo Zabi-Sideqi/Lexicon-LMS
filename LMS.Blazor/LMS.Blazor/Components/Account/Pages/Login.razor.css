@@ -1,0 +1,119 @@
+/* CSS for Login component */
+.login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #6879df 0%, #7045a7 100%);
+}
+
+.login-box {
+    width: min(620px, 100%);
+    padding: 48px 64px;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.20);
+}
+
+.login-brand {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.brand-icon {
+    font-size: 52px;
+    line-height: 1;
+    margin-bottom: 16px;
+}
+
+.login-brand h1 {
+    margin: 0;
+    color: #222222;
+    font-size: 30px;
+    font-weight: 400;
+}
+
+.field {
+    margin-bottom: 20px;
+}
+
+    .field label {
+        display: block;
+        margin-bottom: 7px;
+        color: #222222;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .field ::deep input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 13px 14px;
+        border: 1px solid #cfcfd4;
+        border-radius: 5px;
+        background: #ffffff;
+        color: #222222;
+        font-size: 16px;
+        outline: none;
+    }
+
+        .field ::deep input:focus {
+            border-color: #5146d8;
+            box-shadow: 0 0 0 2px rgba(81, 70, 216, 0.12);
+        }
+
+.login-button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    border: none;
+    border-radius: 5px;
+    background: #5146d8;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+}
+
+    .login-button:hover {
+        background: #4439c7;
+    }
+
+.login-demo {
+    margin-top: 18px;
+    color: #d9004c;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+    .login-demo:hover {
+        text-decoration: underline;
+    }
+
+@media (max-width: 700px) {
+    .login-box {
+        padding: 36px 25px;
+    }
+
+    .login-brand h1 {
+        font-size: 27px;
+    }
+}
+.demo-button {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #5146d8;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #5146d8;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+    .demo-button:hover {
+        background: #f4f3ff;
+    }

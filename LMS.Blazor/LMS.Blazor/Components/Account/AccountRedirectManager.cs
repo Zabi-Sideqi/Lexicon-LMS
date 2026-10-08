@@ -6,6 +6,8 @@ internal sealed class AccountRedirectManager(NavigationManager navigationManager
 {
     public void RedirectTo(string? uri)
     {
+        // Ingen returnUrl: gå till "/" - där skickas inloggad användare
+        // vidare till teacher-dashboard eller student-dashboard beroende på roll.
         if (string.IsNullOrWhiteSpace(uri))
         {
             navigationManager.NavigateTo("");

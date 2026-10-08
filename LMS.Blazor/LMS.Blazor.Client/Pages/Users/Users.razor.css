@@ -1,4 +1,3 @@
-/* CSS for Users component */
 .users-page {
     max-width: 1200px;
     margin: 0 auto;
@@ -20,61 +19,105 @@
         font-weight: 700;
     }
 
-.filters {
-    display: grid;
-    grid-template-columns: 1fr 180px 180px;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
 .users-card {
     border: 1px solid #e3e9f2;
     border-radius: 10px;
     overflow: hidden;
+    background: #ffffff;
 }
 
-.users-table th {
-    color: #6b7a90;
-    font-size: 0.85rem;
-    font-weight: 600;
-    white-space: nowrap;
+/* Sökning */
+
+.searchbar {
+    display: grid;
+    grid-template-columns: 1fr 200px auto;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid #e3e9f2;
 }
 
-.users-table td {
-    vertical-align: middle;
+/* Tabell */
+
+.users-table {
+    margin-bottom: 0;
 }
 
-.users-table tbody tr:hover {
-    background-color: #f8faff;
-}
+    .users-table th {
+        color: #6b7a90;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 1rem;
+    }
 
-.role-student {
-    background-color: #e0e9ff;
-    color: #1d4ed8;
-}
+    .users-table td {
+        vertical-align: middle;
+        padding: 1rem;
+    }
 
-.role-teacher {
-    background-color: #fef3c7;
-    color: #b45309;
-}
+    .users-table tbody tr:hover {
+        background-color: #f8faff;
+    }
 
-.status-active {
-    background-color: #dcfce7;
-    color: #15803d;
-}
+    /* Roll-badges */
+
+    .users-table .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .users-table .role-student {
+        background-color: #e0e9ff;
+        color: #1d4ed8;
+    }
+
+    .users-table .role-teacher {
+        background-color: #f3e8ff;
+        color: #7e22ce;
+    }
+
+    /* Status-badge */
+
+    .users-table .status-active {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+
+/* Responsiv design */
 
 @media (max-width: 768px) {
+
+    .users-page {
+        padding: 1rem;
+    }
 
     .page-header {
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .filters {
+        .page-header .btn {
+            width: 100%;
+        }
+
+    .searchbar {
         grid-template-columns: 1fr;
     }
 
-    .users-page {
-        padding: 1rem 0;
+        .searchbar .btn {
+            width: 100%;
+        }
+
+    .users-table {
+        min-width: 700px;
     }
 }
