@@ -1,0 +1,62 @@
+﻿@page "/courses/create"
+@using LMS.Shared.DTOs.CourseDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject IApiProxyClient Proxy
+@inject NavigationManager Navigation
+
+<PageTitle>Create Course</PageTitle>
+
+<h1>Create Course</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <InputText @bind-Value="model.Name" class="form-control" />
+        <ValidationMessage For="() => model.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea @bind-Value="model.Description" class="form-control" />
+        <ValidationMessage For="() => model.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Start Date</label>
+        <InputDate @bind-Value="model.StartDate" class="form-control" />
+        <ValidationMessage For="() => model.StartDate" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">End Date</label>
+        <InputDate @bind-Value="model.EndDate" class="form-control" />
+        <ValidationMessage For="() => model.EndDate" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a href="/courses" class="btn btn-secondary">Cancel</a>
+</EditForm>
+
+@code {
+    private CourseForCreationDto model = new()
+    {
+        Name = "",
+        Description = "",
+        StartDate = DateTime.Today,
+        EndDate = DateTime.Today.AddMonths(1)
+    };
+
+    private async Task HandleSubmit()
+    {
+        await Proxy.SendAsync<CourseDto>(
+            HttpMethod.Post,
+            "courses",
+            JsonContent.Create(model));
+
+        Navigation.NavigateTo("/courses");
+    }
+}

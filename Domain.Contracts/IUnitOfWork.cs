@@ -2,7 +2,7 @@
 
 public interface IUnitOfWork
 {
+    ICourseRepository CourseRepository { get; }
     IUserRepository UserRepository { get; }
-    Task<int> SaveChangesAsync();
-
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
