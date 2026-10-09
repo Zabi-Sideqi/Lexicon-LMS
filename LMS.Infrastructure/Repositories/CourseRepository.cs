@@ -1,4 +1,3 @@
-
 using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Infrastructure.Data;
@@ -33,6 +32,23 @@ public class CourseRepository : ICourseRepository
         bool trackChanges = false)
     {
         var query = _context.Courses.AsQueryable();
+
+        if (!trackChanges)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.FirstOrDefaultAsync(
+            course => course.Id == id);
+    }
+
+    public async Task<Course?> GetCourseWithStudentsAsync(
+        int id,
+        bool trackChanges = false)
+    {
+        var query = _context.Courses
+            .Include(c => c.Students)
+            .AsQueryable();
 
         if (!trackChanges)
         {

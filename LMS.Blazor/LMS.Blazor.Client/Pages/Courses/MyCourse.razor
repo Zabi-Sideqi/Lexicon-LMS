@@ -1,0 +1,75 @@
+﻿@page "/my-course"
+@attribute [Authorize(Roles = "Student")]
+@using LMS.Shared.DTOs.CourseDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@inject IApiProxyClient Proxy
+
+<PageTitle>My Course</PageTitle>
+
+<h1>My Course</h1>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (course is null)
+{
+    <div class="alert alert-warning">
+        You are not enrolled in any course.
+    </div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">@course.Name</h5>
+            <p class="card-text">@course.Description</p>
+            <p class="text-muted">
+                @course.StartDate.ToShortDateString() – @course.EndDate.ToShortDateString()
+            </p>
+        </div>
+    </div>
+
+    <h2>Participants</h2>
+
+    @if (participants is null || !participants.Any())
+    {
+        <p><em>No participants.</em></p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var p in participants)
+            {
+                <li class="list-group-item">
+                    <strong>@p.UserName</strong>
+                    <span class="text-muted"> — @p.Email</span>
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    private bool loading = true;
+    private StudentCourseDto? course;
+    private IEnumerable<CourseParticipantDto>? participants;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            course = await Proxy.GetAsync<StudentCourseDto>("courses/my");
+            participants = await Proxy.GetAsync<IEnumerable<CourseParticipantDto>>("courses/my/participants");
+        }
+        catch (HttpRequestException)
+        {
+            course = null;
+            participants = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
