@@ -3,6 +3,7 @@
 @using LMS.Shared.DTOs.UserDtos
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Blazor.Client.Services.ApiProxy
+@using Microsoft.JSInterop
 
 @attribute [Authorize(Roles = "Teacher")]
 
@@ -13,9 +14,7 @@
     <div class="page-header">
         <div>
             <h1>Användare</h1>
-            <p class="text-muted mb-0">
-                US01 · Administrera elever och lärare
-            </p>
+
         </div>
 
         <a class="btn btn-primary" href="/users/create">
@@ -126,6 +125,11 @@
                                        href="@($"/users/edit/{user.Id}")">
                                         Redigera
                                     </a>
+                                    <button class="btn btn-sm btn-outline-danger ms-2"
+                                            type="button"
+                                            @onclick="() => DeleteUser(user)">
+                                        Ta bort
+                                    </button>
                                 </td>
 
                             </tr>
@@ -155,7 +159,8 @@
 
     private bool isLoading;
     private string? errorMessage;
-
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
     protected override async Task OnInitializedAsync()
     {
         await LoadUsers();
@@ -217,5 +222,33 @@
         }
 
         filteredUsers = result.ToList();
+    }
+    private async Task DeleteUser(UserResponseDto user)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>(
+            "confirm",
+            $"Vill du verkligen ta bort användaren {user.UserName}?"
+        );
+
+        if (!confirmed)
+            return;
+
+        try
+        {
+            await ApiProxyClient.SendAsync<object>(
+                HttpMethod.Delete,
+                $"users/{user.Id}"
+            );
+
+            await LoadUsers();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session har gått ut. Logga in igen.";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Det gick inte att ta bort användaren: {ex.Message}";
+        }
     }
 }

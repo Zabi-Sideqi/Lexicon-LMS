@@ -19,7 +19,19 @@ public class UserService : IUserService
         _userManager = userManager;
     }
     public async Task<UserResponseDto> CreateUserAsync(UserCreateDto userDto)
+
     {
+        if (userDto.CourseId.HasValue)
+        {
+            var courseExists = await _unitOfWork.CourseExistsAsync(
+                userDto.CourseId.Value);
+
+            if (!courseExists)
+            {
+                throw new InvalidOperationException(
+                    "The selected course does not exist.");
+            }
+        }
         var existingUser = await _userManager.FindByEmailAsync(userDto.Email);
 
         if (existingUser is not null)
@@ -124,6 +136,19 @@ public class UserService : IUserService
 
         if (user is null)
             throw new KeyNotFoundException($"User with id '{id}' was not found.");
+
+        if (userDto.CourseId.HasValue)
+        {
+            var courseExists = await _unitOfWork.CourseExistsAsync(
+                userDto.CourseId.Value);
+
+            if (!courseExists)
+            {
+                throw new InvalidOperationException(
+                    "The selected course does not exist.");
+            }
+        }
+
         var existingUser = await _userManager.FindByEmailAsync(userDto.Email);
 
         if (existingUser is not null && existingUser.Id != id)

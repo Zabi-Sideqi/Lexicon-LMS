@@ -1,15 +1,23 @@
-﻿using Domain.Contracts;
+using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMS.Infrastructure.Repositories;
 
-public class CourseRepository(ApplicationDbContext context) : ICourseRepository
+public class CourseRepository : ICourseRepository
 {
-    public async Task<IEnumerable<Course>> GetAllAsync(bool trackChanges = false)
+    private readonly ApplicationDbContext _context;
+
+    public CourseRepository(ApplicationDbContext context)
     {
-        var query = context.Courses.AsQueryable();
+        _context = context;
+    }
+
+    public async Task<IEnumerable<Course>> GetAllAsync(
+        bool trackChanges = false)
+    {
+        var query = _context.Courses.AsQueryable();
 
         if (!trackChanges)
         {
@@ -19,21 +27,26 @@ public class CourseRepository(ApplicationDbContext context) : ICourseRepository
         return await query.ToListAsync();
     }
 
-    public async Task<Course?> GetByIdAsync(int id, bool trackChanges = false)
+    public async Task<Course?> GetByIdAsync(
+        int id,
+        bool trackChanges = false)
     {
-        var query = context.Courses.AsQueryable();
+        var query = _context.Courses.AsQueryable();
 
         if (!trackChanges)
         {
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(c => c.Id == id);
+        return await query.FirstOrDefaultAsync(
+            course => course.Id == id);
     }
 
-    public async Task<Course?> GetCourseWithStudentsAsync(int id, bool trackChanges = false)
+    public async Task<Course?> GetCourseWithStudentsAsync(
+        int id,
+        bool trackChanges = false)
     {
-        var query = context.Courses
+        var query = _context.Courses
             .Include(c => c.Students)
             .AsQueryable();
 
@@ -42,8 +55,12 @@ public class CourseRepository(ApplicationDbContext context) : ICourseRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(c => c.Id == id);
+        return await query.FirstOrDefaultAsync(
+            course => course.Id == id);
     }
 
-    public void Create(Course course) => context.Courses.Add(course);
+    public void Create(Course course)
+    {
+        _context.Courses.Add(course);
+    }
 }

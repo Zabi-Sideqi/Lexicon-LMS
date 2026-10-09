@@ -1,4 +1,4 @@
-﻿using Domain.Models.Entities;
+using Domain.Models.Entities;
 
 namespace Domain.Contracts;
 
