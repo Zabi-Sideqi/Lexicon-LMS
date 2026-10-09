@@ -1,14 +1,10 @@
-﻿using Domain.Models.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Domain.Models.Entities;
 
-namespace Domain.Contracts
+namespace Domain.Contracts;
+
+public interface ICourseRepository
 {
-    public interface ICourseRepository
-    {
-        Task<IEnumerable<Course>> GetAllAsync(bool trackChanges = false);
-        Task<Course?> GetByIdAsync(int id, bool trackChanges = false);
-        void Create(Course course);
-    }
+    Task<IEnumerable<Course>> GetAllAsync(bool trackChanges = false);
+    Task<Course?> GetByIdAsync(int id, bool trackChanges = false);
+    void Create(Course course);
 }

@@ -1,39 +1,50 @@
-﻿using Domain.Contracts;
+
+using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace LMS.Infrastructure.Repositories
+namespace LMS.Infrastructure.Repositories;
+
+public class CourseRepository : ICourseRepository
 {
-    public class CourseRepository(ApplicationDbContext context) : ICourseRepository
+    private readonly ApplicationDbContext _context;
+
+    public CourseRepository(ApplicationDbContext context)
     {
-        public async Task<IEnumerable<Course>> GetAllAsync(bool trackChanges = false)
+        _context = context;
+    }
+
+    public async Task<IEnumerable<Course>> GetAllAsync(
+        bool trackChanges = false)
+    {
+        var query = _context.Courses.AsQueryable();
+
+        if (!trackChanges)
         {
-            var query = context.Courses.AsQueryable();
-
-            if (!trackChanges)
-            {
-                query = query.AsNoTracking();
-            }
-
-            return await query.ToListAsync();
+            query = query.AsNoTracking();
         }
 
-        public async Task<Course?> GetByIdAsync(int id, bool trackChanges = false)
+        return await query.ToListAsync();
+    }
+
+    public async Task<Course?> GetByIdAsync(
+        int id,
+        bool trackChanges = false)
+    {
+        var query = _context.Courses.AsQueryable();
+
+        if (!trackChanges)
         {
-            var query = context.Courses.AsQueryable();
-
-            if (!trackChanges)
-            {
-                query = query.AsNoTracking();
-            }
-
-            return await query.FirstOrDefaultAsync(c => c.Id == id);
+            query = query.AsNoTracking();
         }
 
-        public void Create(Course course) => context.Courses.Add(course);
+        return await query.FirstOrDefaultAsync(
+            course => course.Id == id);
+    }
+
+    public void Create(Course course)
+    {
+        _context.Courses.Add(course);
     }
 }

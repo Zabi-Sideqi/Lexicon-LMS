@@ -2,6 +2,23 @@
    LEXICON LMS - MAIN LAYOUT
    ========================================================= */
 
+.app-shell {
+    --lms-page-bg: #f5f6f8;
+    --lms-surface: #ffffff;
+    --lms-surface-soft: #f8f8fa;
+    --lms-text: #27272a;
+    --lms-text-muted: #6b6b72;
+    --lms-border: #e4e4e8;
+    --lms-border-strong: #d4d4d8;
+    --lms-sidebar: #ffffff;
+    --lms-hover: #f3f4f6;
+
+    min-height: 100vh;
+    background: var(--lms-page-bg);
+    color: var(--lms-text);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 .topbar {
     position: fixed;
     top: 0;
@@ -45,9 +62,9 @@
     cursor: pointer;
 }
 
-    .icon-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-    }
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
 
 .user-chip {
     display: flex;
@@ -57,6 +74,11 @@
     font-size: 16px;
 }
 
+.topbar-logout-form {
+    margin: 0;
+    padding: 0;
+}
+
 .sidebar {
     position: fixed;
     top: 58px;
@@ -64,36 +86,64 @@
     bottom: 0;
     width: 332px;
     z-index: 900;
-    background: #ffffff;
-    border-right: 1px solid #e4e4e8;
+    background: var(--lms-sidebar);
+    border-right: 1px solid var(--lms-border);
     overflow-y: auto;
     overflow-x: hidden;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-main {
+.main {
     min-height: 100vh;
     margin-left: 332px;
     padding: 88px 36px 50px;
-    background: #f5f6f8;
-    color: #27272a;
+    background: var(--lms-page-bg);
+    color: var(--lms-text);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark-mode {
+    --lms-page-bg: #111827;
+    --lms-surface: #1f2937;
+    --lms-surface-soft: #374151;
+    --lms-text: #f3f4f6;
+    --lms-text-muted: #cbd5e1;
+    --lms-border: #374151;
+    --lms-border-strong: #4b5563;
+    --lms-sidebar: #1f2937;
+    --lms-hover: #374151;
+}
+
+.dark-mode ::deep .nav-item .nav-link {
+    color: #e5e7eb;
+    border-bottom-color: #374151;
+}
+
+.dark-mode ::deep .nav-item .nav-link:hover {
+    background: #374151;
+    color: #ffffff;
+}
+
+.dark-mode ::deep .nav-item .nav-link.active {
+    background: #3730a3;
+    color: #ffffff;
 }
 
 @media (max-width: 1000px) {
-
     .sidebar {
         width: 280px;
     }
 
-    main {
+    .main {
         margin-left: 280px;
     }
 }
+
 .hamburger-btn {
     display: none;
 }
 
 @media (max-width: 760px) {
-
     .topbar {
         padding: 0 12px;
     }
@@ -118,14 +168,14 @@ main {
     .sidebar {
         width: 290px;
         transform: translateX(-100%);
-        transition: transform 0.2s ease;
+        transition: transform 0.2s ease, background-color 0.2s ease;
     }
 
-        .sidebar.sidebar-open {
-            transform: translateX(0);
-        }
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
 
-    main {
+    .main {
         margin-left: 0;
         padding: 82px 16px 35px;
     }
