@@ -1,5 +1,4 @@
-﻿
-namespace Domain.Contracts;
+﻿namespace Domain.Contracts;
 
 public interface IUnitOfWork
 {
@@ -8,5 +7,6 @@ public interface IUnitOfWork
 
     Task<bool> CourseExistsAsync(int courseId);
 
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default);
 }

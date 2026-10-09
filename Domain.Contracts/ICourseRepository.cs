@@ -1,4 +1,3 @@
-﻿
 using Domain.Models.Entities;
 
 namespace Domain.Contracts;

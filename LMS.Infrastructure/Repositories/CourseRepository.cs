@@ -1,4 +1,4 @@
-﻿
+
 using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Infrastructure.Data;
@@ -39,7 +39,8 @@ public class CourseRepository : ICourseRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(course => course.Id == id);
+        return await query.FirstOrDefaultAsync(
+            course => course.Id == id);
     }
 
     public void Create(Course course)
