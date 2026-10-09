@@ -89,4 +89,27 @@ public class UserController : ControllerBase
             });
         }
     }
+
+    // DELETE: api/users/{id}
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        try
+        {
+            var deleted = await _serviceManager.UserService.DeleteUserAsync(id);
+            if (!deleted)
+            {
+                return NotFound("User not found.");
+            }
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+    }
 }
+
