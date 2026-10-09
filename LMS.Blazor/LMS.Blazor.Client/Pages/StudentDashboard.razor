@@ -1,0 +1,8 @@
+﻿@page "/student-dashboard"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Student")]
+
+<PageTitle>Min översikt</PageTitle>
+
+<h1>Min översikt</h1>
+<p class="text-muted">US12 · Kommande aktiviteter, deadlines och feedback hamnar här.</p>

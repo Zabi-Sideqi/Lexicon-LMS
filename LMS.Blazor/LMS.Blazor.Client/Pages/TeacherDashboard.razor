@@ -1,0 +1,159 @@
+﻿@page "/teacher-dashboard"
+
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Teacher")]
+
+<PageTitle>Lärardashboard</PageTitle>
+
+<div class="dashboard">
+
+    <div class="page-head">
+        <div>
+            <h1>Lärardashboard</h1>
+            <p>Hantera dina kurser, moduler och studenter.</p>
+        </div>
+
+        <span class="role-badge">
+            Lärare
+        </span>
+    </div>
+
+
+    <div class="stats">
+
+        <div class="stat-card">
+            <span class="stat-icon">▣</span>
+            <strong>2</strong>
+            <span>Aktiva kurser</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon">♙</span>
+            <strong>27</strong>
+            <span>Registrerade elever</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon">◇</span>
+            <strong>4</strong>
+            <span>Totala moduler</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon">✓</span>
+            <strong>12</strong>
+            <span>Väntar på feedback</span>
+        </div>
+
+    </div>
+
+
+    <div class="section-head">
+        <h2>Dina aktiva kurser</h2>
+
+        <button class="btn-primary-demo">
+            + Skapa ny kurs
+        </button>
+    </div>
+
+
+    <div class="course-grid">
+
+        <div class="course-card">
+
+            <h3>Frontend-utvecklare</h3>
+
+            <span class="course-code">
+                FED101
+            </span>
+
+            <div class="course-info">
+                <div>
+                    <strong>15</strong>
+                    <span>elever</span>
+                </div>
+
+                <div>
+                    <strong>3</strong>
+                    <span>moduler</span>
+                </div>
+            </div>
+
+            <p>15 Aug – 15 Dec</p>
+
+            <button class="btn-primary-demo">
+                Gå till kurs →
+            </button>
+
+        </div>
+
+
+        <div class="course-card">
+
+            <h3>Backend-utvecklare</h3>
+
+            <span class="course-code">
+                BED101
+            </span>
+
+            <div class="course-info">
+                <div>
+                    <strong>12</strong>
+                    <span>elever</span>
+                </div>
+
+                <div>
+                    <strong>1</strong>
+                    <span>modul</span>
+                </div>
+            </div>
+
+            <p>01 Sep – 31 Jan</p>
+
+            <button class="btn-primary-demo">
+                Gå till kurs →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="activity-card">
+
+        <h2>Senaste aktiviteter</h2>
+
+        <div class="activity">
+            <strong>
+                Anna Andersson lämnade in JavaScript Quiz
+            </strong>
+
+            <span>
+                05 okt 2026 · Betyg väntar
+            </span>
+        </div>
+
+        <div class="activity">
+            <strong>
+                Sara Lindberg skickade HTML & CSS Projekt
+            </strong>
+
+            <span>
+                04 okt 2026 · Feedback behövs
+            </span>
+        </div>
+
+        <div class="activity">
+            <strong>
+                Ny student registrerad i Frontend-utvecklare
+            </strong>
+
+            <span>
+                03 okt 2026
+            </span>
+        </div>
+
+    </div>
+
+</div>

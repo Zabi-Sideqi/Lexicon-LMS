@@ -26,7 +26,17 @@ public sealed class ApiProxyClient(HttpClient httpClient) : IApiProxyClient
         using var response = await httpClient.SendAsync(request, cancellationToken);
 
         EnsureAuthenticated(response);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var message = string.IsNullOrWhiteSpace(errorBody)
+                ? $"Request failed with status code {(int)response.StatusCode} ({response.ReasonPhrase})."
+                : errorBody;
+
+            throw new HttpRequestException(message);
+        }
 
         if (response.StatusCode == HttpStatusCode.NoContent ||
             response.Content.Headers.ContentLength == 0)

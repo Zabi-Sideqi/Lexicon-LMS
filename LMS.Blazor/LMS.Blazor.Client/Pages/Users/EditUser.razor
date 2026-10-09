@@ -1,0 +1,259 @@
+﻿@page "/users/edit/{id}"
+
+@using LMS.Shared.DTOs.UserDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@using Microsoft.AspNetCore.Authorization
+@using System.Net.Http.Json
+
+@attribute [Authorize(Roles = "Teacher")]
+
+<PageTitle>Redigera användare</PageTitle>
+
+<div class="users-page">
+
+    <div class="page-header">
+        <div>
+            <h1>Redigera användare</h1>
+            <p class="text-muted mb-0">
+                US01 · Validering och kurskoppling
+            </p>
+        </div>
+
+        <a class="btn btn-outline-primary" href="/users">
+            Tillbaka
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                Användaruppgifter
+            </h5>
+
+            @if (isLoading)
+            {
+                <div class="alert alert-info">
+                    Laddar användare...
+                </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    @errorMessage
+                </div>
+            }
+            else
+            {
+                <EditForm Model="@userModel"
+                          OnValidSubmit="@HandleValidSubmit">
+
+                    <DataAnnotationsValidator />
+
+                    <div class="form-grid">
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Användarnamn *
+                            </label>
+
+                            <InputText class="form-control"
+                                       @bind-Value="userModel.UserName"
+                                       placeholder="Användarnamn" />
+
+                            <ValidationMessage For="@(() => userModel.UserName)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                E-post *
+                            </label>
+
+                            <InputText class="form-control"
+                                       type="email"
+                                       @bind-Value="userModel.Email"
+                                       placeholder="anna@example.com" />
+
+                            <ValidationMessage For="@(() => userModel.Email)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Roll *
+                            </label>
+
+                            <InputSelect class="form-select"
+                                         @bind-Value="userModel.Role">
+
+                                <option value="">Välj roll</option>
+                                <option value="Student">Student</option>
+                                <option value="Teacher">Teacher</option>
+
+                            </InputSelect>
+
+                            <ValidationMessage For="@(() => userModel.Role)" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                Kurs
+                            </label>
+
+                            <InputNumber class="form-control"
+                                         @bind-Value="userModel.CourseId"
+                                         placeholder="Kurs-ID" />
+
+                            <ValidationMessage For="@(() => userModel.CourseId)" />
+                        </div>
+
+                    </div>
+
+                    <ValidationSummary />
+
+                    @if (!string.IsNullOrWhiteSpace(successMessage))
+                    {
+                        <div class="alert alert-success">
+                            @successMessage
+                        </div>
+                    }
+
+                    <div class="alert alert-info">
+                        Endast behörig Teacher ska kunna skapa och ändra användare.
+                        E-post och obligatoriska fält valideras.
+                    </div>
+
+                    <div class="d-flex gap-2">
+
+                        <button class="btn btn-primary"
+                                type="submit"
+                                disabled="@isSaving">
+
+                            @if (isSaving)
+                            {
+                                <span>Sparar...</span>
+                            }
+                            else
+                            {
+                                <span>Spara användare</span>
+                            }
+
+                        </button>
+
+                        <a class="btn btn-outline-secondary"
+                           href="/users">
+                            Avbryt
+                        </a>
+
+                    </div>
+
+                </EditForm>
+            }
+
+        </div>
+    </div>
+
+</div>
+
+@code {
+
+    [Parameter]
+    public string id { get; set; } = string.Empty;
+
+    [Inject]
+    private IApiProxyClient ApiProxyClient { get; set; } = default!;
+
+    private UserUpdateDto userModel = new();
+
+    private bool isLoading = true;
+    private bool isSaving;
+
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUser();
+    }
+
+    private async Task LoadUser()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var user = await ApiProxyClient.GetAsync<UserResponseDto>(
+                $"users/{id}");
+
+            if (user is null)
+            {
+                errorMessage = "Användaren kunde inte hittas.";
+                return;
+            }
+
+            userModel = new UserUpdateDto
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                Role = user.Role,
+                CourseId = user.CourseId
+            };
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Det gick inte att hämta användaren: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ett fel uppstod: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSaving = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            using var content = JsonContent.Create(userModel);
+
+            var updatedUser = await ApiProxyClient.PutAsync<UserResponseDto>(
+                $"users/{id}",
+                content);
+
+            if (updatedUser is null)
+            {
+                errorMessage = "Användaren kunde inte uppdateras.";
+                return;
+            }
+
+            successMessage = "Användaren uppdaterades.";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Det gick inte att uppdatera användaren: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ett fel uppstod: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}
