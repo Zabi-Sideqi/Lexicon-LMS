@@ -1,15 +1,14 @@
 ﻿using LMS.Shared.DTOs.CourseDtos;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Service.Contracts
+namespace Service.Contracts;
+
+public interface ICourseService
 {
-    public interface ICourseService
-    {
-        Task<IEnumerable<CourseDto>> GetAllAsync();
-        Task<CourseDto?> GetByIdAsync(int id);
-        Task<CourseDto> CreateAsync(CourseForCreationDto dto);
-        Task UpdateAsync(int id, CourseForUpdateDto dto);
-    }
+    Task<IEnumerable<CourseDto>> GetAllAsync();
+    Task<CourseDto?> GetByIdAsync(int id);
+    Task<CourseDto> CreateAsync(CourseForCreationDto dto);
+    Task UpdateAsync(int id, CourseForUpdateDto dto);
+
+    Task<StudentCourseDto?> GetMyCourseAsync(string userId);
+    Task<IEnumerable<CourseParticipantDto>> GetCourseParticipantsAsync(string userId);
 }

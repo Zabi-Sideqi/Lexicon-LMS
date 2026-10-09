@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace LMS.Presentation.Controllers;
 
@@ -66,5 +67,35 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     {
         await _serviceManager.CourseService.UpdateAsync(id, dto);
         return NoContent();
+    }
+
+    [HttpGet("my")]
+    [SwaggerOperation(
+        Summary = "Get the current student's course",
+        Description = "Returns the course assigned to the authenticated student.")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Course found", typeof(StudentCourseDto))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Student has no assigned course")]
+    public async Task<ActionResult<StudentCourseDto>> GetMyCourse()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var course = await _serviceManager.CourseService.GetMyCourseAsync(userId);
+
+        if (course is null)
+            return NotFound();
+
+        return Ok(course);
+    }
+
+    [HttpGet("my/participants")]
+    [SwaggerOperation(
+        Summary = "Get participants of the current student's course",
+        Description = "Returns a list of participants in the same course as the authenticated student.")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Participants retrieved", typeof(IEnumerable<CourseParticipantDto>))]
+    public async Task<ActionResult<IEnumerable<CourseParticipantDto>>> GetParticipants()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var participants = await _serviceManager.CourseService.GetCourseParticipantsAsync(userId);
+
+        return Ok(participants);
     }
 }
