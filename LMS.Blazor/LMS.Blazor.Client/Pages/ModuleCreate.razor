@@ -1,0 +1,102 @@
+﻿@* @page "/courses/{CourseId:int}/modules/create" *@
+@page "/modules/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Teacher")]
+
+@* After #36 is merged, uncomment this line (check the DTO namespace): *@
+@* @using LMS.Shared.DTOs.ModuleDtos *@
+@using System.ComponentModel.DataAnnotations
+@using LMS.Blazor.Client.Services.ApiProxy
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject IApiProxyClient Proxy
+@inject NavigationManager Navigation
+
+<PageTitle>Create Module</PageTitle>
+
+<h1>Create Module</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <InputText @bind-Value="model.Name" class="form-control" />
+        <ValidationMessage For="() => model.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea @bind-Value="model.Description" class="form-control" />
+        <ValidationMessage For="() => model.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Start Date</label>
+        <InputDate @bind-Value="model.StartDate" class="form-control" />
+        <ValidationMessage For="() => model.StartDate" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">End Date</label>
+        <InputDate @bind-Value="model.EndDate" class="form-control" />
+        <ValidationMessage For="() => model.EndDate" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a href="/modules" class="btn btn-secondary">Cancel</a>
+</EditForm>
+
+@code {
+    // A module belongs to a course, so the course id comes from the address.
+    [Parameter]
+    public int CourseId { get; set; }
+
+    // ---- Temporary version: local model, nothing is sent to the API. ----
+    // Remove this class and the temporary HandleSubmit when #36 and #38 are done.
+    private class TempModuleModel : IValidatableObject
+    {
+        [Required]
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public DateTime StartDate { get; set; } = DateTime.Today;
+        public DateTime EndDate { get; set; } = DateTime.Today.AddDays(14);
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext context)
+        {
+            if (EndDate < StartDate)
+                yield return new ValidationResult("End date cannot be before start date.", [nameof(EndDate)]);
+        }
+    }
+
+    private TempModuleModel model = new();
+
+    private Task HandleSubmit()
+    {
+        Navigation.NavigateTo("/modules");
+        return Task.CompletedTask;
+    }
+
+    // ---- Real version: uncomment after #36 and #38 are done, and delete the temporary version above. ----
+    // Check the DTO names. If ModuleCreateDto has a CourseId property, also set model.CourseId = CourseId.
+    // The address depends on ModuleController (#38): "modules" or $"courses/{CourseId}/modules".
+    //
+    // private ModuleCreateDto model = new()
+    // {
+    //     Name = "",
+    //     Description = "",
+    //     StartDate = DateTime.Today,
+    //     EndDate = DateTime.Today.AddDays(14)
+    // };
+    //
+    // private async Task HandleSubmit()
+    // {
+    //     await Proxy.SendAsync<ModuleResponseDto>(
+    //         HttpMethod.Post,
+    //         "modules",
+    //         JsonContent.Create(model));
+    //
+    //     Navigation.NavigateTo("/modules");
+    // }
+}

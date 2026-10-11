@@ -1,0 +1,82 @@
+﻿@page "/modules"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@* After #36 is merged, uncomment these three lines (check the DTO namespace): *@
+@* @using LMS.Shared.DTOs.ModuleDtos *@
+@* @using LMS.Blazor.Client.Services.ApiProxy *@
+@* @inject IApiProxyClient Proxy *@
+
+<PageTitle>Modules</PageTitle>
+
+<h1>Modules</h1>
+
+<AuthorizeView Roles="Teacher">
+    <a href="/modules/create" class="btn btn-primary mb-3">Create module</a>
+</AuthorizeView>
+
+@if (modules is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!modules.Any())
+{
+    <p>No modules found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>End</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var module in modules.OrderBy(m => m.StartDate))
+            {
+                <tr>
+                    <td>@module.Name</td>
+                    <td>@module.Description</td>
+                    <td>@module.StartDate.ToShortDateString()</td>
+                    <td>@module.EndDate.ToShortDateString()</td>
+                    <td>
+                        <AuthorizeView Roles="Teacher">
+                            <a href="/modules/edit/@module.Id" class="btn btn-sm btn-secondary">Edit</a>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // ---- Temporary version: fake type and fake data. Remove when #36 is merged. ----
+    private record FakeModule(int Id, string Name, string Description, DateTime StartDate, DateTime EndDate);
+
+    private List<FakeModule>? modules;
+
+    protected override void OnInitialized()
+    {
+        modules =
+        [
+            new(1,"Modul 1: Databashantering med Entity Framework Core", "Hur en applikation kommunicerar med en databas för att spara och hämta data.", new DateTime(2026, 9, 1), new DateTime(2026, 9, 30)),
+            new(2, "Modul 2: Backend-utveckling med ASP.NET Core Web API", "Hur man bygger moderna, säkra och skalbara API:er (rest-tjänster).", new DateTime(2026, 10, 1), new DateTime(2026, 10, 31))
+        ];
+    }
+
+    // ---- Real version: uncomment after #36 is merged, and delete the temporary version above. ----
+    // The address ("modules") depends on how ModuleController (#38) is built.
+    //
+    // private IEnumerable<ModuleResponseDto>? modules;
+    //
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     modules = await Proxy.GetAsync<IEnumerable<ModuleResponseDto>>("modules");
+    // }
+}
