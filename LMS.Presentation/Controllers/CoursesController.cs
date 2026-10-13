@@ -18,6 +18,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     private readonly IServiceManager _serviceManager = serviceManager;
 
     [HttpGet]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Get all courses",
         Description = "Returns a list of all courses.")]
@@ -29,6 +30,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Get a course",
         Description = "Returns a course by id.")]
@@ -45,6 +47,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Create a course",
         Description = "Creates a new course. Start date must not be after end date.")]
@@ -57,6 +60,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Update a course",
         Description = "Updates an existing course.")]
@@ -70,6 +74,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpGet("my")]
+    [Authorize(Roles = "Student")]
     [SwaggerOperation(
         Summary = "Get the current student's course",
         Description = "Returns the course assigned to the authenticated student.")]
@@ -87,6 +92,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpGet("my/participants")]
+    [Authorize(Roles = "Student")]
     [SwaggerOperation(
         Summary = "Get participants of the current student's course",
         Description = "Returns a list of participants in the same course as the authenticated student.")]
