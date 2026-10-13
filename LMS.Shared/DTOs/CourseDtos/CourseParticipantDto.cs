@@ -2,5 +2,4 @@
 
 public sealed record CourseParticipantDto(
     string Id,
-    string UserName,
-    string Email);
+    string UserName);
