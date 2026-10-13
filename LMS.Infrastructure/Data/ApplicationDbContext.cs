@@ -7,4 +7,5 @@ namespace LMS.Infrastructure.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Course> Courses => Set<Course>();
+    public DbSet<Module> Modules => Set<Module>();
 }

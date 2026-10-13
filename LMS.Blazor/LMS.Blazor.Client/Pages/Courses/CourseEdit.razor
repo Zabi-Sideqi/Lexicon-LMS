@@ -1,4 +1,5 @@
 ﻿@page "/courses/edit/{id:int}"
+@attribute [Authorize(Roles = "Teacher")]
 @using System.Net.Http
 @using System.Net.Http.Json
 @using LMS.Shared.DTOs.CourseDtos

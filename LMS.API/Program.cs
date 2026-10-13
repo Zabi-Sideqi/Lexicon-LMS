@@ -29,9 +29,10 @@ internal class Program
         .AddApplicationPart(typeof(AssemblyReference).Assembly);
 
         builder.Services.AddHostedService<DataSeedService>();
-
-        // Registrera OpenAPI med Bearer Security Scheme för .NET 10
+        // change Swager to OpenAPI for .NET 10 för att använda Scalar UI
         builder.Services.AddOpenApi(options =>
+        // Registrera OpenAPI med Bearer Security Scheme för .NET 10
+        // För att kunna använda din JWT-token när du testar skyddade endpoints i Scalar.
         {
             options.AddDocumentTransformer((document, context, cancellationToken) =>
             {
