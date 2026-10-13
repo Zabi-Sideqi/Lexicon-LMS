@@ -122,7 +122,6 @@ public class CourseService : ICourseService
 
         return course.Students.Select(s => new CourseParticipantDto(
             s.Id,
-            s.UserName ?? "Unknown",
-            s.Email ?? string.Empty));
+            s.UserName ?? "Unknown"));
     }
 }
