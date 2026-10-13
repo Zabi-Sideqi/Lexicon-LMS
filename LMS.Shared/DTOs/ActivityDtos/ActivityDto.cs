@@ -1,16 +1,11 @@
 ﻿
+namespace LMS.Shared.DTOs.ActivityDtos;
 
-namespace LMS.Shared.DTOs.ActivityDtos
-{
-    public record ActivityDto(
-        int Id,
-        int ModeId,
-        string Type,
-        string Name,
-        string Description,
-        DateTime StartTime,
-        DateTime EndTime
-    );
-    
-    
-}
+public record ActivityDto(
+    int Id,
+    int ModuleId,
+    string Type,
+    string Name,
+    string Description,
+    DateTime StartTime,
+    DateTime EndTime);
