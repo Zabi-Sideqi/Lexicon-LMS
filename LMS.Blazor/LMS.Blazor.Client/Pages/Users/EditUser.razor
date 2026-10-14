@@ -196,7 +196,7 @@
                 UserName = user.UserName,
                 Email = user.Email,
                 Role = user.Role,
-                CourseId = user.CourseId
+                CourseId = user.CourseId ?? 0
             };
         }
         catch (UnauthorizedAccessException)

@@ -1,4 +1,5 @@
-﻿using Domain.Contracts;
+﻿
+using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Shared.DTOs.UserDtos;
 using Microsoft.AspNetCore.Identity;
@@ -10,32 +11,33 @@ public class UserService : IUserService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly UserManager<ApplicationUser> _userManager;
+
     public UserService(
         IUnitOfWork unitOfWork,
-        UserManager<ApplicationUser> userManager
-        )
+        UserManager<ApplicationUser> userManager)
     {
         _unitOfWork = unitOfWork;
         _userManager = userManager;
     }
+
     public async Task<UserResponseDto> CreateUserAsync(UserCreateDto userDto)
-
     {
-        if (userDto.CourseId.HasValue)
-        {
-            var courseExists = await _unitOfWork.CourseExistsAsync(
-                userDto.CourseId.Value);
+        var courseExists = await _unitOfWork.CourseExistsAsync(
+            userDto.CourseId);
 
-            if (!courseExists)
-            {
-                throw new InvalidOperationException(
-                    "The selected course does not exist.");
-            }
+        if (!courseExists)
+        {
+            throw new InvalidOperationException(
+                "The selected course does not exist.");
         }
+
         var existingUser = await _userManager.FindByEmailAsync(userDto.Email);
 
         if (existingUser is not null)
-            throw new InvalidOperationException("A user with this email already exists.");
+        {
+            throw new InvalidOperationException(
+                "A user with this email already exists.");
+        }
 
         var user = new ApplicationUser
         {
@@ -75,7 +77,9 @@ public class UserService : IUserService
         var user = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
 
         if (user is null)
+        {
             return false;
+        }
 
         var result = await _userManager.DeleteAsync(user);
 
@@ -91,7 +95,6 @@ public class UserService : IUserService
     public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
     {
         var users = await _unitOfWork.UserRepository.GetAllUsersAsync();
-
         var result = new List<UserResponseDto>();
 
         foreach (var user in users)
@@ -116,7 +119,10 @@ public class UserService : IUserService
         var user = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
 
         if (user is null)
-            throw new KeyNotFoundException($"User with id '{id}' was not found.");
+        {
+            throw new KeyNotFoundException(
+                $"User with id '{id}' was not found.");
+        }
 
         var roles = await _userManager.GetRolesAsync(user);
 
@@ -130,29 +136,34 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<UserResponseDto> UpdateUserAsync(string id, UserUpdateDto userDto)
+    public async Task<UserResponseDto> UpdateUserAsync(
+        string id,
+        UserUpdateDto userDto)
     {
         var user = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
 
         if (user is null)
-            throw new KeyNotFoundException($"User with id '{id}' was not found.");
-
-        if (userDto.CourseId.HasValue)
         {
-            var courseExists = await _unitOfWork.CourseExistsAsync(
-                userDto.CourseId.Value);
+            throw new KeyNotFoundException(
+                $"User with id '{id}' was not found.");
+        }
 
-            if (!courseExists)
-            {
-                throw new InvalidOperationException(
-                    "The selected course does not exist.");
-            }
+        var courseExists = await _unitOfWork.CourseExistsAsync(
+            userDto.CourseId);
+
+        if (!courseExists)
+        {
+            throw new InvalidOperationException(
+                "The selected course does not exist.");
         }
 
         var existingUser = await _userManager.FindByEmailAsync(userDto.Email);
 
         if (existingUser is not null && existingUser.Id != id)
-            throw new InvalidOperationException("A user with this email already exists.");
+        {
+            throw new InvalidOperationException(
+                "A user with this email already exists.");
+        }
 
         user.UserName = userDto.UserName;
         user.Email = userDto.Email;
@@ -172,21 +183,25 @@ public class UserService : IUserService
         {
             if (currentRoles.Count > 0)
             {
-                var removeRoleResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                var removeRoleResult =
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
 
                 if (!removeRoleResult.Succeeded)
                 {
                     throw new InvalidOperationException(
-                        string.Join("; ", removeRoleResult.Errors.Select(e => e.Description)));
+                        string.Join("; ",
+                            removeRoleResult.Errors.Select(e => e.Description)));
                 }
             }
 
-            var addRoleResult = await _userManager.AddToRoleAsync(user, userDto.Role);
+            var addRoleResult =
+                await _userManager.AddToRoleAsync(user, userDto.Role);
 
             if (!addRoleResult.Succeeded)
             {
                 throw new InvalidOperationException(
-                    string.Join("; ", addRoleResult.Errors.Select(e => e.Description)));
+                    string.Join("; ",
+                        addRoleResult.Errors.Select(e => e.Description)));
             }
         }
 
