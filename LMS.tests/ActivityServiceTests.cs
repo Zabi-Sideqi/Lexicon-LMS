@@ -1,6 +1,7 @@
 ﻿
 using Domain.Contracts;
 using Domain.Models.Entities;
+using Domain.Models.Exceptions;
 using LMS.Services;
 using LMS.Shared.DTOs.ActivityDtos;
 using Moq;
@@ -343,6 +344,137 @@ public async Task UpdateAsync_ValidActivity_UpdatesAndSavesActivity()
         unitOfWork.Verify(
             u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+   
+[Fact]
+public async Task UpdateAsync_StartAfterEnd_ThrowsArgumentException()
+    {
+        // Arrange
+        var existing = new Activity
+        {
+            Id = 10,
+            ModuleId = 1,
+            Type = ActivityType.Lecture,
+            Name = "Test activity",
+            Description = "Test",
+            StartTime = new DateTime(2026, 10, 10, 9, 0, 0),
+            EndTime = new DateTime(2026, 10, 10, 10, 0, 0)
+        };
+
+        var (service, unitOfWork, repository) =
+            CreateService(new[] { existing });
+
+        repository
+            .Setup(r => r.GetByIdAsync(10, true))
+            .ReturnsAsync(existing);
+
+        var dto = new ActivityUpdateDto
+        {
+            Type = "Lecture",
+            Name = "Updated activity",
+            Description = "Test",
+            StartTime = new DateTime(2026, 10, 10, 11, 0, 0),
+            EndTime = new DateTime(2026, 10, 10, 10, 0, 0)
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.UpdateAsync(10, dto));
+
+        repository.Verify(
+            r => r.Update(It.IsAny<Activity>()),
+            Times.Never);
+
+        unitOfWork.Verify(
+            u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+  
+[Fact]
+public async Task UpdateAsync_OverlappingActivity_ThrowsArgumentException()
+    {
+        // Arrange
+        var existing = new Activity
+        {
+            Id = 10,
+            ModuleId = 1,
+            Type = ActivityType.Lecture,
+            Name = "Activity to update",
+            Description = "Test",
+            StartTime = new DateTime(2026, 10, 10, 9, 0, 0),
+            EndTime = new DateTime(2026, 10, 10, 10, 0, 0)
+        };
+
+        var otherActivity = new Activity
+        {
+            Id = 20,
+            ModuleId = 1,
+            Type = ActivityType.Exercise,
+            Name = "Other activity",
+            Description = "Test",
+            StartTime = new DateTime(2026, 10, 10, 11, 0, 0),
+            EndTime = new DateTime(2026, 10, 10, 12, 0, 0)
+        };
+
+        var (service, unitOfWork, repository) =
+            CreateService(new[] { existing, otherActivity });
+
+        repository
+            .Setup(r => r.GetByIdAsync(10, true))
+            .ReturnsAsync(existing);
+
+        var dto = new ActivityUpdateDto
+        {
+            Type = "Lecture",
+            Name = "Updated activity",
+            Description = "Test",
+            StartTime = new DateTime(2026, 10, 10, 11, 30, 0),
+            EndTime = new DateTime(2026, 10, 10, 12, 30, 0)
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.UpdateAsync(10, dto));
+
+        repository.Verify(
+            r => r.Update(It.IsAny<Activity>()),
+            Times.Never);
+
+        unitOfWork.Verify(
+            u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+   
+[Fact]
+public async Task UpdateAsync_ActivityNotFound_ThrowsArgumentException()
+    {
+        // Arrange
+        var (service, unitOfWork, repository) = CreateService();
+
+        repository
+            .Setup(r => r.GetByIdAsync(99, true))
+            .ReturnsAsync((Activity?)null);
+
+        var dto = new ActivityUpdateDto
+        {
+            Type = "Lecture",
+            Name = "Updated activity",
+            Description = "Test",
+            StartTime = new DateTime(2026, 10, 10, 11, 0, 0),
+            EndTime = new DateTime(2026, 10, 10, 12, 0, 0)
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ResourceNotFoundException>(
+            () => service.UpdateAsync(99, dto));
+        repository.Verify(
+            r => r.Update(It.IsAny<Activity>()),
+            Times.Never);
+
+        unitOfWork.Verify(
+            u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
 }
