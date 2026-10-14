@@ -16,7 +16,7 @@ namespace LMS.Shared.DTOs.UserDtos
         [RegularExpression("^(Teacher|Student)$", ErrorMessage = "Role must be either 'Teacher' or 'Student'.")]
         public string Role { get; set; } = string.Empty;
 
-        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Välj en kurs.")]
         public int CourseId { get; set; }
     }
 }
