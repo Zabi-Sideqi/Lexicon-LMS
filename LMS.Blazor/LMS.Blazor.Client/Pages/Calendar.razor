@@ -352,15 +352,20 @@
         _formError = null;
     }
 
+    
     private async Task SaveActivityAsync()
     {
         _formError = null;
+        _errorMessage = null;
         _successMessage = null;
-        if (_form.ModuleId <= 0 || !_modules.Any(x => x.Id == _form.ModuleId))
+
+        if (_form.ModuleId <= 0 ||
+            !_modules.Any(x => x.Id == _form.ModuleId))
         {
             _formError = "Välj en giltig modul.";
             return;
         }
+
         if (_form.StartTime >= _form.EndTime)
         {
             _formError = "Starttiden måste vara före sluttiden.";
@@ -368,6 +373,7 @@
         }
 
         _isSaving = true;
+
         try
         {
             if (_editingId.HasValue)
@@ -380,7 +386,12 @@
                     StartTime = _form.StartTime,
                     EndTime = _form.EndTime
                 };
-                await ApiProxyClient.SendAsync<object>(HttpMethod.Put, $"Activities/{_editingId.Value}", JsonContent.Create(dto));
+
+                await ApiProxyClient.SendAsync<object>(
+                    HttpMethod.Put,
+                    $"Activities/{_editingId.Value}",
+                    JsonContent.Create(dto));
+
                 _successMessage = "Aktiviteten har uppdaterats.";
             }
             else
@@ -394,11 +405,28 @@
                     StartTime = _form.StartTime,
                     EndTime = _form.EndTime
                 };
-                await ApiProxyClient.SendAsync<ActivityDto>(HttpMethod.Post, "Activities", JsonContent.Create(dto));
+
+                await ApiProxyClient.SendAsync<ActivityDto>(
+                    HttpMethod.Post,
+                    "Activities",
+                    JsonContent.Create(dto));
+
                 _successMessage = "Aktiviteten har skapats.";
             }
+
             _showForm = false;
-            await LoadDataAsync();
+
+            try
+            {
+                await LoadDataAsync();
+            }
+            catch
+            {
+                // Sparningen lyckades redan.
+                // Behåll framgångsmeddelandet.
+                _errorMessage =
+                    "Aktiviteten sparades, men kalendern kunde inte uppdateras. Ladda om sidan.";
+            }
         }
         catch (Exception ex)
         {
@@ -409,6 +437,7 @@
             _isSaving = false;
         }
     }
+
 
     private void CancelDelete() => _pendingDelete = null;
 
@@ -463,20 +492,65 @@
     };
 
 
+
+   
     private static string GetFriendlyError(Exception ex)
     {
         if (ex is UnauthorizedAccessException)
+        {
             return "Din session har gått ut. Logga in igen.";
+        }
+
+        var message = ex.Message;
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return "Ett fel uppstod. Försök igen.";
+        }
+
+        try
+        {
+            using var document =
+                System.Text.Json.JsonDocument.Parse(message);
+
+            var root = document.RootElement;
+
+            if (root.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                root.TryGetProperty("detail", out var detail) &&
+                detail.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                message = detail.GetString() ?? message;
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Svaret är inte JSON.
+        }
+
+        if (message.Contains("overlap",
+                StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("överlap",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Aktiviteten överlappar en annan aktivitet i modulen. Välj en annan tid.";
+        }
+
+        if (message.Contains("module dates",
+                StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("within the module",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Aktiviteten måste ligga inom modulens datum och tider.";
+        }
 
         if (ex is HttpRequestException)
         {
-            return string.IsNullOrWhiteSpace(ex.Message)
-                ? "Det gick inte att kommunicera med API:t. Försök igen."
-                : ex.Message;
+            return "Begäran kunde inte genomföras. Kontrollera uppgifterna och försök igen.";
         }
 
-        return ex.Message;
+        return "Ett fel uppstod. Försök igen.";
     }
+
 
 
     private sealed class ActivityFormModel
