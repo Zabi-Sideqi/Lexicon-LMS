@@ -1,11 +1,15 @@
 ﻿@page "/courses"
+@attribute [Authorize(Roles = "Teacher")]
 @using LMS.Shared.DTOs.CourseDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @inject IApiProxyClient Proxy
 
 <PageTitle>Courses</PageTitle>
 
-<h1>Courses</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Courses</h1>
+    <a href="/courses/create" class="btn btn-primary">Create Course</a>
+</div>
 
 @if (courses is null)
 {

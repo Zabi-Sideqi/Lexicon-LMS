@@ -1,5 +1,7 @@
-﻿using LMS.Infrastructure.Repositories;
+﻿
+using LMS.Infrastructure.Repositories;
 using LMS.Services;
+using Service.Contracts;
 
 namespace LMS.API.Extensions;
 
@@ -16,8 +18,11 @@ public static class ServiceExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICourseService, CourseService>();
+        services.AddScoped<IModuleService, ModuleService>();
+
         services.AddLazy<IAuthService>();
         services.AddLazy<IUserService>();
         services.AddLazy<ICourseService>();
+        services.AddLazy<IModuleService>();
     }
 }

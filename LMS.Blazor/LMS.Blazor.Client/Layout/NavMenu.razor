@@ -13,12 +13,24 @@
                 Dashboard
                 </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="courses">
-                <span class="nav-icon">▣</span>
-                Mina kurser
-            </NavLink>
-        </div>
+        <AuthorizeView Roles="Teacher">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="courses">
+                        <span class="nav-icon">▣</span>
+                        Alla kurser
+                    </NavLink>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="my-course">
+                        <span class="nav-icon">▣</span>
+                        Min kurs
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="assignments">
