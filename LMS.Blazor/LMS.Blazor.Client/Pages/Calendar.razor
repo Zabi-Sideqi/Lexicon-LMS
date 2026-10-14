@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 @inject IApiProxyClient ApiProxyClient
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Schema</PageTitle>
 
@@ -19,7 +20,7 @@
         </div>
         <AuthorizeView Roles="Teacher">
             <Authorized>
-                <button class="schedule-primary-button" type="button" @onclick="StartCreate" disabled="@_isLoadingModules">
+                <button class="schedule-primary-button" type="button" @onclick="StartCreate" >
                     + Ny aktivitet
                 </button>
             </Authorized>
@@ -197,7 +198,6 @@
     private ActivityDto? _pendingDelete;
     private bool _showForm;
     private bool _isLoading = true;
-    private bool _isLoadingModules;
     private bool _isSaving;
     private string? _errorMessage;
     private string? _successMessage;
@@ -208,17 +208,73 @@
         await LoadDataAsync();
     }
 
+
     private async Task LoadDataAsync()
     {
         _isLoading = true;
         _errorMessage = null;
+
         try
         {
-            var modulesTask = ApiProxyClient.SendAsync<List<ModuleDto>>(HttpMethod.Get, "modules");
-            var activitiesTask = ApiProxyClient.SendAsync<List<ActivityDto>>(HttpMethod.Get, "Activities");
-            await Task.WhenAll(modulesTask, activitiesTask);
-            _modules = await modulesTask ?? [];
-            _activities = (await activitiesTask ?? []).OrderBy(x => x.StartTime).ToList();
+            // Hämta aktiviteter för den inloggade användaren.
+            var activities = await ApiProxyClient.SendAsync<List<ActivityDto>>(
+                HttpMethod.Get,
+                "Activities");
+
+            _activities = (activities ?? [])
+                .OrderBy(x => x.StartTime)
+                .ToList();
+
+            // Hämta alla moduler endast för lärare.
+            var authenticationState =
+                await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+            if (authenticationState.User.IsInRole("Teacher"))
+            {
+                try
+                {
+                    var modules =
+                        await ApiProxyClient.SendAsync<List<ModuleDto>>(
+                            HttpMethod.Get,
+                            "modules");
+
+                    _modules = modules ?? [];
+                }
+                catch (Exception)
+                {
+                    _modules = [];
+                    _errorMessage =
+                        "Aktiviteterna kunde hämtas, men modullistan kunde inte laddas.";
+                }
+            }
+            else
+            {
+                _modules = [];
+
+                // Hämta information om moduler som elevens aktiviteter tillhör.
+                foreach (var moduleId in _activities
+                    .Select(x => x.ModuleId)
+                    .Distinct())
+                {
+                    try
+                    {
+                        var module =
+                            await ApiProxyClient.SendAsync<ModuleDto>(
+                                HttpMethod.Get,
+                                $"modules/{moduleId}");
+
+                        if (module is not null)
+                        {
+                            _modules.Add(module);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Kalendern ska fortfarande visas även om
+                        // information om en modul inte kan hämtas.
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -229,6 +285,7 @@
             _isLoading = false;
         }
     }
+
 
 
     private void StartCreate()
