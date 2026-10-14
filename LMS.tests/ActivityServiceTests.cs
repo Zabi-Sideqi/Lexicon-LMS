@@ -249,4 +249,100 @@ public class ActivityServiceTests
             u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
     }
+    
+[Theory]
+[InlineData("ELearning")]
+[InlineData("Other")]
+public async Task CreateAsync_NewActivityTypes_SavesActivity(string type)
+    {
+        // Arrange
+        var (service, unitOfWork, repository) = CreateService();
+        var dto = CreateDto();
+        dto.Type = type;
+
+        // Act
+        var result = await service.CreateAsync(dto);
+
+        // Assert
+        Assert.Equal(type, result.Type);
+
+        repository.Verify(
+            r => r.Create(It.Is<Activity>(a =>
+                a.Type.ToString() == type)),
+            Times.Once);
+
+        unitOfWork.Verify(
+            u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+    
+[Fact]
+public async Task CreateAsync_InvalidActivityType_ThrowsArgumentException()
+    {
+        // Arrange
+        var (service, unitOfWork, repository) = CreateService();
+        var dto = CreateDto();
+        dto.Type = "InvalidType";
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.CreateAsync(dto));
+
+        repository.Verify(
+            r => r.Create(It.IsAny<Activity>()),
+            Times.Never);
+
+        unitOfWork.Verify(
+            u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+    
+[Fact]
+public async Task UpdateAsync_ValidActivity_UpdatesAndSavesActivity()
+    {
+        // Arrange
+        var existing = new Activity
+        {
+            Id = 10,
+            ModuleId = 1,
+            Type = ActivityType.Lecture,
+            Name = "Old activity",
+            Description = "Old description",
+            StartTime = new DateTime(2026, 10, 10, 9, 0, 0),
+            EndTime = new DateTime(2026, 10, 10, 10, 0, 0)
+        };
+
+        var (service, unitOfWork, repository) =
+            CreateService(new[] { existing });
+
+        repository
+            .Setup(r => r.GetByIdAsync(10, true))
+            .ReturnsAsync(existing);
+
+        var dto = new ActivityUpdateDto
+        {
+            Type = "ELearning",
+            Name = "Updated activity",
+            Description = "Updated description",
+            StartTime = new DateTime(2026, 10, 10, 11, 0, 0),
+            EndTime = new DateTime(2026, 10, 10, 12, 0, 0)
+        };
+
+        // Act
+        await service.UpdateAsync(10, dto);
+
+        // Assert
+        Assert.Equal(ActivityType.ELearning, existing.Type);
+        Assert.Equal("Updated activity", existing.Name);
+        Assert.Equal("Updated description", existing.Description);
+
+        repository.Verify(
+            r => r.Update(existing),
+            Times.Once);
+
+        unitOfWork.Verify(
+            u => u.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
 }

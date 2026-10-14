@@ -1,6 +1,8 @@
 ﻿
+using Domain.Models.Entities;
 using LMS.Shared.DTOs.ModuleDtos;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
@@ -13,11 +15,15 @@ namespace LMS.Presentation.Controllers;
 [Consumes("application/json")]
 [Produces("application/json")]
 [Authorize]
-public class ModulesController(IServiceManager serviceManager) : ControllerBase
+public class ModulesController(
+    IServiceManager serviceManager,
+    UserManager<ApplicationUser> userManager) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
 
     [HttpGet]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(Summary = "Get all modules")]
     [SwaggerResponse(StatusCodes.Status200OK, "Modules retrieved")]
     public async Task<ActionResult<IEnumerable<ModuleDto>>> GetAll()
@@ -29,6 +35,7 @@ public class ModulesController(IServiceManager serviceManager) : ControllerBase
     [HttpGet("{id:int}")]
     [SwaggerOperation(Summary = "Get a module by id")]
     [SwaggerResponse(StatusCodes.Status200OK, "Module found")]
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Module not found")]
     public async Task<ActionResult<ModuleDto>> GetById(int id)
     {
@@ -37,23 +44,51 @@ public class ModulesController(IServiceManager serviceManager) : ControllerBase
         if (module is null)
             return NotFound();
 
+        if (User.IsInRole("Teacher"))
+            return Ok(module);
+
+        if (!User.IsInRole("Student"))
+            return Forbid();
+
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user?.CourseId is null || user.CourseId != module.CourseId)
+            return Forbid();
+
         return Ok(module);
     }
 
     [HttpGet("course/{courseId:int}")]
     [SwaggerOperation(Summary = "Get modules for a course")]
     [SwaggerResponse(StatusCodes.Status200OK, "Modules retrieved")]
-    public async Task<ActionResult<IEnumerable<ModuleDto>>> GetByCourseId(int courseId)
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
+    public async Task<ActionResult<IEnumerable<ModuleDto>>> GetByCourseId(
+        int courseId)
     {
-        var modules = await _serviceManager.ModuleService.GetByCourseIdAsync(courseId);
+        if (!User.IsInRole("Teacher"))
+        {
+            if (!User.IsInRole("Student"))
+                return Forbid();
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user?.CourseId is null || user.CourseId != courseId)
+                return Forbid();
+        }
+
+        var modules = await _serviceManager.ModuleService
+            .GetByCourseIdAsync(courseId);
+
         return Ok(modules);
     }
+
     [Authorize(Roles = "Teacher")]
     [HttpPost]
     [SwaggerOperation(Summary = "Create a module")]
     [SwaggerResponse(StatusCodes.Status201Created, "Module created")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid data")]
-    public async Task<ActionResult<ModuleDto>> Create(ModuleForCreationDto dto)
+    public async Task<ActionResult<ModuleDto>> Create(
+        ModuleForCreationDto dto)
     {
         var created = await _serviceManager.ModuleService.CreateAsync(dto);
 
@@ -62,17 +97,21 @@ public class ModulesController(IServiceManager serviceManager) : ControllerBase
             new { id = created.Id },
             created);
     }
+
     [Authorize(Roles = "Teacher")]
     [HttpPut("{id:int}")]
     [SwaggerOperation(Summary = "Update a module")]
     [SwaggerResponse(StatusCodes.Status204NoContent, "Module updated")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid data")]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Module not found")]
-    public async Task<IActionResult> Update(int id, ModuleForUpdateDto dto)
+    public async Task<IActionResult> Update(
+        int id,
+        ModuleForUpdateDto dto)
     {
         await _serviceManager.ModuleService.UpdateAsync(id, dto);
         return NoContent();
     }
+
     [Authorize(Roles = "Teacher")]
     [HttpDelete("{id:int}")]
     [SwaggerOperation(Summary = "Delete a module")]

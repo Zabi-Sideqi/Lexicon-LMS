@@ -25,6 +25,12 @@ public class ActivitiesController(
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetAll()
     {
+        if (!User.IsInRole("Teacher") &&
+            !User.IsInRole("Student"))
+        {
+            return Forbid();
+        }
+
         var activities = await _serviceManager.ActivityService.GetAllAsync();
 
         if (User.IsInRole("Teacher"))
@@ -64,17 +70,26 @@ public class ActivitiesController(
         return Forbid();
     }
 
+
     // Hämtar aktiviteter för en modul endast om användaren har åtkomst.
     [HttpGet("module/{moduleId:int}")]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByModuleId(
         int moduleId)
     {
+        // Endast lärare och studenter får läsa aktiviteter.
+        if (!User.IsInRole("Teacher") &&
+            !User.IsInRole("Student"))
+        {
+            return Forbid();
+        }
+
         var module = await _serviceManager.ModuleService.GetByIdAsync(moduleId);
 
         if (module is null)
             return NotFound();
 
-        if (!User.IsInRole("Teacher"))
+        // Studenter får endast läsa aktiviteter från sin egen kurs.
+        if (User.IsInRole("Student"))
         {
             var user = await _userManager.GetUserAsync(User);
 
@@ -90,6 +105,7 @@ public class ActivitiesController(
 
         return Ok(activities.OrderBy(activity => activity.StartTime));
     }
+
 
     // Skapar en aktivitet. Endast lärare får göra detta.
     [Authorize(Roles = "Teacher")]
@@ -125,18 +141,26 @@ public class ActivitiesController(
         return NoContent();
     }
 
+
     private async Task<bool> CanReadModuleAsync(int moduleId)
     {
+        // Lärare får läsa aktiviteter från alla moduler.
         if (User.IsInRole("Teacher"))
             return true;
+
+        // Alla andra roller än Student nekas.
+        if (!User.IsInRole("Student"))
+            return false;
 
         var user = await _userManager.GetUserAsync(User);
 
         if (user?.CourseId is not int courseId)
             return false;
 
-        var module = await _serviceManager.ModuleService.GetByIdAsync(moduleId);
+        var module = await _serviceManager.ModuleService
+            .GetByIdAsync(moduleId);
 
         return module is not null && module.CourseId == courseId;
     }
+
 }

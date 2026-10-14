@@ -165,19 +165,26 @@ public class ActivityService : IActivityService
         }
     }
 
+
+
     private static void ValidateModulePeriod(
         DateTime startTime,
         DateTime endTime,
         DateTime moduleStartDate,
         DateTime moduleEndDate)
     {
-        if (startTime.Date < moduleStartDate.Date ||
-            endTime.Date > moduleEndDate.Date)
+        var moduleStart = moduleStartDate.Date;
+        var moduleEndExclusive = moduleEndDate.Date.AddDays(1);
+
+        if (startTime < moduleStart ||
+            endTime > moduleEndExclusive)
         {
             throw new ArgumentException(
-                "Activity must be within the module dates.");
+                "Activity must be within the module dates and times.");
         }
     }
+
+
 
     private async Task ValidateNoOverlapAsync(
         int moduleId,
@@ -209,7 +216,7 @@ public class ActivityService : IActivityService
             !Enum.IsDefined(typeof(ActivityType), activityType))
         {
             throw new ArgumentException(
-                "Activity type must be Lecture, Exercise or Assignment.");
+                "Activity type must be Lecture, ELearning, Exercise, Assignment or Other.");
         }
 
         return activityType;

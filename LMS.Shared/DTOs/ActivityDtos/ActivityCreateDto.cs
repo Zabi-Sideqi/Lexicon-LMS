@@ -10,8 +10,8 @@ public class ActivityCreateDto
 
     [Required]
     [RegularExpression(
-        "^(Lecture|Exercise|Assignment)$",
-        ErrorMessage = "Activity type must be Lecture, Exercise or Assignment.")]
+        "^(Lecture|ELearning|Exercise|Assignment|Other)$",
+        ErrorMessage = "Activity type must be Lecture, ELearning, Exercise, Assignment or Other.")]
     public string Type { get; set; } = string.Empty;
 
     [Required]

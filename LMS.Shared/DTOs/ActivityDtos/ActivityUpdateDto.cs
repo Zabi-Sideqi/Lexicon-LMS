@@ -7,8 +7,8 @@ public class ActivityUpdateDto
 {
     [Required]
     [RegularExpression(
-        "^(Lecture|Exercise|Assignment)$",
-        ErrorMessage = "Activity type must be Lecture, Exercise or Assignment.")]
+        "^(Lecture|ELearning|Exercise|Assignment|Other)$",
+        ErrorMessage = "Activity type must be Lecture, ELearning, Exercise, Assignment or Other.")]
     public string Type { get; set; } = string.Empty;
 
     [Required]
@@ -23,7 +23,3 @@ public class ActivityUpdateDto
     [Required]
     public DateTime EndTime { get; set; }
 }
-
-
-//Den används när en befintlig aktivitet ska ändras.
-//ModuleId ingår inte här eftersom vi i den här designen uppdaterar aktiviteten inom dess befintliga modul.

@@ -143,11 +143,15 @@
                             </label>
                             <label class="schedule-field">
                                 <span>Typ</span>
+
                                 <InputSelect @bind-Value="_form.Type">
-                                    <option value="Lecture">Föreläsning</option>
-                                    <option value="Exercise">Övning</option>
-                                    <option value="Assignment">Inlämning</option>
+                                    <option value="Lecture">Lecture</option>
+                                    <option value="ELearning">ELearning</option>
+                                    <option value="Exercise">Exercise</option>
+                                    <option value="Assignment">Assignment</option>
+                                    <option value="Other">Other</option>
                                 </InputSelect>
+
                             </label>
                             <label class="schedule-field">
                                 <span>Namn</span>
@@ -381,13 +385,17 @@
     private string GetModuleName(int moduleId) =>
         _modules.FirstOrDefault(x => x.Id == moduleId)?.Name ?? $"Modul {moduleId}";
 
+
     private static string GetTypeLabel(string type) => type switch
     {
-        "Lecture" => "Föreläsning",
-        "Exercise" => "Övning",
-        "Assignment" => "Inlämning",
+        "Lecture" => "Lecture",
+        "ELearning" => "ELearning",
+        "Exercise" => "Exercise",
+        "Assignment" => "Assignment",
+        "Other" => "Other",
         _ => type
     };
+
 
     private static string GetTypeClass(string type) => type switch
     {
