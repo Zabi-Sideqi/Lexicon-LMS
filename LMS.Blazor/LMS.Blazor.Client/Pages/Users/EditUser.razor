@@ -81,9 +81,9 @@
                             <label class="form-label">
                                 Roll *
                             </label>
-
                             <InputSelect class="form-select"
-                                         @bind-Value="userModel.Role">
+                                         @bind-Value="userModel.Role"
+                                         @bind-Value:after="HandleRoleChanged">
 
                                 <option value="">Välj roll</option>
                                 <option value="Student">Student</option>
@@ -94,17 +94,20 @@
                             <ValidationMessage For="@(() => userModel.Role)" />
                         </div>
 
-                        <div class="mb-4">
-                            <label class="form-label">
-                                Kurs
-                            </label>
+                        @if (userModel.Role == "Student")
+                        {
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    Kurs *
+                                </label>
 
-                            <InputNumber class="form-control"
-                                         @bind-Value="userModel.CourseId"
-                                         placeholder="Kurs-ID" />
+                                <InputNumber class="form-control"
+                                             @bind-Value="userModel.CourseId"
+                                             placeholder="Kurs-ID" />
 
-                            <ValidationMessage For="@(() => userModel.CourseId)" />
-                        </div>
+                                <ValidationMessage For="@(() => userModel.CourseId)" />
+                            </div>
+                        }
 
                     </div>
 
@@ -174,6 +177,16 @@
     {
         await LoadUser();
     }
+    private void HandleRoleChanged()
+    {
+        if (userModel.Role == "Teacher")
+        {
+            userModel.CourseId = null;
+        }
+
+        errorMessage = null;
+        successMessage = null;
+    }
 
     private async Task LoadUser()
     {
@@ -196,7 +209,7 @@
                 UserName = user.UserName,
                 Email = user.Email,
                 Role = user.Role,
-                CourseId = user.CourseId ?? 0
+                CourseId = user.CourseId 
             };
         }
         catch (UnauthorizedAccessException)

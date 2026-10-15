@@ -20,15 +20,36 @@ public class UserService : IUserService
         _userManager = userManager;
     }
 
+
+
     public async Task<UserResponseDto> CreateUserAsync(UserCreateDto userDto)
     {
-        var courseExists = await _unitOfWork.CourseExistsAsync(
-            userDto.CourseId);
+        if (userDto.Role == "Student")
+        {
+            if (!userDto.CourseId.HasValue ||
+                userDto.CourseId.Value <= 0)
+            {
+                throw new InvalidOperationException(
+                    "A course must be selected for a Student.");
+            }
 
-        if (!courseExists)
+            var courseExists = await _unitOfWork.CourseExistsAsync(
+                userDto.CourseId.Value);
+
+            if (!courseExists)
+            {
+                throw new InvalidOperationException(
+                    "The selected course does not exist.");
+            }
+        }
+        else if (userDto.Role == "Teacher")
+        {
+            userDto.CourseId = null;
+        }
+        else
         {
             throw new InvalidOperationException(
-                "The selected course does not exist.");
+                "Role must be either 'Teacher' or 'Student'.");
         }
 
         var existingUser = await _userManager.FindByEmailAsync(userDto.Email);
@@ -71,6 +92,7 @@ public class UserService : IUserService
             CourseId = user.CourseId
         };
     }
+
 
     public async Task<bool> DeleteUserAsync(string id)
     {
@@ -148,14 +170,35 @@ public class UserService : IUserService
                 $"User with id '{id}' was not found.");
         }
 
-        var courseExists = await _unitOfWork.CourseExistsAsync(
-            userDto.CourseId);
 
-        if (!courseExists)
+        if (userDto.Role == "Student")
+        {
+            if (!userDto.CourseId.HasValue ||
+                userDto.CourseId.Value <= 0)
+            {
+                throw new InvalidOperationException(
+                    "A course must be selected for a Student.");
+            }
+
+            var courseExists = await _unitOfWork.CourseExistsAsync(
+                userDto.CourseId.Value);
+
+            if (!courseExists)
+            {
+                throw new InvalidOperationException(
+                    "The selected course does not exist.");
+            }
+        }
+        else if (userDto.Role == "Teacher")
+        {
+            userDto.CourseId = null;
+        }
+        else
         {
             throw new InvalidOperationException(
-                "The selected course does not exist.");
+                "Role must be either 'Teacher' or 'Student'.");
         }
+
 
         var existingUser = await _userManager.FindByEmailAsync(userDto.Email);
 
