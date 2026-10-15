@@ -1,0 +1,111 @@
+﻿@page "/modules/edit/{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@using System.Net.Http
+@using System.Net.Http.Json
+@using LMS.Shared.DTOs.ModuleDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize(Roles = "Teacher")]
+@inject IApiProxyClient Proxy
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Module</PageTitle>
+
+<h1>Edit Module</h1>
+
+@if (model is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        @if (errorMessage is not null)
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Name</label>
+            <InputText @bind-Value="model.Name" class="form-control" />
+            <ValidationMessage For="() => model.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <InputTextArea @bind-Value="model.Description" class="form-control" />
+            <ValidationMessage For="() => model.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <InputDate @bind-Value="model.StartDate" class="form-control" />
+            <ValidationMessage For="() => model.StartDate" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">End Date</label>
+            <InputDate @bind-Value="model.EndDate" class="form-control" />
+            <ValidationMessage For="() => model.EndDate" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/courses/@model.CourseId/modules" class="btn btn-secondary">Cancel</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ModuleForUpdateDto? model;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var module = await Proxy.GetAsync<ModuleDto>($"modules/{Id}");
+
+        if (module is null)
+        {
+            Navigation.NavigateTo("/courses");
+            return;
+        }
+
+        model = new ModuleForUpdateDto
+        {
+            CourseId = module.CourseId,
+            Name = module.Name,
+            Description = module.Description,
+            StartDate = module.StartDate,
+            EndDate = module.EndDate
+        };
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (model is null) return;
+
+        errorMessage = null;
+
+        if (model.EndDate < model.StartDate)
+        {
+            errorMessage = "End date cannot be before start date.";
+            return;
+        }
+
+        try
+        {
+            await Proxy.SendAsync<ModuleDto>(
+                HttpMethod.Put,
+                $"modules/{Id}",
+                JsonContent.Create(model));
+
+            Navigation.NavigateTo($"/courses/{model.CourseId}/modules");
+        }
+        catch (Exception)
+        {
+            errorMessage = "The module could not be saved. The server rejected it, for example because the dates overlap another module or fall outside the course dates.";
+        }
+    }
+}
