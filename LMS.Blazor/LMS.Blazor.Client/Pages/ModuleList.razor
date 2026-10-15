@@ -1,0 +1,117 @@
+@page "/courses/{CourseId:int}/modules"
+@using System.Net
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.ModuleDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize]
+@inject IApiProxyClient Proxy
+
+<PageTitle>Modules</PageTitle>
+
+<h1>Modules</h1>
+
+<p>
+    <AuthorizeView Roles="Teacher">
+        <a href="/courses" class="btn btn-sm btn-outline-secondary">Back to courses</a>
+    </AuthorizeView>
+    <AuthorizeView Roles="Student">
+        <a href="/my-course" class="btn btn-sm btn-outline-secondary">Back to my course</a>
+    </AuthorizeView>
+</p>
+
+<AuthorizeView Roles="Teacher">
+    <a href="/courses/@CourseId/modules/create" class="btn btn-primary mb-3">Create module</a>
+</AuthorizeView>
+
+@if (isLoading)
+{
+    <p><em>Loading modules...</em></p>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        <p>@errorMessage</p>
+        <button type="button" class="btn btn-outline-danger" @onclick="LoadModulesAsync">Try again</button>
+    </div>
+}
+else if (modules is null || !modules.Any())
+{
+    <p>No modules found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>End</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var module in modules.OrderBy(m => m.StartDate))
+            {
+                <tr>
+                    <td>@module.Name</td>
+                    <td>@module.Description</td>
+                    <td>@module.StartDate.ToShortDateString()</td>
+                    <td>@module.EndDate.ToShortDateString()</td>
+                    <td>
+                        <AuthorizeView Roles="Teacher">
+                            <a href="/modules/edit/@module.Id" class="btn btn-sm btn-secondary">Edit</a>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private IEnumerable<ModuleDto>? modules;
+    private bool isLoading;
+    private string? errorMessage;
+
+    protected override Task OnParametersSetAsync() => LoadModulesAsync();
+
+    private async Task LoadModulesAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        modules = null;
+
+        try
+        {
+            modules = await Proxy.GetAsync<IEnumerable<ModuleDto>>($"modules/course/{CourseId}");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Your session has expired. Please sign in again.";
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            errorMessage = "Access denied. You are not allowed to view modules for this course.";
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            errorMessage = "The requested course could not be found.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not load modules. Please try again.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred while loading modules.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -15,6 +15,7 @@ public class ModuleServiceTests
     public async Task CreateAsync_StartDateAfterEndDate_ThrowsArgumentException()
     {
         // Arrange
+        // När startdatum är efter slutdatum ska metoden kasta ett fel.
         var course = new Course
         {
             Id = 1,

@@ -4,7 +4,9 @@ using LMS.Shared.DTOs.ModuleDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Service.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -22,14 +24,45 @@ public class ModulesController(
     private readonly IServiceManager _serviceManager = serviceManager;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
 
+    private bool IsTeacher =>
+        User.IsInRole("Teacher");
+
+    private async Task<int?> GetStudentCourseIdAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (userId is null)
+            return null;
+
+        var user = await _userManager.FindByIdAsync(userId);
+
+        return user?.CourseId;
+    }
+
     [HttpGet]
     [Authorize(Roles = "Teacher")]
     [SwaggerOperation(Summary = "Get all modules")]
     [SwaggerResponse(StatusCodes.Status200OK, "Modules retrieved")]
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     public async Task<ActionResult<IEnumerable<ModuleDto>>> GetAll()
     {
-        var modules = await _serviceManager.ModuleService.GetAllAsync();
-        return Ok(modules);
+        if (IsTeacher)
+        {
+            var allModules =
+                await _serviceManager.ModuleService.GetAllAsync();
+
+            return Ok(allModules);
+        }
+
+        var courseId = await GetStudentCourseIdAsync();
+
+        if (courseId is null)
+            return Forbid();
+
+        var studentModules =
+            await _serviceManager.ModuleService.GetByCourseIdAsync(courseId.Value);
+
+        return Ok(studentModules);
     }
 
     [HttpGet("{id:int}")]
@@ -37,23 +70,22 @@ public class ModulesController(
     [SwaggerResponse(StatusCodes.Status200OK, "Module found")]
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Module not found")]
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     public async Task<ActionResult<ModuleDto>> GetById(int id)
     {
-        var module = await _serviceManager.ModuleService.GetByIdAsync(id);
+        var module =
+            await _serviceManager.ModuleService.GetByIdAsync(id);
 
         if (module is null)
             return NotFound();
 
-        if (User.IsInRole("Teacher"))
-            return Ok(module);
+        if (!IsTeacher)
+        {
+            var courseId = await GetStudentCourseIdAsync();
 
-        if (!User.IsInRole("Student"))
-            return Forbid();
-
-        var user = await _userManager.GetUserAsync(User);
-
-        if (user?.CourseId is null || user.CourseId != module.CourseId)
-            return Forbid();
+            if (courseId is null || module.CourseId != courseId.Value)
+                return Forbid();
+        }
 
         return Ok(module);
     }
@@ -65,19 +97,16 @@ public class ModulesController(
     public async Task<ActionResult<IEnumerable<ModuleDto>>> GetByCourseId(
         int courseId)
     {
-        if (!User.IsInRole("Teacher"))
+        if (!IsTeacher)
         {
-            if (!User.IsInRole("Student"))
-                return Forbid();
+            var studentCourseId = await GetStudentCourseIdAsync();
 
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user?.CourseId is null || user.CourseId != courseId)
+            if (studentCourseId is null || studentCourseId.Value != courseId)
                 return Forbid();
         }
 
-        var modules = await _serviceManager.ModuleService
-            .GetByCourseIdAsync(courseId);
+        var modules =
+            await _serviceManager.ModuleService.GetByCourseIdAsync(courseId);
 
         return Ok(modules);
     }
@@ -90,7 +119,8 @@ public class ModulesController(
     public async Task<ActionResult<ModuleDto>> Create(
         ModuleForCreationDto dto)
     {
-        var created = await _serviceManager.ModuleService.CreateAsync(dto);
+        var created =
+            await _serviceManager.ModuleService.CreateAsync(dto);
 
         return CreatedAtAction(
             nameof(GetById),

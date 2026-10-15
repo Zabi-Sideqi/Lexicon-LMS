@@ -1,0 +1,95 @@
+﻿@page "/courses/{CourseId:int}/modules/create"
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.ModuleDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@using System.Net.Http
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = "Teacher")]
+@inject IApiProxyClient Proxy
+@inject NavigationManager Navigation
+
+<PageTitle>Create Module</PageTitle>
+
+<h1>Create Module</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    @if (errorMessage is not null)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <InputText @bind-Value="model.Name" class="form-control" />
+        <ValidationMessage For="() => model.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea @bind-Value="model.Description" class="form-control" />
+        <ValidationMessage For="() => model.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Start Date</label>
+        <InputDate @bind-Value="model.StartDate" class="form-control" />
+        <ValidationMessage For="() => model.StartDate" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">End Date</label>
+        <InputDate @bind-Value="model.EndDate" class="form-control" />
+        <ValidationMessage For="() => model.EndDate" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a href="/courses/@CourseId/modules" class="btn btn-secondary">Cancel</a>
+</EditForm>
+
+@code {
+    // A module belongs to a course, so the course id comes from the address.
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private ModuleForCreationDto model = new()
+    {
+        Name = "",
+        Description = "",
+        StartDate = DateTime.Today,
+        EndDate = DateTime.Today.AddDays(14)
+    };
+
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        model.CourseId = CourseId;
+    }
+
+    private async Task HandleSubmit()
+    {
+        errorMessage = null;
+
+        if (model.EndDate < model.StartDate)
+        {
+            errorMessage = "End date cannot be before start date.";
+            return;
+        }
+
+        try
+        {
+            await Proxy.SendAsync<ModuleDto>(
+                HttpMethod.Post,
+                "modules",
+                JsonContent.Create(model));
+
+            Navigation.NavigateTo($"/courses/{CourseId}/modules");
+        }
+        catch (Exception)
+        {
+            errorMessage = "The module could not be saved. The server rejected it, for example because the dates overlap another module or fall outside the course dates.";
+        }
+    }
+}
