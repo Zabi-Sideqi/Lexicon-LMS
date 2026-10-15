@@ -1,0 +1,76 @@
+﻿@page "/courses/{CourseId:int}/modules"
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.ModuleDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize]
+@inject IApiProxyClient Proxy
+
+<PageTitle>Modules</PageTitle>
+
+<h1>Modules</h1>
+
+<p>
+    <AuthorizeView Roles="Teacher">
+        <a href="/courses" class="btn btn-sm btn-outline-secondary">Back to courses</a>
+    </AuthorizeView>
+    <AuthorizeView Roles="Student">
+        <a href="/my-course" class="btn btn-sm btn-outline-secondary">Back to my course</a>
+    </AuthorizeView>
+</p>
+
+<AuthorizeView Roles="Teacher">
+    <a href="/courses/@CourseId/modules/create" class="btn btn-primary mb-3">Create module</a>
+</AuthorizeView>
+
+@if (modules is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!modules.Any())
+{
+    <p>No modules found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>End</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var module in modules.OrderBy(m => m.StartDate))
+            {
+                <tr>
+                    <td>@module.Name</td>
+                    <td>@module.Description</td>
+                    <td>@module.StartDate.ToShortDateString()</td>
+                    <td>@module.EndDate.ToShortDateString()</td>
+                    <td>
+                        <AuthorizeView Roles="Teacher">
+                            <a href="/modules/edit/@module.Id" class="btn btn-sm btn-secondary">Edit</a>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private IEnumerable<ModuleDto>? modules;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        modules = await Proxy.GetAsync<IEnumerable<ModuleDto>>($"modules/course/{CourseId}");
+    }
+}
+
+
