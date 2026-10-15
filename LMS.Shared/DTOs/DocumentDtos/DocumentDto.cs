@@ -6,6 +6,6 @@ public sealed record DocumentDto(
     string ContentType,
     long FileSize,
     DateTime UploadedAt,
-    string UploadedByUserId,
+    string UploadedById,
     int? CourseId,
     int? ModuleId);

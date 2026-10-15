@@ -32,7 +32,7 @@ public class DocumentService : IDocumentService
         long fileSize,
         int? courseId,
         int? moduleId,
-        string uploadedByUserId)
+        string uploadedById)
     {
         ValidateFile(fileName, fileSize);
 
@@ -63,7 +63,7 @@ public class DocumentService : IDocumentService
             ContentType = contentType,
             FileSize = fileSize,
             UploadedAt = DateTime.UtcNow,
-            UploadedByUserId = uploadedByUserId,
+            UploadedById = uploadedById,
             CourseId = courseId,
             ModuleId = moduleId
         };
@@ -159,7 +159,7 @@ public class DocumentService : IDocumentService
             document.ContentType,
             document.FileSize,
             document.UploadedAt,
-            document.UploadedByUserId,
+            document.UploadedById,
             document.CourseId,
             document.ModuleId);
 }

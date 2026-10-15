@@ -10,7 +10,7 @@ public class Document
     public long FileSize { get; set; }
 
     public DateTime UploadedAt { get; set; }
-    public string UploadedByUserId { get; set; } = null!;
+    public string UploadedById { get; set; } = null!;
 
     public int? CourseId { get; set; }
     public int? ModuleId { get; set; }
