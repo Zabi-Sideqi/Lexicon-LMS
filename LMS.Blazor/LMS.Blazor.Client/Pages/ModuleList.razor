@@ -1,4 +1,5 @@
-﻿@page "/courses/{CourseId:int}/modules"
+@page "/courses/{CourseId:int}/modules"
+@using System.Net
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.ModuleDtos
 @using LMS.Blazor.Client.Services.ApiProxy
@@ -22,11 +23,18 @@
     <a href="/courses/@CourseId/modules/create" class="btn btn-primary mb-3">Create module</a>
 </AuthorizeView>
 
-@if (modules is null)
+@if (isLoading)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Loading modules...</em></p>
 }
-else if (!modules.Any())
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        <p>@errorMessage</p>
+        <button type="button" class="btn btn-outline-danger" @onclick="LoadModulesAsync">Try again</button>
+    </div>
+}
+else if (modules is null || !modules.Any())
 {
     <p>No modules found.</p>
 }
@@ -66,11 +74,44 @@ else
     public int CourseId { get; set; }
 
     private IEnumerable<ModuleDto>? modules;
+    private bool isLoading;
+    private string? errorMessage;
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync() => LoadModulesAsync();
+
+    private async Task LoadModulesAsync()
     {
-        modules = await Proxy.GetAsync<IEnumerable<ModuleDto>>($"modules/course/{CourseId}");
+        isLoading = true;
+        errorMessage = null;
+        modules = null;
+
+        try
+        {
+            modules = await Proxy.GetAsync<IEnumerable<ModuleDto>>($"modules/course/{CourseId}");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Your session has expired. Please sign in again.";
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            errorMessage = "Access denied. You are not allowed to view modules for this course.";
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            errorMessage = "The requested course could not be found.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not load modules. Please try again.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred while loading modules.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 }
-
-
