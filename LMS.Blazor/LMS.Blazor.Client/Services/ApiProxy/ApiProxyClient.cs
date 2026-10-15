@@ -35,7 +35,7 @@ public sealed class ApiProxyClient(HttpClient httpClient) : IApiProxyClient
                 ? $"Request failed with status code {(int)response.StatusCode} ({response.ReasonPhrase})."
                 : errorBody;
 
-            throw new HttpRequestException(message);
+            throw new HttpRequestException(message, null, response.StatusCode);
         }
 
         if (response.StatusCode == HttpStatusCode.NoContent ||
