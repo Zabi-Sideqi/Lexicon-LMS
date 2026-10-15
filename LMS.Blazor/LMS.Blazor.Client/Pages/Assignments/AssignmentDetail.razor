@@ -1,0 +1,76 @@
+﻿@page "/assignments/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.Enums
+@attribute [Authorize(Roles = "Student")]
+
+<PageTitle>Uppgift</PageTitle>
+
+<p>
+    <a href="/assignments" class="btn btn-sm btn-outline-secondary">Tillbaka till uppgifter</a>
+</p>
+
+@if (loading)
+{
+    <p><em>Laddar...</em></p>
+}
+else if (assignment is null)
+{
+    <div class="alert alert-warning">Uppgiften hittades inte.</div>
+}
+else
+{
+    <h1>@assignment.Name</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <p class="card-text">@assignment.Description</p>
+
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Deadline</dt>
+                <dd class="col-sm-9">@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9"><SubmissionStatusBadge Status="assignment.Status" /></dd>
+
+                <dt class="col-sm-3">Inlämningstid</dt>
+                <dd class="col-sm-9">@(assignment.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+
+                <dt class="col-sm-3">Feedback</dt>
+                <dd class="col-sm-9">@(assignment.HasFeedback ? "Finns" : "Ingen ännu")</dd>
+            </dl>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    // ---- Temporary version: fake type and fake data (same assignments as the list page). ----
+    // Replace with the real DTO and an API call when #50 is done.
+    private record FakeAssignmentDetail(
+        int Id,
+        string Name,
+        string Description,
+        DateTime Deadline,
+        DateTime? SubmittedAt,
+        SubmissionStatus Status,
+        bool HasFeedback);
+
+    private FakeAssignmentDetail? assignment;
+    private bool loading = true;
+
+    protected override void OnInitialized()
+    {
+        List<FakeAssignmentDetail> all =
+        [
+            new(1, "C#-övning 1", "Variabler, loopar och metoder", DateTime.Today.AddDays(-7), DateTime.Today.AddDays(-8), SubmissionStatus.Submitted, true),
+            new(2, "Databasuppgift", "Designa en liten databas", DateTime.Today.AddDays(-3), DateTime.Today.AddDays(-2), SubmissionStatus.SubmittedLate, false),
+            new(3, "Blazor-projekt", "Bygg en enkel webbsida", DateTime.Today.AddDays(-1), null, SubmissionStatus.Late, false),
+            new(4, "Slutrapport", "Skriv en kort rapport om ert projekt", DateTime.Today.AddDays(10), null, SubmissionStatus.NotSubmitted, false)
+        ];
+
+        assignment = all.FirstOrDefault(a => a.Id == Id);
+        loading = false;
+    }
+}

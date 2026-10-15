@@ -1,0 +1,75 @@
+﻿@page "/assignments"
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.Enums
+@attribute [Authorize(Roles = "Student")]
+
+<PageTitle>Uppgifter</PageTitle>
+
+<h1>Uppgifter</h1>
+
+@if (assignments is null)
+{
+    <p><em>Laddar...</em></p>
+}
+else if (!assignments.Any())
+{
+    <p>Inga uppgifter hittades.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Namn</th>
+                    <th>Beskrivning</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th>Feedback</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var assignment in assignments.OrderBy(a => a.Deadline))
+                {
+                    <tr>
+                        <td>@assignment.Name</td>
+                        <td>@assignment.Description</td>
+                        <td>@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><SubmissionStatusBadge Status="assignment.Status" /></td>
+                        <td>@(assignment.HasFeedback ? "Ja" : "-")</td>
+                        <td>
+                            <a href="/assignments/@assignment.Id" class="btn btn-sm btn-secondary">Visa</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    // ---- Temporary version: fake type and fake data. ----
+    // Replace with the real DTO and an API call when #50 is done. The API should
+    // calculate the status (SubmissionStatusCalculator) and send it in the DTO.
+    private record FakeAssignment(
+        int Id,
+        string Name,
+        string Description,
+        DateTime Deadline,
+        SubmissionStatus Status,
+        bool HasFeedback);
+
+    private List<FakeAssignment>? assignments;
+
+    protected override void OnInitialized()
+    {
+        assignments =
+        [
+            new(1, "C#-övning 1", "Variabler, loopar och metoder", DateTime.Today.AddDays(-7), SubmissionStatus.Submitted, true),
+            new(2, "Databasuppgift", "Designa en liten databas", DateTime.Today.AddDays(-3), SubmissionStatus.SubmittedLate, false),
+            new(3, "Blazor-projekt", "Bygg en enkel webbsida", DateTime.Today.AddDays(-1), SubmissionStatus.Late, false),
+            new(4, "Slutrapport", "Skriv en kort rapport om ert projekt", DateTime.Today.AddDays(10), SubmissionStatus.NotSubmitted, false)
+        ];
+    }
+}
