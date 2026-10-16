@@ -19,12 +19,11 @@ public static class ServiceExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICourseService, CourseService>();
         services.AddScoped<IModuleService, ModuleService>();
-        services.AddScoped<IActivityService, ActivityService>();
-
+        services.AddScoped<IDocumentService, DocumentService>();
         services.AddLazy<IAuthService>();
         services.AddLazy<IUserService>();
         services.AddLazy<ICourseService>();
         services.AddLazy<IModuleService>();
-        services.AddLazy<IActivityService>();
+        services.AddLazy<IDocumentService>();
     }
 }

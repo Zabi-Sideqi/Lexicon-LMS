@@ -2,10 +2,12 @@ using LMS.API.Extensions;
 using LMS.API.Services;
 using LMS.Infrastructure.Data;
 using LMS.Presentation;
+using LMS.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using Service.Contracts;
 
 using Scalar.AspNetCore;
 
@@ -54,6 +56,11 @@ internal class Program
 
         builder.Services.AddRepositories();
         builder.Services.AddServiceLayer();
+
+        // FileStorage registration
+        var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "uploads");
+        builder.Services.AddSingleton<IFileStorage>(new FileStorage(uploadPath));
+
         builder.Services.ConfigureAuthentication(builder.Configuration);
         builder.Services.ConfigureIdentity();
         builder.Services.ConfigurePolicys();

@@ -8,5 +8,5 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Module> Modules => Set<Module>();
-    public DbSet<Activity> Activities => Set<Activity>();
+    public DbSet<Document> Documents => Set<Document>();
 }

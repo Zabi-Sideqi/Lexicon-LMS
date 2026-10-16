@@ -1,0 +1,226 @@
+﻿@page "/documents"
+@using LMS.Shared.DTOs.DocumentDtos
+@using LMS.Shared.DTOs.CourseDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@inject IApiProxyClient Proxy
+
+<PageTitle>Documents</PageTitle>
+
+<h1>Dokument</h1>
+
+<AuthorizeView Roles="Teacher">
+    <Authorized Context="authContext">
+        <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
+            <div class="mb-3">
+                <label class="form-label">Kurs</label>
+                <InputSelect @bind-Value="uploadModel.CourseId"
+                             @bind-Value:after="OnCourseSelected"
+                             class="form-select">
+                    <option value="">Välj kurs</option>
+                    @foreach (var c in courses)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Fil (.pdf eller .docx, max 10MB)</label>
+                <InputFile OnChange="HandleFileSelected" class="form-control" />
+                @if (selectedFile is not null)
+                {
+                    <p class="text-muted mt-1">
+                        Vald: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+                    </p>
+                }
+            </div>
+
+            <button type="submit" class="btn btn-primary"
+                    disabled="@(selectedFile is null || isUploading)">
+                @(isUploading ? "Laddar upp..." : "Ladda upp")
+            </button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(uploadMessage))
+        {
+            <div class="alert @(uploadError ? "alert-danger" : "alert-success") mt-3">
+                @uploadMessage
+            </div>
+        }
+    </Authorized>
+
+    <NotAuthorized>
+        <p class="text-muted">Student: dina dokument visas nedan.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+<h2 class="mt-4">Dokument</h2>
+
+@if (documents is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!documents.Any())
+{
+    <p>Inga dokument hittades.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Filnamn</th>
+                <th>Typ</th>
+                <th>Storlek</th>
+                <th>Uppladdad</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in documents)
+            {
+                <tr>
+                    <td>@doc.FileName</td>
+                    <td>@doc.ContentType</td>
+                    <td>@(doc.FileSize / 1024) KB</td>
+                    <td>@doc.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <a href="/api/proxy/documents/@doc.Id/download" class="btn btn-sm btn-secondary">
+                            Ladda ner
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<CourseDto> courses = new();
+    private List<DocumentDto>? documents;
+    private DocumentUploadModel uploadModel = new();
+    private IBrowserFile? selectedFile;
+    private string? uploadMessage;
+    private bool uploadError;
+    private bool isUploading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Försök hämta alla kurser först (Teacher)
+        try
+        {
+            courses = await Proxy.GetAsync<List<CourseDto>>("courses") ?? new();
+
+            if (courses.Count > 0)
+            {
+                // Teacher - OK
+                documents = new();
+                return;
+            }
+        }
+        catch
+        {
+            // Ignorera - försök med "my" istället
+        }
+
+        // Fallback: hämta egen kurs (Student)
+        try
+        {
+            var myCourse = await Proxy.GetAsync<StudentCourseDto>("courses/my");
+            if (myCourse is not null)
+            {
+                courses = new List<CourseDto>
+            {
+                new(myCourse.Id, myCourse.Name, myCourse.Description,
+                    myCourse.StartDate, myCourse.EndDate)
+            };
+            }
+        }
+        catch
+        {
+            courses = new();
+        }
+
+        documents = new();
+
+        // Om bara en kurs (Student): ladda dokument automatiskt
+        if (courses.Count == 1 && courses[0].Id > 0)
+        {
+            uploadModel.CourseId = courses[0].Id;
+            await LoadDocuments(courses[0].Id);
+        }
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        uploadMessage = null;
+    }
+
+    private async Task HandleUpload()
+    {
+        if (selectedFile is null || uploadModel.CourseId is null or 0)
+            return;
+
+        isUploading = true;
+        uploadMessage = null;
+
+        var uploadedCourseId = uploadModel.CourseId.Value;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+
+            var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "File", selectedFile.Name);
+            content.Add(new StringContent(uploadedCourseId.ToString()), "CourseId");
+
+            var created = await Proxy.SendAsync<DocumentDto>(
+                HttpMethod.Post,
+                "documents/upload",
+                content);
+
+            uploadMessage = $"Uppladdat: {created?.FileName}";
+            uploadError = false;
+            selectedFile = null;
+
+            await LoadDocuments(uploadedCourseId);
+        }
+        catch (Exception ex)
+        {
+            uploadMessage = $"Fel: {ex.Message}";
+            uploadError = true;
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private async Task OnCourseSelected()
+    {
+        if (uploadModel.CourseId is > 0)
+            await LoadDocuments(uploadModel.CourseId.Value);
+    }
+
+    private async Task LoadDocuments(int courseId)
+    {
+        try
+        {
+            documents = await Proxy.GetAsync<List<DocumentDto>>(
+                $"documents/course/{courseId}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            documents = new();
+            Console.WriteLine($"Load error: {ex.Message}");
+        }
+    }
+
+    private class DocumentUploadModel
+    {
+        public int? CourseId { get; set; }
+    }
+}
