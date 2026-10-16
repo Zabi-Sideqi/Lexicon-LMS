@@ -18,7 +18,10 @@ public class DocumentRepository : IDocumentRepository
         int courseId, bool trackChanges = false)
     {
         var query = _context.Documents
-            .Where(d => d.CourseId == courseId);
+            .Where(d =>
+            d.CourseId == courseId ||
+            (d.ModuleId != null && d.Module!.CourseId == courseId) ||
+            (d.ActivityId != null && d.Activity!.Module!.CourseId == courseId));
 
         if (!trackChanges)
             query = query.AsNoTracking();

@@ -1,5 +1,6 @@
 ﻿using Domain.Contracts;
 using Domain.Models.Entities;
+using Domain.Models.Exceptions;
 using LMS.Shared.DTOs.DocumentDtos;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
@@ -88,7 +89,7 @@ public class DocumentService : IDocumentService
         var document = await _uow.DocumentRepository.GetByIdAsync(id);
 
         if (document is null)
-            throw new ArgumentException($"Document with id {id} not found.");
+            throw new ResourceNotFoundException($"Document with id {id} not found.");
 
         await EnsureCanAccessAsync(document, userId);
 
