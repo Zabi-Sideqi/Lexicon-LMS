@@ -2,6 +2,7 @@
 using Domain.Models.Entities;
 using LMS.Shared.DTOs.ModuleDtos;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +40,7 @@ public class ModulesController(
     }
 
     [HttpGet]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(Summary = "Get all modules")]
     [SwaggerResponse(StatusCodes.Status200OK, "Modules retrieved")]
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
@@ -66,6 +68,7 @@ public class ModulesController(
     [HttpGet("{id:int}")]
     [SwaggerOperation(Summary = "Get a module by id")]
     [SwaggerResponse(StatusCodes.Status200OK, "Module found")]
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Module not found")]
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     public async Task<ActionResult<ModuleDto>> GetById(int id)

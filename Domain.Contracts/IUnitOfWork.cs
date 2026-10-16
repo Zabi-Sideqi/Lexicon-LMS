@@ -4,6 +4,7 @@ public interface IUnitOfWork
 {
     ICourseRepository CourseRepository { get; }
     IModuleRepository ModuleRepository { get; }
+    IActivityRepository ActivityRepository { get; }
     IUserRepository UserRepository { get; }
     IDocumentRepository DocumentRepository { get; }
 

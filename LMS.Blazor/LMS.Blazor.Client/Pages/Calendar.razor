@@ -1,0 +1,575 @@
+﻿@page "/calendar"
+@using System.ComponentModel.DataAnnotations
+@using System.Net.Http.Json
+@using LMS.Blazor.Client.Services.ApiProxy
+@using LMS.Shared.DTOs.ActivityDtos
+@using LMS.Shared.DTOs.ModuleDtos
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject IApiProxyClient ApiProxyClient
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Schema</PageTitle>
+
+<div class="schedule-page">
+    <header class="schedule-header">
+        <div>
+            <p class="schedule-eyebrow">LEXICON LMS</p>
+            <h1>Schema</h1>
+            <p class="schedule-subtitle">Se kommande lektioner, övningar och inlämningar i datumordning.</p>
+        </div>
+        <AuthorizeView Roles="Teacher">
+            <Authorized>
+                <button class="schedule-primary-button" type="button" @onclick="StartCreate" >
+                    + Ny aktivitet
+                </button>
+            </Authorized>
+        </AuthorizeView>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="schedule-alert schedule-alert-error" role="alert">@_errorMessage</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
+    {
+        <div class="schedule-alert schedule-alert-success" role="status">@_successMessage</div>
+    }
+
+    @if (_isLoading)
+    {
+        <div class="schedule-empty"><span class="schedule-spinner"></span> Hämtar schemat...</div>
+    }
+    else if (_activities.Count == 0)
+    {
+        <section class="schedule-empty">
+            <div class="schedule-empty-icon">▦</div>
+            <h2>Inga aktiviteter ännu</h2>
+            <p>När aktiviteter har skapats visas de här i kronologisk ordning.</p>
+            <AuthorizeView Roles="Teacher">
+                <Authorized>
+                    <button class="schedule-primary-button" type="button" @onclick="StartCreate">Skapa första aktiviteten</button>
+                </Authorized>
+            </AuthorizeView>
+        </section>
+    }
+    else
+    {
+        <section class="schedule-list" aria-label="Aktiviteter sorterade efter starttid">
+            @foreach (var activity in _activities.OrderBy(x => x.StartTime))
+            {
+                <article class="schedule-item" @key="activity.Id">
+                    <div class="schedule-date-column">
+                        <span class="schedule-date-day">@activity.StartTime.ToString("dd")</span>
+                        <span class="schedule-date-month">@activity.StartTime.ToString("MMM")</span>
+                    </div>
+                    <div class="schedule-time-column">
+                        <strong>@activity.StartTime.ToString("HH:mm")</strong>
+                        <span>– @activity.EndTime.ToString("HH:mm")</span>
+                    </div>
+                    <div class="schedule-item-content">
+                        <div class="schedule-item-topline">
+                            <span class="schedule-type-badge @GetTypeClass(activity.Type)">@GetTypeLabel(activity.Type)</span>
+                            <span class="schedule-module">@GetModuleName(activity.ModuleId)</span>
+                        </div>
+                        <h2>@activity.Name</h2>
+                        @if (!string.IsNullOrWhiteSpace(activity.Description))
+                        {
+                            <p>@activity.Description</p>
+                        }
+                    </div>
+                    <AuthorizeView Roles="Teacher">
+                        <Authorized>
+                            <div class="schedule-item-actions">
+                                <button class="schedule-secondary-button" type="button" @onclick="() => StartEdit(activity)">Redigera</button>
+                                <button class="schedule-danger-button" type="button" @onclick="() => _pendingDelete = activity">Ta bort</button>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+                </article>
+            }
+        </section>
+    }
+
+    @if (_pendingDelete is not null)
+    {
+        <div class="schedule-form-backdrop">
+            <section class="schedule-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+                <h2 id="delete-title">Ta bort aktivitet?</h2>
+                <p>Vill du ta bort <strong>@_pendingDelete.Name</strong>? Åtgärden kan inte ångras.</p>
+                <div class="schedule-form-actions">
+                    <button class="schedule-secondary-button" type="button" @onclick="CancelDelete">Avbryt</button>
+                    <button class="schedule-danger-button" type="button" @onclick="ConfirmDeleteAsync" disabled="@_isSaving">@(_isSaving ? "Tar bort..." : "Ja, ta bort")</button>
+                </div>
+            </section>
+        </div>
+    }
+
+    @if (_showForm)
+    {
+        <div class="schedule-form-backdrop">
+            <section class="schedule-form-panel" role="dialog" aria-modal="true" aria-labelledby="activity-form-title">
+                <div class="schedule-form-heading">
+                    <div>
+                        <p class="schedule-eyebrow">AKTIVITETSHANTERING</p>
+                        <h2 id="activity-form-title">@(_editingId.HasValue ? "Redigera aktivitet" : "Skapa aktivitet")</h2>
+                    </div>
+                    <button class="schedule-close-button" type="button" aria-label="Stäng" @onclick="CancelForm">×</button>
+                </div>
+
+                @if (_modules.Count == 0)
+                {
+                    <p>Det finns inga moduler att välja. Skapa en modul först.</p>
+                }
+                else
+                {
+                    <EditForm Model="_form" OnValidSubmit="SaveActivityAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="schedule-form-grid">
+                            <label class="schedule-field schedule-field-full">
+                                <span>Modul</span>
+
+                                <InputSelect @bind-Value="_form.ModuleId"
+                                             @bind-Value:after="OnModuleChanged"
+                                             disabled="@(_editingId.HasValue)">
+
+                                    <option value="0">Välj modul</option>
+                                    @foreach (var module in _modules.OrderBy(x => x.Name))
+                                    {
+                                        <option value="@module.Id">@module.Name (@module.StartDate.ToString("yyyy-MM-dd") – @module.EndDate.ToString("yyyy-MM-dd"))</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="() => _form.ModuleId" />
+                            </label>
+                            <label class="schedule-field">
+                                <span>Typ</span>
+
+                                <InputSelect @bind-Value="_form.Type">
+                                    <option value="Lecture">Lecture</option>
+                                    <option value="ELearning">ELearning</option>
+                                    <option value="Exercise">Exercise</option>
+                                    <option value="Assignment">Assignment</option>
+                                    <option value="Other">Other</option>
+                                </InputSelect>
+
+                            </label>
+                            <label class="schedule-field">
+                                <span>Namn</span>
+                                <InputText @bind-Value="_form.Name" maxlength="150" />
+                                <ValidationMessage For="() => _form.Name" />
+                            </label>
+                            <label class="schedule-field">
+                                <span>Starttid</span>
+                                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="_form.StartTime" />
+                                <ValidationMessage For="() => _form.StartTime" />
+                            </label>
+                            <label class="schedule-field">
+                                <span>Sluttid</span>
+                                <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="_form.EndTime" />
+                                <ValidationMessage For="() => _form.EndTime" />
+                            </label>
+                            <label class="schedule-field schedule-field-full">
+                                <span>Beskrivning</span>
+                                <InputTextArea @bind-Value="_form.Description" rows="3" maxlength="2000" />
+                                <ValidationMessage For="() => _form.Description" />
+                            </label>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(_formError))
+                        {
+                            <div class="schedule-alert schedule-alert-error" role="alert">@_formError</div>
+                        }
+                        <div class="schedule-form-actions">
+                            <button class="schedule-secondary-button" type="button" @onclick="CancelForm">Avbryt</button>
+                            <button class="schedule-primary-button" type="submit" disabled="@_isSaving">@(_isSaving ? "Sparar..." : "Spara aktivitet")</button>
+                        </div>
+                    </EditForm>
+                }
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ActivityDto> _activities = [];
+    private List<ModuleDto> _modules = [];
+    private ActivityFormModel _form = new();
+    private int? _editingId;
+    private ActivityDto? _pendingDelete;
+    private bool _showForm;
+    private bool _isLoading = true;
+    private bool _isSaving;
+    private string? _errorMessage;
+    private string? _successMessage;
+    private string? _formError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            // Hämta aktiviteter för den inloggade användaren.
+            var activities = await ApiProxyClient.SendAsync<List<ActivityDto>>(
+                HttpMethod.Get,
+                "Activities");
+
+            _activities = (activities ?? [])
+                .OrderBy(x => x.StartTime)
+                .ToList();
+
+            // Hämta alla moduler endast för lärare.
+            var authenticationState =
+                await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+            if (authenticationState.User.IsInRole("Teacher"))
+            {
+                try
+                {
+                    var modules =
+                        await ApiProxyClient.SendAsync<List<ModuleDto>>(
+                            HttpMethod.Get,
+                            "modules");
+
+                    _modules = modules ?? [];
+                }
+                catch (Exception)
+                {
+                    _modules = [];
+                    _errorMessage =
+                        "Aktiviteterna kunde hämtas, men modullistan kunde inte laddas.";
+                }
+            }
+            else
+            {
+                _modules = [];
+
+                // Hämta information om moduler som elevens aktiviteter tillhör.
+                foreach (var moduleId in _activities
+                    .Select(x => x.ModuleId)
+                    .Distinct())
+                {
+                    try
+                    {
+                        var module =
+                            await ApiProxyClient.SendAsync<ModuleDto>(
+                                HttpMethod.Get,
+                                $"modules/{moduleId}");
+
+                        if (module is not null)
+                        {
+                            _modules.Add(module);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Kalendern ska fortfarande visas även om
+                        // information om en modul inte kan hämtas.
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = GetFriendlyError(ex);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+
+
+    private void StartCreate()
+    {
+        _editingId = null;
+        _formError = null;
+
+        _form = new ActivityFormModel
+        {
+            ModuleId = 0,
+            Type = "Lecture",
+            Name = string.Empty,
+            Description = string.Empty,
+            StartTime = DateTime.Now.AddHours(1),
+            EndTime = DateTime.Now.AddHours(2)
+        };
+
+        _showForm = true;
+        _successMessage = null;
+    }
+
+    private void OnModuleChanged()
+    {
+        var module = _modules.FirstOrDefault(x => x.Id == _form.ModuleId);
+
+        if (module is null)
+            return;
+
+        var today = DateTime.Today;
+
+        var activityDate = today >= module.StartDate.Date &&
+                           today <= module.EndDate.Date
+            ? today
+            : module.StartDate.Date;
+
+        _form.StartTime = activityDate.AddHours(9);
+        _form.EndTime = activityDate.AddHours(10);
+
+        _formError = null;
+    }
+
+
+
+    private void StartEdit(ActivityDto activity)
+    {
+        _editingId = activity.Id;
+        _formError = null;
+        _form = new ActivityFormModel
+        {
+            ModuleId = activity.ModuleId,
+            Type = activity.Type,
+            Name = activity.Name,
+            Description = activity.Description,
+            StartTime = activity.StartTime,
+            EndTime = activity.EndTime
+        };
+        _showForm = true;
+        _successMessage = null;
+    }
+
+    private void CancelForm()
+    {
+        _showForm = false;
+        _formError = null;
+    }
+
+    
+    private async Task SaveActivityAsync()
+    {
+        _formError = null;
+        _errorMessage = null;
+        _successMessage = null;
+
+        if (_form.ModuleId <= 0 ||
+            !_modules.Any(x => x.Id == _form.ModuleId))
+        {
+            _formError = "Välj en giltig modul.";
+            return;
+        }
+
+        if (_form.StartTime >= _form.EndTime)
+        {
+            _formError = "Starttiden måste vara före sluttiden.";
+            return;
+        }
+
+        _isSaving = true;
+
+        try
+        {
+            if (_editingId.HasValue)
+            {
+                var dto = new ActivityUpdateDto
+                {
+                    Type = _form.Type,
+                    Name = _form.Name,
+                    Description = _form.Description,
+                    StartTime = _form.StartTime,
+                    EndTime = _form.EndTime
+                };
+
+                await ApiProxyClient.SendAsync<object>(
+                    HttpMethod.Put,
+                    $"Activities/{_editingId.Value}",
+                    JsonContent.Create(dto));
+
+                _successMessage = "Aktiviteten har uppdaterats.";
+            }
+            else
+            {
+                var dto = new ActivityCreateDto
+                {
+                    ModuleId = _form.ModuleId,
+                    Type = _form.Type,
+                    Name = _form.Name,
+                    Description = _form.Description,
+                    StartTime = _form.StartTime,
+                    EndTime = _form.EndTime
+                };
+
+                await ApiProxyClient.SendAsync<ActivityDto>(
+                    HttpMethod.Post,
+                    "Activities",
+                    JsonContent.Create(dto));
+
+                _successMessage = "Aktiviteten har skapats.";
+            }
+
+            _showForm = false;
+
+            try
+            {
+                await LoadDataAsync();
+            }
+            catch
+            {
+                // Sparningen lyckades redan.
+                // Behåll framgångsmeddelandet.
+                _errorMessage =
+                    "Aktiviteten sparades, men kalendern kunde inte uppdateras. Ladda om sidan.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _formError = GetFriendlyError(ex);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+
+    private void CancelDelete() => _pendingDelete = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_pendingDelete is null)
+            return;
+
+        var activity = _pendingDelete;
+        _isSaving = true;
+        _errorMessage = null;
+        _successMessage = null;
+        try
+        {
+            await ApiProxyClient.SendAsync<object>(HttpMethod.Delete, $"Activities/{activity.Id}");
+            _pendingDelete = null;
+            _successMessage = $"Aktiviteten '{activity.Name}' har tagits bort.";
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = GetFriendlyError(ex);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+
+    private string GetModuleName(int moduleId) =>
+        _modules.FirstOrDefault(x => x.Id == moduleId)?.Name ?? $"Modul {moduleId}";
+
+
+    private static string GetTypeLabel(string type) => type switch
+    {
+        "Lecture" => "Lecture",
+        "ELearning" => "ELearning",
+        "Exercise" => "Exercise",
+        "Assignment" => "Assignment",
+        "Other" => "Other",
+        _ => type
+    };
+
+
+    private static string GetTypeClass(string type) => type switch
+    {
+        "Lecture" => "type-lecture",
+        "Exercise" => "type-exercise",
+        "Assignment" => "type-assignment",
+        _ => "type-other"
+    };
+
+
+
+   
+    private static string GetFriendlyError(Exception ex)
+    {
+        if (ex is UnauthorizedAccessException)
+        {
+            return "Din session har gått ut. Logga in igen.";
+        }
+
+        var message = ex.Message;
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return "Ett fel uppstod. Försök igen.";
+        }
+
+        try
+        {
+            using var document =
+                System.Text.Json.JsonDocument.Parse(message);
+
+            var root = document.RootElement;
+
+            if (root.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                root.TryGetProperty("detail", out var detail) &&
+                detail.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                message = detail.GetString() ?? message;
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Svaret är inte JSON.
+        }
+
+        if (message.Contains("overlap",
+                StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("överlap",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Aktiviteten överlappar en annan aktivitet i modulen. Välj en annan tid.";
+        }
+
+        if (message.Contains("module dates",
+                StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("within the module",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Aktiviteten måste ligga inom modulens datum och tider.";
+        }
+
+        if (ex is HttpRequestException)
+        {
+            return "Begäran kunde inte genomföras. Kontrollera uppgifterna och försök igen.";
+        }
+
+        return "Ett fel uppstod. Försök igen.";
+    }
+
+
+
+    private sealed class ActivityFormModel
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "Välj en modul.")]
+        public int ModuleId { get; set; }
+
+        [Required(ErrorMessage = "Välj aktivitetstyp.")]
+        public string Type { get; set; } = "Lecture";
+
+        [Required(ErrorMessage = "Ange ett namn.")]
+        [StringLength(150, ErrorMessage = "Namnet får vara högst 150 tecken.")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ange en beskrivning.")]
+        [StringLength(2000, ErrorMessage = "Beskrivningen får vara högst 2000 tecken.")]
+        public string Description { get; set; } = string.Empty;
+
+        public DateTime StartTime { get; set; } = DateTime.Now;
+        public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
+    }
+}
