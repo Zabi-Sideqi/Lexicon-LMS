@@ -7,4 +7,5 @@ public interface IServiceManager
     IModuleService ModuleService { get; }
     IUserService UserService { get; }
     IDocumentService DocumentService { get; }
+    IActivityService ActivityService { get; }
 }
