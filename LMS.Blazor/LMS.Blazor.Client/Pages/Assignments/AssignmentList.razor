@@ -1,13 +1,19 @@
 ﻿@page "/assignments"
 @using Microsoft.AspNetCore.Authorization
-@using LMS.Shared.Enums
+@using LMS.Shared.DTOs.AssignmentDtos
+@using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Student")]
+@inject IApiProxyClient Proxy
 
 <PageTitle>Uppgifter</PageTitle>
 
 <h1>Uppgifter</h1>
 
-@if (assignments is null)
+@if (errorMessage is not null)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else if (assignments is null)
 {
     <p><em>Laddar...</em></p>
 }
@@ -49,27 +55,18 @@ else
 }
 
 @code {
-    // ---- Temporary version: fake type and fake data. ----
-    // Replace with the real DTO and an API call when #50 is done. The API should
-    // calculate the status (SubmissionStatusCalculator) and send it in the DTO.
-    private record FakeAssignment(
-        int Id,
-        string Name,
-        string Description,
-        DateTime Deadline,
-        SubmissionStatus Status,
-        bool HasFeedback);
+    private IEnumerable<StudentAssignmentDto>? assignments;
+    private string? errorMessage;
 
-    private List<FakeAssignment>? assignments;
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        assignments =
-        [
-            new(1, "C#-övning 1", "Variabler, loopar och metoder", DateTime.Today.AddDays(-7), SubmissionStatus.Submitted, true),
-            new(2, "Databasuppgift", "Designa en liten databas", DateTime.Today.AddDays(-3), SubmissionStatus.SubmittedLate, false),
-            new(3, "Blazor-projekt", "Bygg en enkel webbsida", DateTime.Today.AddDays(-1), SubmissionStatus.Late, false),
-            new(4, "Slutrapport", "Skriv en kort rapport om ert projekt", DateTime.Today.AddDays(10), SubmissionStatus.NotSubmitted, false)
-        ];
+        try
+        {
+            assignments = await Proxy.GetAsync<IEnumerable<StudentAssignmentDto>>("assignments/my");
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Det gick inte att hämta uppgifterna. Försök igen senare.";
+        }
     }
 }

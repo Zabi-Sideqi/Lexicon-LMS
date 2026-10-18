@@ -1,7 +1,9 @@
 ﻿@page "/assignments/{Id:int}"
 @using Microsoft.AspNetCore.Authorization
-@using LMS.Shared.Enums
+@using LMS.Shared.DTOs.AssignmentDtos
+@using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Student")]
+@inject IApiProxyClient Proxy
 
 <PageTitle>Uppgift</PageTitle>
 
@@ -46,31 +48,22 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    // ---- Temporary version: fake type and fake data (same assignments as the list page). ----
-    // Replace with the real DTO and an API call when #50 is done.
-    private record FakeAssignmentDetail(
-        int Id,
-        string Name,
-        string Description,
-        DateTime Deadline,
-        DateTime? SubmittedAt,
-        SubmissionStatus Status,
-        bool HasFeedback);
-
-    private FakeAssignmentDetail? assignment;
+    private StudentAssignmentDto? assignment;
     private bool loading = true;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        List<FakeAssignmentDetail> all =
-        [
-            new(1, "C#-övning 1", "Variabler, loopar och metoder", DateTime.Today.AddDays(-7), DateTime.Today.AddDays(-8), SubmissionStatus.Submitted, true),
-            new(2, "Databasuppgift", "Designa en liten databas", DateTime.Today.AddDays(-3), DateTime.Today.AddDays(-2), SubmissionStatus.SubmittedLate, false),
-            new(3, "Blazor-projekt", "Bygg en enkel webbsida", DateTime.Today.AddDays(-1), null, SubmissionStatus.Late, false),
-            new(4, "Slutrapport", "Skriv en kort rapport om ert projekt", DateTime.Today.AddDays(10), null, SubmissionStatus.NotSubmitted, false)
-        ];
-
-        assignment = all.FirstOrDefault(a => a.Id == Id);
-        loading = false;
+        try
+        {
+            assignment = await Proxy.GetAsync<StudentAssignmentDto>($"assignments/my/{Id}");
+        }
+        catch (HttpRequestException)
+        {
+            assignment = null;
+        }
+        finally
+        {
+            loading = false;
+        }
     }
 }
