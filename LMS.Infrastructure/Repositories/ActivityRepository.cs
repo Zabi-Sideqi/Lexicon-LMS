@@ -72,4 +72,23 @@ public class ActivityRepository : IActivityRepository
     {
         _context.Activities.Remove(activity);
     }
+
+    public async Task<IEnumerable<Activity>> GetAssignmentsByCourseIdAsync(
+    int courseId,
+    bool trackChanges = false)
+    {
+        var query = _context.Activities
+            .Where(activity =>
+                activity.Type == ActivityType.Assignment &&
+                activity.Module.CourseId == courseId);
+
+        if (!trackChanges)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query
+            .OrderBy(activity => activity.EndTime)
+            .ToListAsync();
+    }
 }
