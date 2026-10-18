@@ -9,17 +9,37 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;
     private readonly Lazy<ICourseRepository> _courseRepository;
+    private readonly Lazy<IModuleRepository> _moduleRepository;
+    private readonly Lazy<IDocumentRepository> _documentRepository;
+    private readonly Lazy<IActivityRepository> _activityRepository;
     private IUserRepository? _userRepository;
 
     public UnitOfWork(ApplicationDbContext context)
     {
         _context = context;
+
         _courseRepository = new Lazy<ICourseRepository>(
             () => new CourseRepository(context));
+
+        _moduleRepository = new Lazy<IModuleRepository>(
+            () => new ModuleRepository(context));
+
+        _documentRepository = new Lazy<IDocumentRepository>(
+            () => new DocumentRepository(context));
+        _activityRepository = new Lazy<IActivityRepository>(
+            () => new ActivityRepository(context));
     }
 
     public ICourseRepository CourseRepository =>
         _courseRepository.Value;
+
+    public IModuleRepository ModuleRepository =>
+        _moduleRepository.Value;
+
+    public IDocumentRepository DocumentRepository =>
+        _documentRepository.Value;
+    public IActivityRepository ActivityRepository =>
+    _activityRepository.Value;
 
     public IUserRepository UserRepository =>
         _userRepository ??= new UserRepository(_context);

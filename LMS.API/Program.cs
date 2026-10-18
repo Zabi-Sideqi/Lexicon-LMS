@@ -2,10 +2,12 @@ using LMS.API.Extensions;
 using LMS.API.Services;
 using LMS.Infrastructure.Data;
 using LMS.Presentation;
+using LMS.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using Service.Contracts;
 
 using Scalar.AspNetCore;
 
@@ -29,9 +31,10 @@ internal class Program
         .AddApplicationPart(typeof(AssemblyReference).Assembly);
 
         builder.Services.AddHostedService<DataSeedService>();
-
-        // Registrera OpenAPI med Bearer Security Scheme för .NET 10
+        // change Swager to OpenAPI for .NET 10 för att använda Scalar UI
         builder.Services.AddOpenApi(options =>
+        // Registrera OpenAPI med Bearer Security Scheme för .NET 10
+        // För att kunna använda din JWT-token när du testar skyddade endpoints i Scalar.
         {
             options.AddDocumentTransformer((document, context, cancellationToken) =>
             {
@@ -53,6 +56,11 @@ internal class Program
 
         builder.Services.AddRepositories();
         builder.Services.AddServiceLayer();
+
+        // FileStorage registration
+        var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "uploads");
+        builder.Services.AddSingleton<IFileStorage>(new FileStorage(uploadPath));
+
         builder.Services.ConfigureAuthentication(builder.Configuration);
         builder.Services.ConfigureIdentity();
         builder.Services.ConfigurePolicys();

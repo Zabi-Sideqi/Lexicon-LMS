@@ -18,12 +18,24 @@ public static class ExceptionMiddlewareExtensions
                     var problemDetailsFactory = app.Services.GetRequiredService<ProblemDetailsFactory>();
                     var exception = contextFeature.Error;
 
+
                     var (statusCode, title) = exception switch
                     {
-                        NotFoundException ex => (StatusCodes.Status404NotFound, ex.Title),
-                        TokenValidationException ex => (StatusCodes.Status401Unauthorized, "Unauthorized"),
-                        _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
+                        NotFoundException ex =>
+                            (StatusCodes.Status404NotFound, ex.Title),
+
+                        TokenValidationException =>
+                            (StatusCodes.Status401Unauthorized, "Unauthorized"),
+
+                        UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
+
+                        ArgumentException =>
+                            (StatusCodes.Status400BadRequest, "Bad Request"),
+
+                        _ =>
+                            (StatusCodes.Status500InternalServerError, "Internal Server Error")
                     };
+
 
                     var problemDetails = problemDetailsFactory.CreateProblemDetails(
                         context,

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace LMS.Presentation.Controllers;
 
@@ -17,6 +18,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     private readonly IServiceManager _serviceManager = serviceManager;
 
     [HttpGet]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Get all courses",
         Description = "Returns a list of all courses.")]
@@ -28,6 +30,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Get a course",
         Description = "Returns a course by id.")]
@@ -44,6 +47,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Create a course",
         Description = "Creates a new course. Start date must not be after end date.")]
@@ -56,6 +60,7 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Teacher")]
     [SwaggerOperation(
         Summary = "Update a course",
         Description = "Updates an existing course.")]
@@ -66,5 +71,37 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
     {
         await _serviceManager.CourseService.UpdateAsync(id, dto);
         return NoContent();
+    }
+
+    [HttpGet("my")]
+    [Authorize(Roles = "Student")]
+    [SwaggerOperation(
+        Summary = "Get the current student's course",
+        Description = "Returns the course assigned to the authenticated student.")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Course found", typeof(StudentCourseDto))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Student has no assigned course")]
+    public async Task<ActionResult<StudentCourseDto>> GetMyCourse()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var course = await _serviceManager.CourseService.GetMyCourseAsync(userId);
+
+        if (course is null)
+            return NotFound();
+
+        return Ok(course);
+    }
+
+    [HttpGet("my/participants")]
+    [Authorize(Roles = "Student")]
+    [SwaggerOperation(
+        Summary = "Get participants of the current student's course",
+        Description = "Returns a list of participants in the same course as the authenticated student.")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Participants retrieved", typeof(IEnumerable<CourseParticipantDto>))]
+    public async Task<ActionResult<IEnumerable<CourseParticipantDto>>> GetParticipants()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var participants = await _serviceManager.CourseService.GetCourseParticipantsAsync(userId);
+
+        return Ok(participants);
     }
 }
