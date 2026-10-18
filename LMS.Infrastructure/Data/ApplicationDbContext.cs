@@ -12,4 +12,5 @@ public class ApplicationDbContext
     public DbSet<Module> Modules => Set<Module>();
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<Activity> Activities => Set<Activity>();
+    public DbSet<Submission> Submissions => Set<Submission>();
 }
