@@ -43,13 +43,15 @@ public class SubmissionService : ISubmissionService
                 group => group.Key,
                 group => group.OrderByDescending(submission => submission.SubmittedAt).First());
 
-        var now = DateTime.UtcNow;
+        var now = SchoolTime.FromUtc(DateTime.UtcNow);
 
         return assignments
             .Select(assignment =>
             {
                 latestSubmissionByActivity.TryGetValue(assignment.Id, out var submission);
-                var submittedAt = submission?.SubmittedAt;
+                DateTime? submittedAt = submission is null
+                ? null
+                : SchoolTime.FromUtc(submission.SubmittedAt);
 
                 return new StudentAssignmentDto(
                     assignment.Id,
