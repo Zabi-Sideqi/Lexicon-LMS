@@ -50,6 +50,11 @@ namespace LMS.Infrastructure.Migrations
                 table: "Submissions",
                 column: "StudentId");
         }
- 
+
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "Submissions");
+        }
     }
 }
