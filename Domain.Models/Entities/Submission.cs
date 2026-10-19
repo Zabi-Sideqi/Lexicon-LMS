@@ -11,7 +11,9 @@ public class Submission
     public ApplicationUser Student { get; set; } = null!;
 
     public string FileName { get; set; } = null!;
-    public string FilePath { get; set; } = null!;
+    public string StoredFileName { get; set; } = null!;
+    public string ContentType { get; set; } = null!;
+    public long FileSize { get; set; }
 
     public DateTime SubmittedAt { get; set; }
 }
