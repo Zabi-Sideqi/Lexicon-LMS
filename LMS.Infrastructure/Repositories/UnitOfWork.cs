@@ -12,6 +12,7 @@ public class UnitOfWork : IUnitOfWork
     private readonly Lazy<IModuleRepository> _moduleRepository;
     private readonly Lazy<IDocumentRepository> _documentRepository;
     private readonly Lazy<IActivityRepository> _activityRepository;
+    private readonly Lazy<ISubmissionRepository> _submissionRepository;
     private IUserRepository? _userRepository;
 
     public UnitOfWork(ApplicationDbContext context)
@@ -26,8 +27,12 @@ public class UnitOfWork : IUnitOfWork
 
         _documentRepository = new Lazy<IDocumentRepository>(
             () => new DocumentRepository(context));
+
         _activityRepository = new Lazy<IActivityRepository>(
             () => new ActivityRepository(context));
+
+        _submissionRepository = new Lazy<ISubmissionRepository>(
+            () => new SubmissionRepository(context));
     }
 
     public ICourseRepository CourseRepository =>
@@ -38,11 +43,15 @@ public class UnitOfWork : IUnitOfWork
 
     public IDocumentRepository DocumentRepository =>
         _documentRepository.Value;
+
     public IActivityRepository ActivityRepository =>
-    _activityRepository.Value;
+        _activityRepository.Value;
 
     public IUserRepository UserRepository =>
         _userRepository ??= new UserRepository(_context);
+
+    public ISubmissionRepository SubmissionRepository =>
+        _submissionRepository.Value;
 
     public async Task<bool> CourseExistsAsync(int courseId)
     {

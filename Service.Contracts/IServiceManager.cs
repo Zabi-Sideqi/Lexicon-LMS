@@ -8,4 +8,5 @@ public interface IServiceManager
     IUserService UserService { get; }
     IDocumentService DocumentService { get; }
     IActivityService ActivityService { get; }
+    ISubmissionService SubmissionService { get; }
 }

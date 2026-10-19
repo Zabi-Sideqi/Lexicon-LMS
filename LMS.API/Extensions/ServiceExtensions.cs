@@ -21,11 +21,13 @@ public static class ServiceExtensions
         services.AddScoped<IModuleService, ModuleService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IActivityService, ActivityService>();
+        services.AddScoped<ISubmissionService, SubmissionService>();
         services.AddLazy<IAuthService>();
         services.AddLazy<IUserService>();
         services.AddLazy<ICourseService>();
         services.AddLazy<IModuleService>();
         services.AddLazy<IDocumentService>();
         services.AddLazy<IActivityService>();
+        services.AddLazy<ISubmissionService>();
     }
 }

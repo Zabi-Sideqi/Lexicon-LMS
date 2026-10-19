@@ -1,0 +1,69 @@
+﻿@page "/assignments/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.AssignmentDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize(Roles = "Student")]
+@inject IApiProxyClient Proxy
+
+<PageTitle>Uppgift</PageTitle>
+
+<p>
+    <a href="/assignments" class="btn btn-sm btn-outline-secondary">Tillbaka till uppgifter</a>
+</p>
+
+@if (loading)
+{
+    <p><em>Laddar...</em></p>
+}
+else if (assignment is null)
+{
+    <div class="alert alert-warning">Uppgiften hittades inte.</div>
+}
+else
+{
+    <h1>@assignment.Name</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <p class="card-text">@assignment.Description</p>
+
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Deadline</dt>
+                <dd class="col-sm-9">@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9"><SubmissionStatusBadge Status="assignment.Status" /></dd>
+
+                <dt class="col-sm-3">Inlämningstid</dt>
+                <dd class="col-sm-9">@(assignment.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+
+                <dt class="col-sm-3">Feedback</dt>
+                <dd class="col-sm-9">@(assignment.HasFeedback ? "Finns" : "Ingen ännu")</dd>
+            </dl>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private StudentAssignmentDto? assignment;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            assignment = await Proxy.GetAsync<StudentAssignmentDto>($"assignments/my/{Id}");
+        }
+        catch (HttpRequestException)
+        {
+            assignment = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
