@@ -11,6 +11,7 @@ public interface IDocumentService
         long fileSize,
         int? courseId,
         int? moduleId,
+        int? activityId,
         string uploadedByUserId);
 
     Task<(Stream Stream, string FileName, string ContentType)> DownloadAsync(int id, string userId);

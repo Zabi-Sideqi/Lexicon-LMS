@@ -40,6 +40,7 @@ public class DocumentsController(IServiceManager serviceManager) : ControllerBas
             dto.File.Length,
             dto.CourseId,
             dto.ModuleId,
+            dto.ActivityId,
             userId);
 
         return CreatedAtAction(nameof(Download), new { id = created.Id }, created);

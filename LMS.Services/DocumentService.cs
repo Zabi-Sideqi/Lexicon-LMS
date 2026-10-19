@@ -1,5 +1,6 @@
 ﻿using Domain.Contracts;
 using Domain.Models.Entities;
+using Domain.Models.Exceptions;
 using LMS.Shared.DTOs.DocumentDtos;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
@@ -32,13 +33,14 @@ public class DocumentService : IDocumentService
         long fileSize,
         int? courseId,
         int? moduleId,
+        int? activityId,
         string uploadedById)
     {
         ValidateFile(fileName, fileSize);
 
-        if ((courseId.HasValue ? 1 : 0) + (moduleId.HasValue ? 1 : 0) != 1)
+        if ((courseId.HasValue ? 1 : 0) + (moduleId.HasValue ? 1 : 0) + (activityId.HasValue ? 1 : 0) != 1)
             throw new ArgumentException(
-                "Exakt en av CourseId eller ModuleId måste anges.");
+                "Exakt en av CourseId, ModuleId eller ActivityId måste anges.");
 
         if (courseId.HasValue)
         {
@@ -51,6 +53,12 @@ public class DocumentService : IDocumentService
             var module = await _uow.ModuleRepository.GetByIdAsync(moduleId.Value);
             if (module is null)
                 throw new ArgumentException($"Module with id {moduleId} not found.");
+        }
+        else if (activityId.HasValue)
+        {
+            var activity = await _uow.ActivityRepository.GetByIdAsync(activityId.Value);
+            if (activity is null)
+                throw new ArgumentException($"Activity with id {activityId} not found.");
         }
 
         var storedFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(fileName);
@@ -65,7 +73,8 @@ public class DocumentService : IDocumentService
             UploadedAt = DateTime.UtcNow,
             UploadedById = uploadedById,
             CourseId = courseId,
-            ModuleId = moduleId
+            ModuleId = moduleId,
+            ActivityId = activityId
         };
 
         _uow.DocumentRepository.Create(document);
@@ -80,7 +89,7 @@ public class DocumentService : IDocumentService
         var document = await _uow.DocumentRepository.GetByIdAsync(id);
 
         if (document is null)
-            throw new ArgumentException($"Document with id {id} not found.");
+            throw new ResourceNotFoundException($"Document with id {id} not found.");
 
         await EnsureCanAccessAsync(document, userId);
 
@@ -148,6 +157,17 @@ public class DocumentService : IDocumentService
                 return;
         }
 
+        if (document.ActivityId.HasValue)
+        {
+            var activity = await _uow.ActivityRepository.GetByIdAsync(document.ActivityId.Value);
+            if (activity is not null)
+            {
+                var module = await _uow.ModuleRepository.GetByIdAsync(activity.ModuleId);
+                if (module is not null && user.CourseId == module.CourseId)
+                    return;
+            }
+        }
+
         throw new UnauthorizedAccessException(
             "Du har inte behörighet att komma åt detta dokument.");
     }
@@ -161,5 +181,6 @@ public class DocumentService : IDocumentService
             document.UploadedAt,
             document.UploadedById,
             document.CourseId,
-            document.ModuleId);
+            document.ModuleId,
+            document.ActivityId);
 }
