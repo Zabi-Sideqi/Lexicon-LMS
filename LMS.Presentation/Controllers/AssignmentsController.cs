@@ -1,4 +1,5 @@
-﻿using LMS.Shared.DTOs.AssignmentDtos;
+﻿using LMS.Presentation.DTOs;
+using LMS.Shared.DTOs.AssignmentDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +43,33 @@ public class AssignmentsController(IServiceManager serviceManager) : ControllerB
 
         if (assignment is null)
             return NotFound();
+
+        return Ok(assignment);
+    }
+
+    [HttpPost("my/{id:int}/submission")]
+    [Consumes("multipart/form-data")]
+    [SwaggerOperation(
+        Summary = "Hand in a file to an assignment",
+        Description = "Uploads a file as the authenticated student's submission. The submission time is set by the server.")]
+    [SwaggerResponse(StatusCodes.Status200OK, "File handed in. Returns the assignment with its new status", typeof(StudentAssignmentDto))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid file")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Assignment not found in the student's course")]
+    public async Task<ActionResult<StudentAssignmentDto>> Submit(
+        int id,
+        [FromForm] SubmissionUploadDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        await using var stream = dto.File.OpenReadStream();
+
+        var assignment = await _serviceManager.SubmissionService.SubmitAsync(
+            userId,
+            id,
+            stream,
+            dto.File.FileName,
+            dto.File.ContentType,
+            dto.File.Length);
 
         return Ok(assignment);
     }
