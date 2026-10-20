@@ -6,5 +6,10 @@ public interface ISubmissionService
 {
     Task<IEnumerable<StudentAssignmentDto>> GetMyAssignmentsAsync(string userId);
 
-    Task<StudentAssignmentDto?> GetMyAssignmentAsync(string userId, int assignmentId);
+    Task<StudentAssignmentDto?> GetMyAssignmentAsync(
+        string userId,
+        int assignmentId);
+
+    Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
+        string teacherId);
 }

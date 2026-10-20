@@ -27,11 +27,13 @@ public class CourseRepository : ICourseRepository
         return await query.ToListAsync();
     }
 
+
     public async Task<Course?> GetByIdAsync(
         int id,
         bool trackChanges = false)
     {
-        var query = _context.Courses.AsQueryable();
+        IQueryable<Course> query = _context.Courses
+            .Include(course => course.Teachers);
 
         if (!trackChanges)
         {
@@ -41,6 +43,7 @@ public class CourseRepository : ICourseRepository
         return await query.FirstOrDefaultAsync(
             course => course.Id == id);
     }
+
 
     public async Task<Course?> GetCourseWithStudentsAsync(
         int id,

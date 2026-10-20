@@ -10,4 +10,7 @@ public class ApplicationUser : IdentityUser
 
     public int? CourseId { get; set; }
     public Course? Course { get; set; }
+
+    // Kurser som läraren undervisar i
+    public ICollection<Course> TeachingCourses { get; set; } = [];
 }

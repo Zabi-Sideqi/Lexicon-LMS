@@ -1,4 +1,5 @@
-﻿using Domain.Contracts;
+﻿
+using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Services.Helpers;
 using LMS.Shared.DTOs.AssignmentDtos;
@@ -20,57 +21,110 @@ public class SubmissionService : ISubmissionService
         _userManager = userManager;
     }
 
-    public async Task<IEnumerable<StudentAssignmentDto>> GetMyAssignmentsAsync(string userId)
+    public async Task<IEnumerable<StudentAssignmentDto>> GetMyAssignmentsAsync(
+        string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
 
         if (user?.CourseId is null)
             return [];
 
-        // Two queries in total (not one per assignment): the assignments of the
-        // student's course, and all submissions made by the student.
         var assignments = await _uow.ActivityRepository
             .GetAssignmentsByCourseIdAsync(user.CourseId.Value);
 
         var submissions = await _uow.SubmissionRepository
             .GetByStudentIdAsync(userId);
 
-        // If a student has handed in more than once for the same assignment,
-        // the latest submission is used.
+        // Use the latest submission for each assignment.
         var latestSubmissionByActivity = submissions
             .GroupBy(submission => submission.ActivityId)
             .ToDictionary(
                 group => group.Key,
-                group => group.OrderByDescending(submission => submission.SubmittedAt).First());
+                group => group
+                    .OrderByDescending(submission => submission.SubmittedAt)
+                    .First());
 
         var now = SchoolTime.FromUtc(DateTime.UtcNow);
+        var result = new List<StudentAssignmentDto>();
 
-        return assignments
-            .Select(assignment =>
-            {
-                latestSubmissionByActivity.TryGetValue(assignment.Id, out var submission);
-                DateTime? submittedAt = submission is null
+        foreach (var assignment in assignments)
+        {
+            latestSubmissionByActivity.TryGetValue(
+                assignment.Id,
+                out var submission);
+
+            DateTime? submittedAt = submission is null
                 ? null
                 : SchoolTime.FromUtc(submission.SubmittedAt);
 
-                return new StudentAssignmentDto(
-                    assignment.Id,
-                    assignment.Name,
-                    assignment.Description,
+            var hasFeedback = false;
+
+            if (submission is not null)
+            {
+                var feedbackItems = await _uow.FeedbackRepository
+                    .GetBySubmissionIdAsync(submission.Id);
+
+                hasFeedback = feedbackItems.Any();
+            }
+
+            result.Add(new StudentAssignmentDto(
+                assignment.Id,
+                assignment.Name,
+                assignment.Description,
+                assignment.EndTime,
+                submittedAt,
+                SubmissionStatusCalculator.Calculate(
                     assignment.EndTime,
                     submittedAt,
-                    SubmissionStatusCalculator.Calculate(assignment.EndTime, submittedAt, now),
-                    false); // Feedback does not exist yet (US11)
-            })
+                    now),
+                hasFeedback,
+                submission?.Id));
+        }
+
+        return result;
+    }
+
+    public async Task<StudentAssignmentDto?> GetMyAssignmentAsync(
+        string userId,
+        int assignmentId)
+    {
+        var assignments = await GetMyAssignmentsAsync(userId);
+
+        return assignments.FirstOrDefault(
+            assignment => assignment.Id == assignmentId);
+    }
+
+    public async Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
+        string teacherId)
+    {
+        var teacher = await _userManager.FindByIdAsync(teacherId);
+
+        if (teacher is null ||
+            !await _userManager.IsInRoleAsync(teacher, "Teacher"))
+        {
+            throw new UnauthorizedAccessException(
+                "Only teachers can view course submissions.");
+        }
+
+        if (teacher.CourseId is null)
+            return [];
+
+        var submissions = await _uow.SubmissionRepository
+            .GetByCourseIdAsync(teacher.CourseId.Value);
+
+        return submissions
+            .Select(submission => new TeacherSubmissionDto(
+                submission.Id,
+                submission.ActivityId,
+                submission.Activity.Name,
+                submission.StudentId,
+                submission.Student.UserName
+                    ?? submission.Student.Email
+                    ?? "Okänd student",
+                submission.FileName,
+                SchoolTime.FromUtc(submission.SubmittedAt),
+                submission.Feedbacks.Any()))
             .ToList();
     }
 
-    public async Task<StudentAssignmentDto?> GetMyAssignmentAsync(string userId, int assignmentId)
-    {
-        // Only assignments in the student's own course are returned,
-        // so a student cannot read another course by changing the id.
-        var assignments = await GetMyAssignmentsAsync(userId);
-
-        return assignments.FirstOrDefault(assignment => assignment.Id == assignmentId);
-    }
 }

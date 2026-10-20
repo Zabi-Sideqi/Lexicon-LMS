@@ -1,6 +1,8 @@
-﻿@page "/assignments/{Id:int}"
+﻿
+@page "/assignments/{Id:int}"
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.AssignmentDtos
+@using LMS.Shared.DTOs.FeedbackDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Student")]
 @inject IApiProxyClient Proxy
@@ -8,7 +10,9 @@
 <PageTitle>Uppgift</PageTitle>
 
 <p>
-    <a href="/assignments" class="btn btn-sm btn-outline-secondary">Tillbaka till uppgifter</a>
+    <a href="/assignments" class="btn btn-sm btn-outline-secondary">
+        Tillbaka till uppgifter
+    </a>
 </p>
 
 @if (loading)
@@ -17,7 +21,9 @@
 }
 else if (assignment is null)
 {
-    <div class="alert alert-warning">Uppgiften hittades inte.</div>
+    <div class="alert alert-warning">
+        Uppgiften hittades inte.
+    </div>
 }
 else
 {
@@ -29,19 +35,71 @@ else
 
             <dl class="row mb-0">
                 <dt class="col-sm-3">Deadline</dt>
-                <dd class="col-sm-9">@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</dd>
+                <dd class="col-sm-9">
+                    @assignment.Deadline.ToString("yyyy-MM-dd HH:mm")
+                </dd>
 
                 <dt class="col-sm-3">Status</dt>
-                <dd class="col-sm-9"><SubmissionStatusBadge Status="assignment.Status" /></dd>
+                <dd class="col-sm-9">
+                    <SubmissionStatusBadge Status="assignment.Status" />
+                </dd>
 
                 <dt class="col-sm-3">Inlämningstid</dt>
-                <dd class="col-sm-9">@(assignment.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+                <dd class="col-sm-9">
+                    @(assignment.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                </dd>
 
                 <dt class="col-sm-3">Feedback</dt>
-                <dd class="col-sm-9">@(assignment.HasFeedback ? "Finns" : "Ingen ännu")</dd>
+                <dd class="col-sm-9">
+                    @(assignment.HasFeedback ? "Finns" : "Ingen ännu")
+                </dd>
             </dl>
         </div>
     </div>
+
+    @if (assignment.SubmissionId is null)
+    {
+        <div class="alert alert-info">
+            Du har inte lämnat in uppgiften ännu. Feedback visas när du har lämnat in uppgiften och läraren har gett feedback.
+        </div>
+    }
+    else if (loadingFeedback)
+    {
+        <p><em>Hämtar feedback...</em></p>
+    }
+    else if (feedbackError is not null)
+    {
+        <div class="alert alert-warning">
+            @feedbackError
+        </div>
+    }
+    else if (feedback is null || !feedback.Any())
+    {
+        <div class="alert alert-info">
+            Du har inte fått någon feedback på den här inlämningen ännu.
+        </div>
+    }
+    else
+    {
+        <h2>Feedback från läraren</h2>
+
+        @foreach (var item in feedback.OrderByDescending(f => f.CreatedAt))
+        {
+            <div class="card mb-3" @key="item.Id">
+                <div class="card-body">
+                    <p class="card-text" style="white-space: pre-wrap">@item.Text</p>
+
+                    <hr />
+
+                    <small class="text-muted">
+                        Lärare: @item.TeacherName
+                        <br />
+                        Datum: @item.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    </small>
+                </div>
+            </div>
+        }
+    }
 }
 
 @code {
@@ -49,13 +107,28 @@ else
     public int Id { get; set; }
 
     private StudentAssignmentDto? assignment;
+    private IEnumerable<FeedbackDto>? feedback;
     private bool loading = true;
+    private bool loadingFeedback;
+    private string? feedbackError;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        loading = true;
+        assignment = null;
+        feedback = null;
+        feedbackError = null;
+
         try
         {
-            assignment = await Proxy.GetAsync<StudentAssignmentDto>($"assignments/my/{Id}");
+            assignment = await Proxy.SendAsync<StudentAssignmentDto>(
+                HttpMethod.Get,
+                $"assignments/my/{Id}");
+
+            if (assignment?.SubmissionId is int submissionId)
+            {
+                await LoadFeedbackAsync(submissionId);
+            }
         }
         catch (HttpRequestException)
         {
@@ -64,6 +137,27 @@ else
         finally
         {
             loading = false;
+        }
+    }
+
+    private async Task LoadFeedbackAsync(int submissionId)
+    {
+        loadingFeedback = true;
+        feedbackError = null;
+
+        try
+        {
+            feedback = await Proxy.SendAsync<IEnumerable<FeedbackDto>>(
+                HttpMethod.Get,
+                $"feedback/submission/{submissionId}");
+        }
+        catch (HttpRequestException)
+        {
+            feedbackError = "Det gick inte att hämta feedback. Försök igen senare.";
+        }
+        finally
+        {
+            loadingFeedback = false;
         }
     }
 }

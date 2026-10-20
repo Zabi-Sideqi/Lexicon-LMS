@@ -9,4 +9,6 @@ public interface IServiceManager
     IDocumentService DocumentService { get; }
     IActivityService ActivityService { get; }
     ISubmissionService SubmissionService { get; }
+    IFeedbackService FeedbackService { get; }
+    INotificationService NotificationService { get; }
 }
