@@ -8,5 +8,9 @@ public sealed record DocumentDto(
     DateTime UploadedAt,
     string UploadedById,
     int? CourseId,
+    string? CourseName,
     int? ModuleId,
-    int? ActivityId);
+    string? ModuleName,
+    int? ActivityId,
+    string? ActivityName,
+    string? AttachPath);
