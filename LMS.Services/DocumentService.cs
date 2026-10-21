@@ -61,6 +61,43 @@ public class DocumentService : IDocumentService
                 throw new ArgumentException($"Activity with id {activityId} not found.");
         }
 
+        // US07: Student-permissions
+        var user = await _userManager.FindByIdAsync(uploadedById);
+        if (user is null)
+            throw new ArgumentException("User not found.");
+
+        if (!await _userManager.IsInRoleAsync(user, "Teacher"))
+        {
+            if (user.CourseId is null)
+                throw new UnauthorizedAccessException(
+                    "Studenten tillhör ingen kurs.");
+
+            if (courseId.HasValue && courseId != user.CourseId)
+                throw new UnauthorizedAccessException(
+                    "Du kan bara ladda upp dokument till din egen kurs.");
+
+            if (moduleId.HasValue)
+            {
+                var module = await _uow.ModuleRepository.GetByIdAsync(moduleId.Value);
+                if (module?.CourseId != user.CourseId)
+                    throw new UnauthorizedAccessException(
+                        "Du kan bara ladda upp dokument till moduler i din kurs.");
+            }
+
+            if (activityId.HasValue)
+            {
+                var activity = await _uow.ActivityRepository.GetByIdAsync(activityId.Value);
+                if (activity is null)
+                    throw new ArgumentException(
+                        $"Activity with id {activityId} not found.");
+
+                var module = await _uow.ModuleRepository.GetByIdAsync(activity.ModuleId);
+                if (module?.CourseId != user.CourseId)
+                    throw new UnauthorizedAccessException(
+                        "Du kan bara ladda upp dokument till aktiviteter i din kurs.");
+            }
+        }
+
         var storedFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(fileName);
         await _fileStorage.SaveAsync(fileStream, storedFileName);
 
@@ -80,7 +117,8 @@ public class DocumentService : IDocumentService
         _uow.DocumentRepository.Create(document);
         await _uow.SaveChangesAsync();
 
-        return MapToDto(document);
+        var created = await _uow.DocumentRepository.GetByIdAsync(document.Id);
+        return MapToDto(created ?? document);
     }
 
     public async Task<(Stream Stream, string FileName, string ContentType)> DownloadAsync(
@@ -195,7 +233,8 @@ public class DocumentService : IDocumentService
         }
         else if (document.CourseId.HasValue)
         {
-            attachPath = $"Kurs: {document.Course?.Name}";
+            if (document.Course?.Name is not null)
+                attachPath = $"Kurs: {document.Course.Name}";
         }
 
         return new DocumentDto(

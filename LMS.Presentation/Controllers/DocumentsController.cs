@@ -19,7 +19,7 @@ public class DocumentsController(IServiceManager serviceManager) : ControllerBas
     private readonly IServiceManager _serviceManager = serviceManager;
 
     [HttpPost("upload")]
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Roles = "Teacher,Student")]
     [Consumes("multipart/form-data")]
     [SwaggerOperation(
         Summary = "Upload a document",
