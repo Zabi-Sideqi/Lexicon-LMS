@@ -1,0 +1,72 @@
+﻿@page "/assignments"
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.AssignmentDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize(Roles = "Student")]
+@inject IApiProxyClient Proxy
+
+<PageTitle>Uppgifter</PageTitle>
+
+<h1>Uppgifter</h1>
+
+@if (errorMessage is not null)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else if (assignments is null)
+{
+    <p><em>Laddar...</em></p>
+}
+else if (!assignments.Any())
+{
+    <p>Inga uppgifter hittades.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Namn</th>
+                    <th>Beskrivning</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th>Feedback</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var assignment in assignments.OrderBy(a => a.Deadline))
+                {
+                    <tr>
+                        <td>@assignment.Name</td>
+                        <td>@assignment.Description</td>
+                        <td>@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><SubmissionStatusBadge Status="assignment.Status" /></td>
+                        <td>@(assignment.HasFeedback ? "Ja" : "-")</td>
+                        <td>
+                            <a href="/assignments/@assignment.Id" class="btn btn-sm btn-secondary">Visa</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IEnumerable<StudentAssignmentDto>? assignments;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            assignments = await Proxy.GetAsync<IEnumerable<StudentAssignmentDto>>("assignments/my");
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Det gick inte att hämta uppgifterna. Försök igen senare.";
+        }
+    }
+}

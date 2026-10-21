@@ -15,10 +15,8 @@ namespace Domain.Contracts
         void Create(Activity activity);
         void Update(Activity activity);
         void Delete(Activity activity);
-
-
-
-
-
+        Task<IEnumerable<Activity>> GetAssignmentsByCourseIdAsync(
+            int courseId, 
+            bool trackChanges = false);
     }
 }

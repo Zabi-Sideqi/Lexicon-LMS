@@ -1,0 +1,27 @@
+﻿@using LMS.Shared.Enums
+
+<span class="badge @CssClass">@Text</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public SubmissionStatus Status { get; set; }
+
+    // The texts and colors for each status live here, so they are easy to change in one place.
+    private string Text => Status switch
+    {
+        SubmissionStatus.NotSubmitted => "Ej inlämnad",
+        SubmissionStatus.Submitted => "Inlämnad",
+        SubmissionStatus.SubmittedLate => "Inlämnad för sent",
+        SubmissionStatus.Late => "Försenad",
+        _ => Status.ToString()
+    };
+
+    private string CssClass => Status switch
+    {
+        SubmissionStatus.NotSubmitted => "bg-secondary",
+        SubmissionStatus.Submitted => "bg-success",
+        SubmissionStatus.SubmittedLate => "bg-warning text-dark",
+        SubmissionStatus.Late => "bg-danger",
+        _ => "bg-secondary"
+    };
+}
