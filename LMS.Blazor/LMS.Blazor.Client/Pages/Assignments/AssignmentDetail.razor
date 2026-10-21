@@ -1,5 +1,6 @@
 ﻿@page "/assignments/{Id:int}"
 @using Microsoft.AspNetCore.Authorization
+@using System.Net.Http
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Student")]
@@ -42,6 +43,31 @@ else
             </dl>
         </div>
     </div>
+
+    <h2 class="h4">Lämna in</h2>
+
+    <div class="mb-3">
+        <label class="form-label">Fil (.pdf eller .docx, max 10 MB)</label>
+        <InputFile OnChange="HandleFileSelected" class="form-control" />
+        @if (selectedFile is not null)
+        {
+            <p class="text-muted mt-1">
+                Vald: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+            </p>
+        }
+    </div>
+
+    <button type="button" class="btn btn-primary" @onclick="HandleSubmit"
+            disabled="@(selectedFile is null || isUploading)">
+        @(isUploading ? "Lämnar in..." : (assignment.SubmittedAt is null ? "Lämna in" : "Lämna in igen"))
+    </button>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert @(messageIsError ? "alert-danger" : "alert-success") mt-3">
+            @message
+        </div>
+    }
 }
 
 @code {
@@ -50,6 +76,10 @@ else
 
     private StudentAssignmentDto? assignment;
     private bool loading = true;
+    private IBrowserFile? selectedFile;
+    private string? message;
+    private bool messageIsError;
+    private bool isUploading;
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,6 +94,53 @@ else
         finally
         {
             loading = false;
+        }
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        message = null;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (selectedFile is null)
+            return;
+
+        isUploading = true;
+        message = null;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+
+            var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "File", selectedFile.Name);
+
+            var updated = await Proxy.SendAsync<StudentAssignmentDto>(
+                HttpMethod.Post,
+                $"assignments/my/{Id}/submission",
+                content);
+
+            if (updated is not null)
+                assignment = updated;
+
+            message = "Filen är inlämnad.";
+            messageIsError = false;
+            selectedFile = null;
+        }
+        catch (Exception ex)
+        {
+            message = $"Det gick inte att lämna in filen: {ex.Message}";
+            messageIsError = true;
+        }
+        finally
+        {
+            isUploading = false;
         }
     }
 }
