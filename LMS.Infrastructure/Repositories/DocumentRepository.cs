@@ -18,6 +18,9 @@ public class DocumentRepository : IDocumentRepository
         int courseId, bool trackChanges = false)
     {
         var query = _context.Documents
+            .Include(d => d.Course)
+            .Include(d => d.Module).ThenInclude(m => m!.Course)
+            .Include(d => d.Activity).ThenInclude(a => a!.Module).ThenInclude(m => m!.Course)
             .Where(d =>
             d.CourseId == courseId ||
             (d.ModuleId != null && d.Module!.CourseId == courseId) ||
@@ -43,7 +46,11 @@ public class DocumentRepository : IDocumentRepository
 
     public async Task<Document?> GetByIdAsync(int id, bool trackChanges = false)
     {
-        var query = _context.Documents.AsQueryable();
+        var query = _context.Documents
+            .Include(d => d.Course)
+            .Include(d => d.Module).ThenInclude(m => m.Course)
+            .Include(d => d.Activity).ThenInclude(a => a.Module).ThenInclude(m => m.Course)
+            .AsQueryable();
 
         if (!trackChanges)
             query = query.AsNoTracking();
