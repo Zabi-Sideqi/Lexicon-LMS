@@ -6,7 +6,9 @@
 @using LMS.Shared.DTOs.ModuleDtos
 @inject IApiProxyClient Proxy
 
-<PageTitle>Documents</PageTitle>
+@attribute [Authorize]
+
+<PageTitle>Dokument</PageTitle>
 
 <h1>Dokument</h1>
 
@@ -84,7 +86,7 @@
     </NotAuthorized>
 </AuthorizeView>
 
-<h2 class="mt-4">Dokument</h2>
+<h2 class="mt-4">Alla dokument</h2>
 
 @if (documents is null)
 {
@@ -236,7 +238,13 @@ else
 
             var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
             var fileContent = new StreamContent(stream);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            var contentType = string.IsNullOrWhiteSpace(selectedFile.ContentType)
+                ? "application/octet-stream"
+                : selectedFile.ContentType;
+
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
             content.Add(fileContent, "File", selectedFile.Name);
             
             if (uploadModel.ActivityId is > 0)
