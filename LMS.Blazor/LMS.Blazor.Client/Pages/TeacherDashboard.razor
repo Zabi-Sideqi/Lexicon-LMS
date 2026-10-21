@@ -1,159 +1,357 @@
-﻿@page "/teacher-dashboard"
-
+﻿
+@page "/teacher-dashboard"
 @using Microsoft.AspNetCore.Authorization
-
+@using LMS.Shared.DTOs.AssignmentDtos
+@using LMS.Shared.DTOs.FeedbackDtos
+@using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Teacher")]
+@inject IApiProxyClient Proxy
 
 <PageTitle>Lärardashboard</PageTitle>
 
 <div class="dashboard">
-
     <div class="page-head">
         <div>
             <h1>Lärardashboard</h1>
-            <p>Hantera dina kurser, moduler och studenter.</p>
+            <p>Översikt över studenternas inlämningar och feedback.</p>
         </div>
-
-        <span class="role-badge">
-            Lärare
-        </span>
+        <span class="role-badge">Lärare</span>
     </div>
 
-
-    <div class="stats">
-
-        <div class="stat-card">
-            <span class="stat-icon">▣</span>
-            <strong>2</strong>
-            <span>Aktiva kurser</span>
+    @if (loading)
+    {
+        <div class="activity-card">
+            <p>Hämtar inlämningar...</p>
         </div>
-
-        <div class="stat-card">
-            <span class="stat-icon">♙</span>
-            <strong>27</strong>
-            <span>Registrerade elever</span>
+    }
+    else if (errorMessage is not null)
+    {
+        <div class="alert alert-warning" role="alert">
+            @errorMessage
+            <button class="btn btn-outline-primary btn-sm ms-2"
+                    @onclick="LoadSubmissionsAsync">
+                Försök igen
+            </button>
         </div>
-
-        <div class="stat-card">
-            <span class="stat-icon">◇</span>
-            <strong>4</strong>
-            <span>Totala moduler</span>
-        </div>
-
-        <div class="stat-card">
-            <span class="stat-icon">✓</span>
-            <strong>12</strong>
-            <span>Väntar på feedback</span>
-        </div>
-
-    </div>
-
-
-    <div class="section-head">
-        <h2>Dina aktiva kurser</h2>
-
-        <button class="btn-primary-demo">
-            + Skapa ny kurs
-        </button>
-    </div>
-
-
-    <div class="course-grid">
-
-        <div class="course-card">
-
-            <h3>Frontend-utvecklare</h3>
-
-            <span class="course-code">
-                FED101
-            </span>
-
-            <div class="course-info">
-                <div>
-                    <strong>15</strong>
-                    <span>elever</span>
-                </div>
-
-                <div>
-                    <strong>3</strong>
-                    <span>moduler</span>
-                </div>
+    }
+    else
+    {
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-icon">▣</span>
+                <strong>@submissions.Count</strong>
+                <span>Inlämningar</span>
             </div>
 
-            <p>15 Aug – 15 Dec</p>
-
-            <button class="btn-primary-demo">
-                Gå till kurs →
-            </button>
-
-        </div>
-
-
-        <div class="course-card">
-
-            <h3>Backend-utvecklare</h3>
-
-            <span class="course-code">
-                BED101
-            </span>
-
-            <div class="course-info">
-                <div>
-                    <strong>12</strong>
-                    <span>elever</span>
-                </div>
-
-                <div>
-                    <strong>1</strong>
-                    <span>modul</span>
-                </div>
+            <div class="stat-card">
+                <span class="stat-icon">✓</span>
+                <strong>@submissions.Count(s => s.HasFeedback)</strong>
+                <span>Har fått feedback</span>
             </div>
 
-            <p>01 Sep – 31 Jan</p>
+            <div class="stat-card">
+                <span class="stat-icon">⌛</span>
+                <strong>@PendingCount</strong>
+                <span>Väntar på feedback</span>
+            </div>
 
-            <button class="btn-primary-demo">
-                Gå till kurs →
-            </button>
-
+            <div class="stat-card">
+                <span class="stat-icon">♙</span>
+                <strong>@submissions.Select(s => s.StudentId).Distinct().Count()</strong>
+                <span>Studenter med inlämning</span>
+            </div>
         </div>
 
-    </div>
+        <div class="activity-card">
+            <div class="section-head">
+                <h2>Inlämningar som väntar på feedback</h2>
+            </div>
 
-
-    <div class="activity-card">
-
-        <h2>Senaste aktiviteter</h2>
-
-        <div class="activity">
-            <strong>
-                Anna Andersson lämnade in JavaScript Quiz
-            </strong>
-
-            <span>
-                05 okt 2026 · Betyg väntar
-            </span>
+            @if (!PendingSubmissions.Any())
+            {
+                <p>Det finns inga inlämningar som väntar på feedback.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Uppgift</th>
+                                <th>Inlämnad</th>
+                                <th>Status</th>
+                                <th>Åtgärd</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var submission in PendingSubmissions)
+                            {
+                                <tr @key="submission.SubmissionId">
+                                    <td>@submission.StudentName</td>
+                                    <td>
+                                        <strong>@submission.ActivityName</strong>
+                                        <div class="text-muted small">
+                                            @submission.FileName
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @submission.SubmittedAt.ToLocalTime()
+                                        .ToString("yyyy-MM-dd HH:mm")
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">
+                                            Väntar på feedback
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm"
+                                                @onclick="() => SelectSubmission(submission)">
+                                            Ge feedback
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
 
-        <div class="activity">
-            <strong>
-                Sara Lindberg skickade HTML & CSS Projekt
-            </strong>
+        @if (selectedSubmission is not null)
+        {
+            <div class="activity-card">
+                <h2>Ge feedback</h2>
 
-            <span>
-                04 okt 2026 · Feedback behövs
-            </span>
+                <p>
+                    <strong>Student:</strong>
+                    @selectedSubmission.StudentName
+                </p>
+
+                <p>
+                    <strong>Uppgift:</strong>
+                    @selectedSubmission.ActivityName
+                </p>
+
+                <div class="mb-3">
+                    <label for="feedbackText" class="form-label">
+                        Feedback till studenten
+                    </label>
+
+                    <textarea id="feedbackText"
+                              class="form-control"
+                              rows="5"
+                              maxlength="2000"
+                              @bind="feedbackText"
+                              placeholder="Skriv din feedback här...">
+                    </textarea>
+
+                    <small class="text-muted">
+                        @feedbackText.Length / 2000 tecken
+                    </small>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(feedbackError))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @feedbackError
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(feedbackSuccess))
+                {
+                    <div class="alert alert-success" role="status">
+                        @feedbackSuccess
+                    </div>
+                }
+
+                <button class="btn btn-primary"
+                        disabled="@sendingFeedback"
+                        @onclick="SubmitFeedbackAsync">
+                    @(sendingFeedback ? "Skickar..." : "Skicka feedback")
+                </button>
+
+                <button class="btn btn-outline-secondary ms-2"
+                        disabled="@sendingFeedback"
+                        @onclick="CancelFeedback">
+                    Avbryt
+                </button>
+            </div>
+        }
+
+        <div class="activity-card">
+            <h2>Senaste inlämningar</h2>
+
+            @if (!submissions.Any())
+            {
+                <p>Det finns inga inlämningar att visa ännu.</p>
+            }
+            else
+            {
+                @foreach (var submission in submissions
+                    .OrderByDescending(s => s.SubmittedAt)
+                    .Take(5))
+                {
+                    <div class="activity" @key="submission.SubmissionId">
+                        <strong>
+                            @submission.StudentName – @submission.ActivityName
+                        </strong>
+                        <span>
+                            @submission.SubmittedAt.ToLocalTime()
+                            .ToString("yyyy-MM-dd HH:mm")
+                            · @(submission.HasFeedback
+                                                            ? "Feedback lämnad"
+                                                            : "Feedback behövs")
+                        </span>
+                    </div>
+                }
+            }
         </div>
-
-        <div class="activity">
-            <strong>
-                Ny student registrerad i Frontend-utvecklare
-            </strong>
-
-            <span>
-                03 okt 2026
-            </span>
-        </div>
-
-    </div>
-
+    }
 </div>
+
+@code {
+    private List<TeacherSubmissionDto> submissions = [];
+    private bool loading = true;
+    private string? errorMessage;
+
+    private TeacherSubmissionDto? selectedSubmission;
+    private string feedbackText = "";
+    private string? feedbackError;
+    private string? feedbackSuccess;
+    private bool sendingFeedback;
+
+    private int PendingCount =>
+        submissions.Count(s => !s.HasFeedback);
+
+    private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
+        submissions
+            .Where(s => !s.HasFeedback)
+            .OrderBy(s => s.SubmittedAt);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubmissionsAsync();
+    }
+
+    private async Task LoadSubmissionsAsync()
+    {
+        loading = true;
+        errorMessage = null;
+
+        try
+        {
+            var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
+                HttpMethod.Get,
+                "teacher/submissions");
+
+            submissions = result?.ToList() ?? [];
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session har gått ut. Logga in igen.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage =
+                "Kunde inte hämta inlämningarna. Kontrollera att API:t är igång och försök igen.";
+        }
+        catch (Exception)
+        {
+            errorMessage =
+                "Ett oväntat fel uppstod när dashboarden skulle laddas.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void SelectSubmission(TeacherSubmissionDto submission)
+    {
+        selectedSubmission = submission;
+        feedbackText = "";
+        feedbackError = null;
+        feedbackSuccess = null;
+    }
+
+    private void CancelFeedback()
+    {
+        selectedSubmission = null;
+        feedbackText = "";
+        feedbackError = null;
+        feedbackSuccess = null;
+    }
+
+    private async Task SubmitFeedbackAsync()
+    {
+        if (selectedSubmission is null)
+        {
+            feedbackError = "Välj en inlämning först.";
+            return;
+        }
+
+        var text = feedbackText.Trim();
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            feedbackError = "Skriv feedback innan du skickar.";
+            return;
+        }
+
+        if (text.Length > 2000)
+        {
+            feedbackError = "Feedback får innehålla högst 2000 tecken.";
+            return;
+        }
+
+        sendingFeedback = true;
+        feedbackError = null;
+        feedbackSuccess = null;
+
+        try
+        {
+            var dto = new FeedbackForCreationDto
+            {
+                Text = text
+            };
+
+            await Proxy.SendAsync<object>(
+                HttpMethod.Post,
+                $"feedback/submission/{selectedSubmission.SubmissionId}",
+                new StringContent(
+                    System.Text.Json.JsonSerializer.Serialize(dto),
+                    System.Text.Encoding.UTF8,
+                    "application/json"));
+
+            feedbackSuccess = "Feedback har skickats till studenten.";
+            feedbackText = "";
+
+            var submittedId = selectedSubmission.SubmissionId;
+
+            await LoadSubmissionsAsync();
+
+            selectedSubmission = submissions.FirstOrDefault(
+                s => s.SubmissionId == submittedId);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            feedbackError =
+                "Du saknar behörighet eller så har din session gått ut. Logga in igen.";
+        }
+        catch (HttpRequestException)
+        {
+            feedbackError =
+                "Kunde inte skicka feedback. Kontrollera anslutningen och försök igen.";
+        }
+        catch (Exception)
+        {
+            feedbackError =
+                "Ett oväntat fel uppstod när feedback skulle skickas.";
+        }
+        finally
+        {
+            sendingFeedback = false;
+        }
+    }
+}

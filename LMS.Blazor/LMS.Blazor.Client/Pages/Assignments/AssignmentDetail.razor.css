@@ -1,0 +1,299 @@
+/* CSS for AssignmentDetail component */
+
+.assignment-detail-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 8px 0 40px;
+    color: var(--lms-text, #27272a);
+}
+
+.assignment-detail-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    color: var(--lms-primary, #4b46d9);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+    .assignment-detail-back:hover {
+        color: var(--lms-primary-hover, #6658d3);
+        text-decoration: underline;
+    }
+
+.assignment-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.assignment-detail-eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--lms-primary, #4b46d9);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.assignment-detail-header h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 3vw, 36px);
+    font-weight: 600;
+    letter-spacing: -0.6px;
+    overflow-wrap: anywhere;
+}
+
+.assignment-detail-header p,
+.assignment-detail-card-heading p,
+.assignment-detail-section-heading p {
+    margin: 0;
+    color: var(--lms-text-muted, #6b6b72);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.assignment-detail-icon {
+    display: grid;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    border: 1px solid var(--lms-border, #e4e4e8);
+    border-radius: 9px;
+    background: var(--lms-primary-soft, #ecebff);
+    color: var(--lms-primary, #4b46d9);
+    font-size: 27px;
+}
+
+.assignment-detail-card,
+.assignment-detail-feedback-card {
+    border: 1px solid var(--lms-border, #e4e4e8);
+    border-radius: 10px;
+    background: var(--lms-surface, #fff);
+    box-shadow: var(--lms-shadow, 0 2px 7px rgba(0, 0, 0, 0.10));
+}
+
+.assignment-detail-card {
+    overflow: hidden;
+}
+
+.assignment-detail-card-heading {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--lms-border, #e4e4e8);
+}
+
+    .assignment-detail-card-heading h2,
+    .assignment-detail-section-heading h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+.assignment-detail-description {
+    padding: 22px 24px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.assignment-detail-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    border-top: 1px solid var(--lms-border, #e4e4e8);
+}
+
+.assignment-detail-meta-item {
+    min-width: 0;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--lms-border, #e4e4e8);
+}
+
+    .assignment-detail-meta-item:nth-child(odd) {
+        border-right: 1px solid var(--lms-border, #e4e4e8);
+    }
+
+    .assignment-detail-meta-item dt {
+        margin-bottom: 7px;
+        color: var(--lms-text-muted, #6b6b72);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .assignment-detail-meta-item dd {
+        margin: 0;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+.assignment-detail-feedback-status {
+    color: var(--lms-text-muted, #6b6b72);
+}
+
+    .assignment-detail-feedback-status.available {
+        color: var(--lms-primary, #4b46d9);
+        font-weight: 700;
+    }
+
+.assignment-detail-feedback-section {
+    margin-top: 32px;
+}
+
+.assignment-detail-section-heading {
+    margin-bottom: 18px;
+}
+
+    .assignment-detail-section-heading h2 {
+        margin-top: 0;
+    }
+
+.assignment-detail-feedback-card {
+    margin-bottom: 16px;
+    padding: 22px 24px;
+}
+
+.assignment-detail-feedback-text {
+    margin: 0;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.assignment-detail-feedback-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--lms-border, #e4e4e8);
+    color: var(--lms-text-muted, #6b6b72);
+    font-size: 13px;
+}
+
+    .assignment-detail-feedback-footer span {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-wrap: anywhere;
+    }
+
+    .assignment-detail-feedback-footer strong {
+        color: var(--lms-text, #27272a);
+        font-size: 12px;
+    }
+
+.assignment-detail-notice,
+.assignment-detail-error {
+    margin-top: 20px;
+    padding: 18px 20px;
+    border-radius: 8px;
+}
+
+.assignment-detail-notice {
+    border: 1px solid var(--lms-border, #e4e4e8);
+    background: var(--lms-primary-soft, #ecebff);
+}
+
+    .assignment-detail-notice strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--lms-primary, #4b46d9);
+    }
+
+    .assignment-detail-notice p {
+        margin: 0;
+        color: var(--lms-text, #27272a);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+.assignment-detail-error {
+    border: 1px solid #f2cbd2;
+    border-left: 4px solid #d83c50;
+    background: #fdecee;
+    color: #8e2638;
+    overflow-wrap: anywhere;
+}
+
+.assignment-detail-state {
+    display: flex;
+    min-height: 140px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--lms-text-muted, #6b6b72);
+}
+
+    .assignment-detail-state p {
+        margin: 0;
+    }
+
+.assignment-detail-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--lms-primary-soft, #ecebff);
+    border-top-color: var(--lms-primary, #4b46d9);
+    border-radius: 50%;
+    animation: assignment-detail-spin 0.8s linear infinite;
+}
+
+@keyframes assignment-detail-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 700px) {
+    .assignment-detail-page {
+        padding: 8px 0 28px;
+    }
+
+    .assignment-detail-header {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .assignment-detail-icon {
+        flex-basis: 44px;
+        width: 44px;
+        height: 44px;
+        font-size: 23px;
+    }
+
+    .assignment-detail-card-heading,
+    .assignment-detail-description {
+        padding: 18px;
+    }
+
+    .assignment-detail-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .assignment-detail-meta-item:nth-child(odd) {
+        border-right: 0;
+    }
+
+    .assignment-detail-meta-item {
+        padding: 15px 18px;
+    }
+
+    .assignment-detail-feedback-card {
+        padding: 18px;
+    }
+
+    .assignment-detail-feedback-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .assignment-detail-spinner {
+        animation: none;
+    }
+}

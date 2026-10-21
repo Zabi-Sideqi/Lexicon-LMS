@@ -33,5 +33,6 @@ public static class ServiceExtensions
         services.AddLazy<IActivityService>();
         services.AddLazy<ISubmissionService>();
         services.AddLazy<IFeedbackService>();
+        services.AddLazy<INotificationService>();
     }
 }

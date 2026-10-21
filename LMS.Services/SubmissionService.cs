@@ -94,6 +94,7 @@ public class SubmissionService : ISubmissionService
             assignment => assignment.Id == assignmentId);
     }
 
+
     public async Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
         string teacherId)
     {
@@ -106,13 +107,24 @@ public class SubmissionService : ISubmissionService
                 "Only teachers can view course submissions.");
         }
 
-        if (teacher.CourseId is null)
+        var courses = await _uow.CourseRepository
+            .GetByTeacherIdAsync(teacherId);
+
+        if (!courses.Any())
             return [];
 
-        var submissions = await _uow.SubmissionRepository
-            .GetByCourseIdAsync(teacher.CourseId.Value);
+        var submissions = new List<Submission>();
+
+        foreach (var course in courses)
+        {
+            var courseSubmissions = await _uow.SubmissionRepository
+                .GetByCourseIdAsync(course.Id);
+
+            submissions.AddRange(courseSubmissions);
+        }
 
         return submissions
+            .DistinctBy(submission => submission.Id)
             .Select(submission => new TeacherSubmissionDto(
                 submission.Id,
                 submission.ActivityId,
@@ -126,5 +138,6 @@ public class SubmissionService : ISubmissionService
                 submission.Feedbacks.Any()))
             .ToList();
     }
+
 
 }

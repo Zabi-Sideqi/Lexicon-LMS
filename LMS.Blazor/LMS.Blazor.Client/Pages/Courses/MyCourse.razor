@@ -1,55 +1,109 @@
 ﻿@page "/my-course"
 @attribute [Authorize(Roles = "Student")]
+@using System.Net.Http
 @using LMS.Shared.DTOs.CourseDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @inject IApiProxyClient Proxy
 
 <PageTitle>My Course</PageTitle>
 
-<h1>My Course</h1>
-
-@if (loading)
-{
-    <p><em>Loading...</em></p>
-}
-else if (course is null)
-{
-    <div class="alert alert-warning">
-        You are not enrolled in any course.
-    </div>
-}
-else
-{
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">@course.Name</h5>
-            <p class="card-text">@course.Description</p>
-            <p class="text-muted">
-                @course.StartDate.ToShortDateString() – @course.EndDate.ToShortDateString()
-            </p>
-            <a href="/courses/@course.Id/modules" class="btn btn-primary">Modules</a>
-            <a href="/assignments" class="btn btn-primary">Assignments</a>
+<div class="my-course-page">
+    <div class="my-course-header">
+        <div>
+            <span class="my-course-eyebrow">LEXICON LMS</span>
+            <h1>My Course</h1>
+            <p>View your course information and connect with your classmates.</p>
         </div>
+        <span class="my-course-badge">Student</span>
     </div>
 
-    <h2>Participants</h2>
-
-    @if (participants is null || !participants.Any())
+    @if (loading)
     {
-        <p><em>No participants.</em></p>
+        <div class="my-course-state">
+            <span class="my-course-spinner"></span>
+            <p>Loading your course...</p>
+        </div>
+    }
+    else if (course is null)
+    {
+        <div class="my-course-state">
+            <div class="my-course-state-icon" aria-hidden="true">▤</div>
+            <h2>No course found</h2>
+            <p>You are not enrolled in any course.</p>
+        </div>
     }
     else
     {
-        <ul class="list-group">
-            @foreach (var p in participants)
+        <section class="my-course-card">
+            <div class="my-course-card-top">
+                <div class="my-course-icon" aria-hidden="true">▤</div>
+                <span class="my-course-status">My course</span>
+            </div>
+
+            <h2>@course.Name</h2>
+            <p class="my-course-description">
+                @course.Description
+            </p>
+
+            <div class="my-course-dates">
+                <div>
+                    <span class="my-course-detail-label">Start date</span>
+                    <strong>@course.StartDate.ToShortDateString()</strong>
+                </div>
+                <div>
+                    <span class="my-course-detail-label">End date</span>
+                    <strong>@course.EndDate.ToShortDateString()</strong>
+                </div>
+            </div>
+
+            <div class="my-course-actions">
+                <a href="/courses/@course.Id/modules" class="btn btn-primary">
+                    View Modules
+                </a>
+                <a href="/assignments" class="btn btn-outline-primary">
+                    View Assignments
+                </a>
+            </div>
+        </section>
+
+        <section class="my-course-participants">
+            <div class="my-course-section-header">
+                <div>
+                    <h2>Participants</h2>
+                    <p>People enrolled in your course.</p>
+                </div>
+
+                @if (participants is not null)
+                {
+                    <span class="my-course-count">@participants.Count()</span>
+                }
+            </div>
+
+            @if (participants is null || !participants.Any())
             {
-                <li class="list-group-item">
-                    <strong>@p.UserName</strong>
-                </li>
+                <div class="my-course-empty-participants">
+                    <p>No participants to display.</p>
+                </div>
             }
-        </ul>
+            else
+            {
+                <div class="my-course-participant-list">
+                    @foreach (var participant in participants)
+                    {
+                        <div class="my-course-participant" @key="participant.UserName">
+                            <span class="my-course-avatar" aria-hidden="true">
+                                @(string.IsNullOrWhiteSpace(participant.UserName)
+                                    ? "?"
+                                    : participant.UserName[..1].ToUpperInvariant())
+                            </span>
+                            <strong>@participant.UserName</strong>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
     }
-}
+</div>
 
 @code {
     private bool loading = true;
@@ -61,7 +115,8 @@ else
         try
         {
             course = await Proxy.GetAsync<StudentCourseDto>("courses/my");
-            participants = await Proxy.GetAsync<IEnumerable<CourseParticipantDto>>("courses/my/participants");
+            participants = await Proxy.GetAsync<IEnumerable<CourseParticipantDto>>(
+                "courses/my/participants");
         }
         catch (HttpRequestException)
         {

@@ -10,43 +10,91 @@
 
 <PageTitle>Create Module</PageTitle>
 
-<h1>Create Module</h1>
+<div class="module-create-page">
+    <div class="module-create-header">
+        <div>
+            <span class="module-create-eyebrow">LEXICON LMS</span>
+            <h1>Create Module</h1>
+            <p>Add a new module to your course and set its schedule.</p>
+        </div>
 
-<EditForm Model="model" OnValidSubmit="HandleSubmit">
-    <DataAnnotationsValidator />
-
-    @if (errorMessage is not null)
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
-
-    <div class="mb-3">
-        <label class="form-label">Name</label>
-        <InputText @bind-Value="model.Name" class="form-control" />
-        <ValidationMessage For="() => model.Name" />
+        <div class="module-create-icon" aria-hidden="true">＋</div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <InputTextArea @bind-Value="model.Description" class="form-control" />
-        <ValidationMessage For="() => model.Description" />
+    <div class="module-create-card">
+        <div class="module-create-card-heading">
+            <h2>Module details</h2>
+            <p>Enter the information for your new module.</p>
+        </div>
+
+        <EditForm Model="model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            @if (errorMessage is not null)
+            {
+                <div class="module-create-error" role="alert">
+                    <span class="module-create-error-icon" aria-hidden="true">!</span>
+                    <div>
+                        <strong>Unable to create module</strong>
+                        <p>@errorMessage</p>
+                    </div>
+                </div>
+            }
+
+            <div class="module-create-field">
+                <label for="module-name">Name</label>
+                <InputText id="module-name"
+                           @bind-Value="model.Name"
+                           class="module-create-input"
+                           placeholder="Enter module name" />
+                <ValidationMessage For="() => model.Name" />
+            </div>
+
+            <div class="module-create-field">
+                <label for="module-description">Description</label>
+                <InputTextArea id="module-description"
+                               @bind-Value="model.Description"
+                               class="module-create-input module-create-textarea"
+                               placeholder="Describe what this module covers" />
+                <ValidationMessage For="() => model.Description" />
+            </div>
+
+            <div class="module-create-date-grid">
+                <div class="module-create-field">
+                    <label for="module-start-date">Start date</label>
+                    <InputDate id="module-start-date"
+                               @bind-Value="model.StartDate"
+                               class="module-create-input" />
+                    <ValidationMessage For="() => model.StartDate" />
+                </div>
+
+                <div class="module-create-field">
+                    <label for="module-end-date">End date</label>
+                    <InputDate id="module-end-date"
+                               @bind-Value="model.EndDate"
+                               class="module-create-input" />
+                    <ValidationMessage For="() => model.EndDate" />
+                </div>
+            </div>
+
+            <div class="module-create-actions">
+                <a href="/courses/@CourseId/modules"
+                   class="module-create-cancel">
+                    Cancel
+                </a>
+
+                <button type="submit" class="module-create-submit">
+                    <span aria-hidden="true">＋</span>
+                    Create module
+                </button>
+            </div>
+        </EditForm>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Start Date</label>
-        <InputDate @bind-Value="model.StartDate" class="form-control" />
-        <ValidationMessage For="() => model.StartDate" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">End Date</label>
-        <InputDate @bind-Value="model.EndDate" class="form-control" />
-        <ValidationMessage For="() => model.EndDate" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Create</button>
-    <a href="/courses/@CourseId/modules" class="btn btn-secondary">Cancel</a>
-</EditForm>
+    <p class="module-create-footer">
+        Make sure the module dates are within the course schedule.
+    </p>
+</div>
 
 @code {
     // A module belongs to a course, so the course id comes from the address.

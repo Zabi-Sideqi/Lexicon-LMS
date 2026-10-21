@@ -61,7 +61,21 @@ public class CourseRepository : ICourseRepository
         return await query.FirstOrDefaultAsync(
             course => course.Id == id);
     }
+    public async Task<IEnumerable<Course>> GetByTeacherIdAsync(
+    string teacherId,
+    bool trackChanges = false)
+    {
+        IQueryable<Course> query = _context.Courses
+            .Where(course => course.Teachers.Any(
+                teacher => teacher.Id == teacherId));
 
+        if (!trackChanges)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.ToListAsync();
+    }
     public void Create(Course course)
     {
         _context.Courses.Add(course);
