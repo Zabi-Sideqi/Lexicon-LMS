@@ -63,6 +63,7 @@ public class SubmissionService : ISubmissionService
                     assignment.Description,
                     assignment.EndTime,
                     submittedAt,
+                    submission?.FileName,
                     SubmissionStatusCalculator.Calculate(assignment.EndTime, submittedAt, now),
                     false); // Feedback does not exist yet (US11)
             })

@@ -38,6 +38,9 @@ else
                 <dt class="col-sm-3">Inlämningstid</dt>
                 <dd class="col-sm-9">@(assignment.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
 
+                <dt class="col-sm-3">Inlämnad fil</dt>
+                <dd class="col-sm-9">@(assignment.SubmittedFileName ?? "-")</dd>
+
                 <dt class="col-sm-3">Feedback</dt>
                 <dd class="col-sm-9">@(assignment.HasFeedback ? "Finns" : "Ingen ännu")</dd>
             </dl>

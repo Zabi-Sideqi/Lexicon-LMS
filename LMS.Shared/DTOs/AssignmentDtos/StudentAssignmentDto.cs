@@ -8,5 +8,6 @@ public record StudentAssignmentDto(
     string Description,
     DateTime Deadline,
     DateTime? SubmittedAt,
+    string? SubmittedFileName,
     SubmissionStatus Status,
     bool HasFeedback);
