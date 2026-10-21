@@ -1,10 +1,14 @@
 ﻿@page "/documents"
-@using LMS.Shared.DTOs.DocumentDtos
-@using LMS.Shared.DTOs.CourseDtos
 @using LMS.Blazor.Client.Services.ApiProxy
+@using LMS.Shared.DTOs.ActivityDtos
+@using LMS.Shared.DTOs.CourseDtos
+@using LMS.Shared.DTOs.DocumentDtos
+@using LMS.Shared.DTOs.ModuleDtos
 @inject IApiProxyClient Proxy
 
-<PageTitle>Documents</PageTitle>
+@attribute [Authorize]
+
+<PageTitle>Dokument</PageTitle>
 
 <h1>Dokument</h1>
 
@@ -24,6 +28,34 @@
                 </InputSelect>
             </div>
 
+            @if (uploadModel.CourseId is > 0)
+            {
+                <div class="mb-3">
+                    <label>Modul (valfri)</label>
+                    <InputSelect @bind-Value="uploadModel.ModuleId" @bind-Value:after="OnModuleChanged">
+                        <option value="">— Ingen modul —</option>
+                        @foreach (var m in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                        {
+                            <option value="@m.Id">@m.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+
+            @if (uploadModel.ModuleId is > 0)
+            {
+                <div class="mb-3">
+                    <label>Aktivitet (valfri)</label>
+                    <InputSelect @bind-Value="uploadModel.ActivityId">
+                        <option value="">— Ingen aktivitet —</option>
+                        @foreach (var a in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
+                        {
+                            <option value="@a.Id">@a.Name (@a.Type)</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+
             <div class="mb-3">
                 <label class="form-label">Fil (.pdf eller .docx, max 10MB)</label>
                 <InputFile OnChange="HandleFileSelected" class="form-control" />
@@ -36,7 +68,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary"
-                    disabled="@(selectedFile is null || isUploading)">
+                    disabled="@(selectedFile is null || isUploading || uploadModel.CourseId is null or 0)">
                 @(isUploading ? "Laddar upp..." : "Ladda upp")
             </button>
         </EditForm>
@@ -54,7 +86,7 @@
     </NotAuthorized>
 </AuthorizeView>
 
-<h2 class="mt-4">Dokument</h2>
+<h2 class="mt-4">Alla dokument</h2>
 
 @if (documents is null)
 {
@@ -70,6 +102,7 @@ else
         <thead>
             <tr>
                 <th>Filnamn</th>
+                <th>Koppling</th>
                 <th>Typ</th>
                 <th>Storlek</th>
                 <th>Uppladdad</th>
@@ -81,6 +114,7 @@ else
             {
                 <tr>
                     <td>@doc.FileName</td>
+                    <td>@doc.AttachPath</td>
                     <td>@doc.ContentType</td>
                     <td>@(doc.FileSize / 1024) KB</td>
                     <td>@doc.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
@@ -97,6 +131,8 @@ else
 
 @code {
     private List<CourseDto> courses = new();
+    private List<ModuleDto> modules = new();
+    private List<ActivityDto> activities = new();
     private List<DocumentDto>? documents;
     private DocumentUploadModel uploadModel = new();
     private IBrowserFile? selectedFile;
@@ -110,6 +146,8 @@ else
         try
         {
             courses = await Proxy.GetAsync<List<CourseDto>>("courses") ?? new();
+            modules = await Proxy.GetAsync<List<ModuleDto>>("modules") ?? new();
+            activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
 
             if (courses.Count > 0)
             {
@@ -155,12 +193,39 @@ else
     {
         selectedFile = e.File;
         uploadMessage = null;
+
+        if (selectedFile is not null)
+        {
+            var ext = Path.GetExtension(selectedFile.Name).ToLowerInvariant();
+            if (ext != ".pdf" && ext != ".docx")
+            {
+                uploadMessage = $"Filtypen {ext} är inte tillåten. Tillåtna: .pdf, .docx.";
+                uploadError = true;
+                selectedFile = null;
+                return;
+            }
+
+            if (selectedFile.Size > 10 * 1024 * 1024)
+            {
+                uploadMessage = "Filen är för stor. Maxstorlek är 10 MB.";
+                uploadError = true;
+                selectedFile = null;
+                return;
+            }
+        }
     }
 
     private async Task HandleUpload()
     {
-        if (selectedFile is null || uploadModel.CourseId is null or 0)
+        if (selectedFile is null)
             return;
+
+        if (uploadModel.CourseId is null or 0)
+        {
+            uploadMessage = "Välj en kurs först.";
+            uploadError = true;
+            return;
+        }
 
         isUploading = true;
         uploadMessage = null;
@@ -173,9 +238,33 @@ else
 
             var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
             var fileContent = new StreamContent(stream);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            var contentType = string.IsNullOrWhiteSpace(selectedFile.ContentType)
+                ? "application/octet-stream"
+                : selectedFile.ContentType;
+
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
             content.Add(fileContent, "File", selectedFile.Name);
-            content.Add(new StringContent(uploadedCourseId.ToString()), "CourseId");
+            
+            if (uploadModel.ActivityId is > 0)
+            {
+                content.Add(new StringContent(uploadModel.ActivityId.Value.ToString()), "ActivityId");
+            }
+            else if (uploadModel.ModuleId is > 0)
+            {
+                content.Add(new StringContent(uploadModel.ModuleId.Value.ToString()), "ModuleId");
+            }
+            else if (uploadModel.CourseId is > 0)
+            {
+                content.Add(new StringContent(uploadModel.CourseId.Value.ToString()), "CourseId");
+            }
+            else
+            {
+                uploadMessage = "Välj kurs, modul eller aktivitet.";
+                uploadError = true;
+                return;
+            }
 
             var created = await Proxy.SendAsync<DocumentDto>(
                 HttpMethod.Post,
@@ -190,7 +279,7 @@ else
         }
         catch (Exception ex)
         {
-            uploadMessage = $"Fel: {ex.Message}";
+            uploadMessage = $"Fel: {ExtractError(ex.Message)}";
             uploadError = true;
         }
         finally
@@ -201,8 +290,16 @@ else
 
     private async Task OnCourseSelected()
     {
+        uploadModel.ModuleId = null;
+        uploadModel.ActivityId = null;
+
         if (uploadModel.CourseId is > 0)
             await LoadDocuments(uploadModel.CourseId.Value);
+    }
+
+    private void OnModuleChanged()
+    {
+        uploadModel.ActivityId = null;
     }
 
     private async Task LoadDocuments(int courseId)
@@ -219,8 +316,29 @@ else
         }
     }
 
+    private static string ExtractError(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return "Ett fel uppstod.";
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(message);
+            if (doc.RootElement.TryGetProperty("detail", out var detail)
+                && detail.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return detail.GetString() ?? message;
+            }
+        }
+        catch (System.Text.Json.JsonException) { }
+
+        return message;
+    }
+
     private class DocumentUploadModel
     {
         public int? CourseId { get; set; }
+        public int? ModuleId { get; set; }
+        public int? ActivityId { get; set; }
     }
 }

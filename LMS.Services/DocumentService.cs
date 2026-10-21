@@ -172,8 +172,33 @@ public class DocumentService : IDocumentService
             "Du har inte behörighet att komma åt detta dokument.");
     }
 
-    private static DocumentDto MapToDto(Document document) =>
-        new(
+    private static DocumentDto MapToDto(Document document)
+    {
+        string? attachPath = null;
+
+        if (document.ActivityId.HasValue)
+        {
+            var courseName = document.Activity?.Module?.Course?.Name;
+            var moduleName = document.Activity?.Module?.Name;
+            var activityName = document.Activity?.Name;
+
+            if (courseName is not null && moduleName is not null && activityName is not null)
+                attachPath = $"Aktivitet: {courseName} / {moduleName} / {activityName}";
+        }
+        else if (document.ModuleId.HasValue)
+        {
+            var courseName = document.Module?.Course?.Name;
+            var moduleName = document.Module?.Name;
+
+            if (courseName is not null && moduleName is not null)
+                attachPath = $"Modul: {courseName} / {moduleName}";
+        }
+        else if (document.CourseId.HasValue)
+        {
+            attachPath = $"Kurs: {document.Course?.Name}";
+        }
+
+        return new DocumentDto(
             document.Id,
             document.FileName,
             document.ContentType,
@@ -181,6 +206,11 @@ public class DocumentService : IDocumentService
             document.UploadedAt,
             document.UploadedById,
             document.CourseId,
+            document.Course?.Name,
             document.ModuleId,
-            document.ActivityId);
+            document.Module?.Name,
+            document.ActivityId,
+            document.Activity?.Name,
+            attachPath);
+    }
 }
