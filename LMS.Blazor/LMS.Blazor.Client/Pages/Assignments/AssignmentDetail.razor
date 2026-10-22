@@ -51,7 +51,9 @@ else
 
     <div class="mb-3">
         <label class="form-label">Fil (.pdf eller .docx, max 10 MB)</label>
-        <InputFile OnChange="HandleFileSelected" class="form-control" />
+        <InputFile OnChange="HandleFileSelected"
+                   accept=".pdf,.docx"
+                   class="form-control" />
         @if (selectedFile is not null)
         {
             <p class="text-muted mt-1">
@@ -100,10 +102,39 @@ else
         }
     }
 
+    private const long MaxFileSize = 10 * 1024 * 1024;
+
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
-        selectedFile = e.File;
+        selectedFile = null;
         message = null;
+        messageIsError = false;
+
+        var file = e.File;
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+        if (extension is not ".pdf" and not ".docx")
+        {
+            message = "Endast PDF- och DOCX-filer kan lämnas in.";
+            messageIsError = true;
+            return;
+        }
+
+        if (file.Size == 0)
+        {
+            message = "Filen är tom.";
+            messageIsError = true;
+            return;
+        }
+
+        if (file.Size > MaxFileSize)
+        {
+            message = "Filen är för stor. Maxstorleken är 10 MB.";
+            messageIsError = true;
+            return;
+        }
+
+        selectedFile = file;
     }
 
     private async Task HandleSubmit()
@@ -117,8 +148,7 @@ else
         try
         {
             using var content = new MultipartFormDataContent();
-
-            var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            var stream = selectedFile.OpenReadStream(maxAllowedSize: MaxFileSize);
             var fileContent = new StreamContent(stream);
             fileContent.Headers.ContentType =
                 new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
