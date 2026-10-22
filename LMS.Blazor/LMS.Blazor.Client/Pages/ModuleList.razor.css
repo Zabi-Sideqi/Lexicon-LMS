@@ -1,0 +1,319 @@
+/* CSS for ModuleList component */
+
+.module-list-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8px 0 40px;
+    color: #27272a;
+}
+
+.module-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.module-list-eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: #4b46d9;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.module-list-header h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 3vw, 36px);
+    font-weight: 600;
+    letter-spacing: -0.6px;
+}
+
+.module-list-header p,
+.module-list-section-header p {
+    margin: 0;
+    color: #6b6b72;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.module-list-course-badge,
+.module-list-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 13px;
+    border-radius: 20px;
+    background: #ecebff;
+    color: #4b46d9;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.module-list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.module-list-back-link {
+    color: #4b46d9;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+    .module-list-back-link:hover {
+        color: #3730a3;
+        text-decoration: underline;
+    }
+
+.module-list-create-button,
+.module-list-retry-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 10px 16px;
+    border: 1px solid #4b46d9;
+    border-radius: 6px;
+    background: #4b46d9;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+    .module-list-create-button:hover,
+    .module-list-retry-button:hover {
+        border-color: #6259d9;
+        background: #6259d9;
+        color: #fff;
+    }
+
+.module-list-card {
+    overflow: hidden;
+    border: 1px solid #e4e4e8;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.module-list-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px;
+    border-bottom: 1px solid #e8e8ed;
+}
+
+    .module-list-section-header h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+.module-list-count {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 9px;
+}
+
+.module-list-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.module-list-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+    .module-list-table thead {
+        background: #f8f7ff;
+    }
+
+    .module-list-table th {
+        padding: 15px 18px;
+        border-bottom: 1px solid #e8e8ed;
+        color: #5c5b68;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.35px;
+        white-space: nowrap;
+    }
+
+    .module-list-table td {
+        padding: 17px 18px;
+        border-bottom: 1px solid #ededf0;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .module-list-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .module-list-table tbody tr:hover {
+        background: #fbfaff;
+    }
+
+.module-list-name {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 150px;
+}
+
+    .module-list-name strong {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+.module-list-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #ecebff;
+    color: #4b46d9;
+    font-size: 19px;
+}
+
+.module-list-description {
+    min-width: 180px;
+    max-width: 340px;
+    color: #6b6b72;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.module-list-date {
+    color: #45454d;
+    white-space: nowrap;
+}
+
+.module-list-actions-heading,
+.module-list-actions {
+    text-align: right;
+}
+
+.module-list-edit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 7px 13px;
+    border: 1px solid #d9d7ff;
+    border-radius: 5px;
+    background: #f5f4ff;
+    color: #4b46d9;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+    .module-list-edit-button:hover {
+        border-color: #4b46d9;
+        background: #ecebff;
+        color: #3730a3;
+    }
+
+.module-list-state {
+    display: flex;
+    min-height: 240px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 22px;
+    text-align: center;
+}
+
+    .module-list-state h3 {
+        margin: 12px 0 8px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .module-list-state p {
+        max-width: 500px;
+        margin: 0 0 18px;
+        color: #6b6b72;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+.module-list-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: #ecebff;
+    color: #4b46d9;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.module-list-spinner {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 16px;
+    border: 3px solid #e4e4ff;
+    border-top-color: #4b46d9;
+    border-radius: 50%;
+    animation: module-list-spin 0.8s linear infinite;
+}
+
+@keyframes module-list-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 700px) {
+    .module-list-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .module-list-toolbar {
+        align-items: flex-start;
+    }
+
+    .module-list-section-header {
+        padding: 18px 20px;
+    }
+
+    .module-list-table th,
+    .module-list-table td {
+        padding: 13px 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .module-list-spinner {
+        animation: none;
+    }
+
+    .module-list-create-button,
+    .module-list-retry-button {
+        transition: none;
+    }
+}

@@ -14,4 +14,6 @@ public class Submission
     public string FilePath { get; set; } = null!;
 
     public DateTime SubmittedAt { get; set; }
+
+    public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 }

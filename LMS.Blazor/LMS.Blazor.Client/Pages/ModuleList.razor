@@ -8,66 +8,142 @@
 
 <PageTitle>Modules</PageTitle>
 
-<h1>Modules</h1>
+<div class="module-list-page">
+    <div class="module-list-header">
+        <div>
+            <span class="module-list-eyebrow">LEXICON LMS</span>
+            <h1>Course Modules</h1>
+            <p>Explore the modules and follow your course progress.</p>
+        </div>
 
-<p>
-    <AuthorizeView Roles="Teacher">
-        <a href="/courses" class="btn btn-sm btn-outline-secondary">Back to courses</a>
-    </AuthorizeView>
-    <AuthorizeView Roles="Student">
-        <a href="/my-course" class="btn btn-sm btn-outline-secondary">Back to my course</a>
-    </AuthorizeView>
-</p>
-
-<AuthorizeView Roles="Teacher">
-    <a href="/courses/@CourseId/modules/create" class="btn btn-primary mb-3">Create module</a>
-</AuthorizeView>
-
-@if (isLoading)
-{
-    <p><em>Loading modules...</em></p>
-}
-else if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="alert alert-danger" role="alert">
-        <p>@errorMessage</p>
-        <button type="button" class="btn btn-outline-danger" @onclick="LoadModulesAsync">Try again</button>
+        <span class="module-list-course-badge">Course #@CourseId</span>
     </div>
-}
-else if (modules is null || !modules.Any())
-{
-    <p>No modules found.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Start</th>
-                <th>End</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var module in modules.OrderBy(m => m.StartDate))
+
+    <div class="module-list-toolbar">
+        <AuthorizeView Roles="Teacher">
+            <a href="/courses" class="module-list-back-link">
+                <span aria-hidden="true">←</span> Back to courses
+            </a>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Student">
+            <a href="/my-course" class="module-list-back-link">
+                <span aria-hidden="true">←</span> Back to my course
+            </a>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Teacher">
+            <a href="/courses/@CourseId/modules/create"
+               class="module-list-create-button">
+                <span aria-hidden="true">+</span> Create module
+            </a>
+        </AuthorizeView>
+    </div>
+
+    <section class="module-list-card">
+        <div class="module-list-section-header">
+            <div>
+                <h2>Modules</h2>
+                <p>Modules are listed by their start date.</p>
+            </div>
+
+            @if (!isLoading && string.IsNullOrWhiteSpace(errorMessage)
+                && modules is not null)
             {
-                <tr>
-                    <td>@module.Name</td>
-                    <td>@module.Description</td>
-                    <td>@module.StartDate.ToShortDateString()</td>
-                    <td>@module.EndDate.ToShortDateString()</td>
-                    <td>
-                        <AuthorizeView Roles="Teacher">
-                            <a href="/modules/edit/@module.Id" class="btn btn-sm btn-secondary">Edit</a>
-                        </AuthorizeView>
-                    </td>
-                </tr>
+                <span class="module-list-count">@modules.Count()</span>
             }
-        </tbody>
-    </table>
-}
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="module-list-state">
+                <span class="module-list-spinner"></span>
+                <p>Loading modules...</p>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="module-list-state">
+                <div class="module-list-state-icon" aria-hidden="true">!</div>
+                <h3>Unable to load modules</h3>
+                <p>@errorMessage</p>
+                <button type="button"
+                        class="module-list-retry-button"
+                        @onclick="LoadModulesAsync">
+                    Try again
+                </button>
+            </div>
+        }
+        else if (modules is null || !modules.Any())
+        {
+            <div class="module-list-state">
+                <div class="module-list-state-icon" aria-hidden="true">▤</div>
+                <h3>No modules yet</h3>
+                <p>There are currently no modules available for this course.</p>
+
+                <AuthorizeView Roles="Teacher">
+                    <a href="/courses/@CourseId/modules/create"
+                       class="module-list-create-button">
+                        Create the first module
+                    </a>
+                </AuthorizeView>
+            </div>
+        }
+        else
+        {
+            <div class="module-list-table-wrapper">
+                <table class="module-list-table">
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Description</th>
+                            <th>Start date</th>
+                            <th>End date</th>
+                            <th class="module-list-actions-heading">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var module in modules.OrderBy(m => m.StartDate))
+                        {
+                            <tr @key="module.Id">
+                                <td>
+                                    <div class="module-list-name">
+                                        <span class="module-list-icon"
+                                              aria-hidden="true">▤</span>
+                                        <strong>@module.Name</strong>
+                                    </div>
+                                </td>
+                                <td class="module-list-description">
+                                    @(string.IsNullOrWhiteSpace(module.Description)
+                                        ? "No description"
+                                        : module.Description)
+                                </td>
+                                <td>
+                                    <span class="module-list-date">
+                                        @module.StartDate.ToShortDateString()
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="module-list-date">
+                                        @module.EndDate.ToShortDateString()
+                                    </span>
+                                </td>
+                                <td class="module-list-actions">
+                                    <AuthorizeView Roles="Teacher">
+                                        <a href="/modules/edit/@module.Id"
+                                           class="module-list-edit-button">
+                                            Edit
+                                        </a>
+                                    </AuthorizeView>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
 
 @code {
     [Parameter]
@@ -87,17 +163,20 @@ else
 
         try
         {
-            modules = await Proxy.GetAsync<IEnumerable<ModuleDto>>($"modules/course/{CourseId}");
+            modules = await Proxy.GetAsync<IEnumerable<ModuleDto>>(
+                $"modules/course/{CourseId}");
         }
         catch (UnauthorizedAccessException)
         {
             errorMessage = "Your session has expired. Please sign in again.";
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Forbidden)
         {
             errorMessage = "Access denied. You are not allowed to view modules for this course.";
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             errorMessage = "The requested course could not be found.";
         }

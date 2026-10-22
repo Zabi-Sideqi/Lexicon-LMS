@@ -10,50 +10,104 @@
 
 <PageTitle>Edit Module</PageTitle>
 
-<h1>Edit Module</h1>
-
-@if (model is null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <EditForm Model="model" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-
-        @if (errorMessage is not null)
-        {
-            <div class="alert alert-danger">@errorMessage</div>
-        }
-
-        <div class="mb-3">
-            <label class="form-label">Name</label>
-            <InputText @bind-Value="model.Name" class="form-control" />
-            <ValidationMessage For="() => model.Name" />
+<div class="module-edit-page">
+    <div class="module-edit-header">
+        <div>
+            <span class="module-edit-eyebrow">LEXICON LMS</span>
+            <h1>Edit Module</h1>
+            <p>Update the module details and schedule for your course.</p>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <InputTextArea @bind-Value="model.Description" class="form-control" />
-            <ValidationMessage For="() => model.Description" />
-        </div>
+        <div class="module-edit-icon" aria-hidden="true">✎</div>
+    </div>
 
-        <div class="mb-3">
-            <label class="form-label">Start Date</label>
-            <InputDate @bind-Value="model.StartDate" class="form-control" />
-            <ValidationMessage For="() => model.StartDate" />
-        </div>
+    @if (model is null)
+    {
+        <section class="module-edit-card">
+            <div class="module-edit-state">
+                <span class="module-edit-spinner" aria-hidden="true"></span>
+                <p>Loading module details...</p>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="module-edit-card">
+            <div class="module-edit-card-heading">
+                <h2>Module details</h2>
+                <p>Update the information below and save your changes.</p>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">End Date</label>
-            <InputDate @bind-Value="model.EndDate" class="form-control" />
-            <ValidationMessage For="() => model.EndDate" />
-        </div>
+            <EditForm Model="model" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
 
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="/courses/@model.CourseId/modules" class="btn btn-secondary">Cancel</a>
-    </EditForm>
-}
+                @if (errorMessage is not null)
+                {
+                    <div class="module-edit-error" role="alert">
+                        <span class="module-edit-error-icon"
+                              aria-hidden="true">!</span>
+                        <div>
+                            <strong>Unable to save module</strong>
+                            <p>@errorMessage</p>
+                        </div>
+                    </div>
+                }
+
+                <div class="module-edit-field">
+                    <label for="module-edit-name">Name</label>
+                    <InputText id="module-edit-name"
+                               @bind-Value="model.Name"
+                               class="module-edit-input"
+                               placeholder="Enter module name" />
+                    <ValidationMessage For="() => model.Name" />
+                </div>
+
+                <div class="module-edit-field">
+                    <label for="module-edit-description">Description</label>
+                    <InputTextArea id="module-edit-description"
+                                   @bind-Value="model.Description"
+                                   class="module-edit-input module-edit-textarea"
+                                   placeholder="Describe what this module covers" />
+                    <ValidationMessage For="() => model.Description" />
+                </div>
+
+                <div class="module-edit-date-grid">
+                    <div class="module-edit-field">
+                        <label for="module-edit-start-date">Start date</label>
+                        <InputDate id="module-edit-start-date"
+                                   @bind-Value="model.StartDate"
+                                   class="module-edit-input" />
+                        <ValidationMessage For="() => model.StartDate" />
+                    </div>
+
+                    <div class="module-edit-field">
+                        <label for="module-edit-end-date">End date</label>
+                        <InputDate id="module-edit-end-date"
+                                   @bind-Value="model.EndDate"
+                                   class="module-edit-input" />
+                        <ValidationMessage For="() => model.EndDate" />
+                    </div>
+                </div>
+
+                <div class="module-edit-actions">
+                    <a href="/courses/@model.CourseId/modules"
+                       class="module-edit-cancel">
+                        Cancel
+                    </a>
+
+                    <button type="submit" class="module-edit-submit">
+                        <span aria-hidden="true">✓</span>
+                        Save changes
+                    </button>
+                </div>
+            </EditForm>
+        </section>
+
+        <p class="module-edit-footer">
+            Make sure the module dates are within the course schedule.
+        </p>
+    }
+</div>
 
 @code {
     [Parameter]

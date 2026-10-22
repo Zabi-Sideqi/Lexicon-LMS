@@ -8,6 +8,9 @@ public interface IUnitOfWork
     IUserRepository UserRepository { get; }
     IDocumentRepository DocumentRepository { get; }
     ISubmissionRepository SubmissionRepository { get; }
+    IFeedbackRepository FeedbackRepository { get; }
+    INotificationRepository NotificationRepository { get; }
+
 
     Task<bool> CourseExistsAsync(int courseId);
 
