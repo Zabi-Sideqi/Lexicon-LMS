@@ -32,7 +32,7 @@ public class DashboardService : IDashboardService
     {
         var user = await _userManager.FindByIdAsync(studentId);
         if (user?.CourseId is null)
-            throw new ArgumentException("Student is not enrolled in a course.");
+            return new StudentDashboardDto(null, [], [], [], [], []);
 
         var courseId = user.CourseId.Value;
 

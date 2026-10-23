@@ -26,31 +26,37 @@
     }
     else if (dashboard is not null)
     {
-        <div class="stats">
-            <div class="stat-card">
-                <span class="stat-icon">▤</span>
-                <strong>@dashboard.UpcomingActivities.Count()</strong>
-                <span>Kommande aktiviteter</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">⌛</span>
-                <strong>@dashboard.PendingAssignments.Count()</strong>
-                <span>Att göra</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">▧</span>
-                <strong>@dashboard.RecentDocuments.Count()</strong>
-                <span>Dokument</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">◉</span>
-                <strong>@dashboard.UnreadNotifications.Count()</strong>
-                <span>Notiser</span>
-            </div>
-        </div>
-
-        @if (dashboard.Course is not null)
+        @if (dashboard.Course is null)
         {
+            <div class="alert alert-info" role="alert">
+                Du är inte inskriven i någon kurs. Kontakta din lärare.
+            </div>
+        }
+        else
+        {
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-icon">▤</span>
+                    <strong>@dashboard.UpcomingActivities.Count()</strong>
+                    <span>Kommande aktiviteter</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">⌛</span>
+                    <strong>@dashboard.PendingAssignments.Count()</strong>
+                    <span>Att göra</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">▧</span>
+                    <strong>@dashboard.RecentDocuments.Count()</strong>
+                    <span>Dokument</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">◉</span>
+                    <strong>@dashboard.UnreadNotifications.Count()</strong>
+                    <span>Notiser</span>
+                </div>
+            </div>
+
             <div class="activity-card">
                 <h2>@dashboard.Course.Name</h2>
                 <p>@dashboard.Course.Description</p>
@@ -58,82 +64,82 @@
                     @dashboard.Course.StartDate.ToString("yyyy-MM-dd") – @dashboard.Course.EndDate.ToString("yyyy-MM-dd")
                 </small>
             </div>
-        }
 
-        @if (dashboard.UpcomingActivities.Any())
-        {
-            <div class="activity-card">
-                <h2>Kommande aktiviteter</h2>
-                @foreach (var a in dashboard.UpcomingActivities)
-                {
-                    <div class="activity">
-                        <div>
-                            <strong>@a.Name</strong>
-                            <p class="mb-0 text-muted small">@a.Description</p>
+            @if (dashboard.UpcomingActivities.Any())
+            {
+                <div class="activity-card">
+                    <h2>Kommande aktiviteter</h2>
+                    @foreach (var a in dashboard.UpcomingActivities)
+                    {
+                        <div class="activity">
+                            <div>
+                                <strong>@a.Name</strong>
+                                <p class="mb-0 text-muted small">@a.Description</p>
+                            </div>
+                            <span>@a.StartTime.ToString("yyyy-MM-dd HH:mm") – @a.EndTime.ToString("HH:mm")</span>
                         </div>
-                        <span>@a.StartTime.ToString("yyyy-MM-dd HH:mm") – @a.EndTime.ToString("HH:mm")</span>
-                    </div>
-                }
-            </div>
-        }
+                    }
+                </div>
+            }
 
-        @if (dashboard.PendingAssignments.Any())
-        {
-            <div class="activity-card">
-                <h2>Att göra</h2>
-                @foreach (var a in dashboard.PendingAssignments)
-                {
-                    <div class="activity">
-                        <strong>@a.Name <span class="badge bg-warning text-dark">@a.Status</span></strong>
-                        <span>Deadline: @a.Deadline.ToString("yyyy-MM-dd HH:mm")</span>
-                    </div>
-                }
-            </div>
-        }
-
-        @if (dashboard.RecentDocuments.Any())
-        {
-            <div class="activity-card">
-                <h2>Senaste dokument</h2>
-                @foreach (var d in dashboard.RecentDocuments)
-                {
-                    <div class="activity">
-                        <strong>@d.FileName</strong>
-                        <span>@d.UploadedAt.ToString("yyyy-MM-dd")</span>
-                    </div>
-                }
-            </div>
-        }
-
-        @if (dashboard.RecentFeedback.Any())
-        {
-            <div class="activity-card">
-                <h2>Senaste feedback</h2>
-                @foreach (var f in dashboard.RecentFeedback)
-                {
-                    <div class="activity">
-                        <div>
-                            <p class="mb-1">@f.Text</p>
-                            <small class="text-muted">@f.TeacherName</small>
+            @if (dashboard.PendingAssignments.Any())
+            {
+                <div class="activity-card">
+                    <h2>Att göra</h2>
+                    @foreach (var a in dashboard.PendingAssignments)
+                    {
+                        <div class="activity">
+                            <strong>@a.Name <span class="badge bg-warning text-dark">@a.Status</span></strong>
+                            <span>Deadline: @a.Deadline.ToString("yyyy-MM-dd HH:mm")</span>
                         </div>
-                        <span>@f.CreatedAt.ToString("yyyy-MM-dd")</span>
-                    </div>
-                }
-            </div>
-        }
+                    }
+                </div>
+            }
 
-        @if (dashboard.UnreadNotifications.Any())
-        {
-            <div class="activity-card">
-                <h2>Notiser</h2>
-                @foreach (var n in dashboard.UnreadNotifications)
-                {
-                    <div class="activity">
-                        <span>@n.Message</span>
-                        <small class="text-muted">@n.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
-                    </div>
-                }
-            </div>
+            @if (dashboard.RecentDocuments.Any())
+            {
+                <div class="activity-card">
+                    <h2>Senaste dokument</h2>
+                    @foreach (var d in dashboard.RecentDocuments)
+                    {
+                        <div class="activity">
+                            <strong>@d.FileName</strong>
+                            <span>@d.UploadedAt.ToString("yyyy-MM-dd")</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (dashboard.RecentFeedback.Any())
+            {
+                <div class="activity-card">
+                    <h2>Senaste feedback</h2>
+                    @foreach (var f in dashboard.RecentFeedback)
+                    {
+                        <div class="activity">
+                            <div>
+                                <p class="mb-1">@f.Text</p>
+                                <small class="text-muted">@f.TeacherName</small>
+                            </div>
+                            <span>@f.CreatedAt.ToString("yyyy-MM-dd")</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (dashboard.UnreadNotifications.Any())
+            {
+                <div class="activity-card">
+                    <h2>Notiser</h2>
+                    @foreach (var n in dashboard.UnreadNotifications)
+                    {
+                        <div class="activity">
+                            <span>@n.Message</span>
+                            <small class="text-muted">@n.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                        </div>
+                    }
+                </div>
+            }
         }
     }
 </div>
