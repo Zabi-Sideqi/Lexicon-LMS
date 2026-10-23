@@ -12,7 +12,7 @@
 
 <h1>Dokument</h1>
 
-<AuthorizeView Roles="Teacher">
+<AuthorizeView>
     <Authorized Context="authContext">
         <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
             <div class="mb-3">
@@ -20,7 +20,10 @@
                 <InputSelect @bind-Value="uploadModel.CourseId"
                              @bind-Value:after="OnCourseSelected"
                              class="form-select">
-                    <option value="">Välj kurs</option>
+                    @if (courses.Count > 1)
+                    {
+                        <option value="">Välj kurs</option>
+                    }
                     @foreach (var c in courses)
                     {
                         <option value="@c.Id">@c.Name</option>
@@ -80,10 +83,6 @@
             </div>
         }
     </Authorized>
-
-    <NotAuthorized>
-        <p class="text-muted">Student: dina dokument visas nedan.</p>
-    </NotAuthorized>
 </AuthorizeView>
 
 <h2 class="mt-4">Alla dokument</h2>
@@ -181,11 +180,25 @@ else
 
         documents = new();
 
-        // Om bara en kurs (Student): ladda dokument automatiskt
+        // Om bara en kurs (Student): ladda dokument + moduler + aktiviteter
         if (courses.Count == 1 && courses[0].Id > 0)
         {
-            uploadModel.CourseId = courses[0].Id;
-            await LoadDocuments(courses[0].Id);
+            var courseId = courses[0].Id;
+            uploadModel.CourseId = courseId;
+
+            try
+            {
+                modules = await Proxy.GetAsync<List<ModuleDto>>($"modules/course/{courseId}") ?? new();
+            }
+            catch { modules = new(); }
+
+            try
+            {
+                activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
+            }
+            catch { activities = new(); }
+
+            await LoadDocuments(courseId);
         }
     }
 

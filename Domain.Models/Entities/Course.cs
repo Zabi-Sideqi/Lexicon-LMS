@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Domain.Models.Entities
 {
@@ -13,5 +12,6 @@ namespace Domain.Models.Entities
         public DateTime EndDate { get; set; }
 
         public ICollection<ApplicationUser> Students { get; set; } = [];
+        public ICollection<ApplicationUser> Teachers { get; set; } = [];
     }
 }

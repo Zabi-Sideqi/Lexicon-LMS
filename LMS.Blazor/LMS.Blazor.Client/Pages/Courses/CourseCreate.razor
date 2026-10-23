@@ -9,38 +9,80 @@
 
 <PageTitle>Create Course</PageTitle>
 
-<h1>Create Course</h1>
+<div class="course-form-page">
+    <div class="course-form-header">
+        <div>
+            <span class="course-form-eyebrow">LEXICON LMS</span>
+            <h1>Create Course</h1>
+            <p>Create a course and define its schedule.</p>
+        </div>
 
-<EditForm Model="model" OnValidSubmit="HandleSubmit">
-    <DataAnnotationsValidator />
-
-    <div class="mb-3">
-        <label class="form-label">Name</label>
-        <InputText @bind-Value="model.Name" class="form-control" />
-        <ValidationMessage For="() => model.Name" />
+        <a href="/courses" class="btn btn-outline-primary">
+            &larr; Back to courses
+        </a>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <InputTextArea @bind-Value="model.Description" class="form-control" />
-        <ValidationMessage For="() => model.Description" />
-    </div>
+    <div class="course-form-card">
+        <div class="course-form-card-header">
+            <div class="course-form-icon" aria-hidden="true">+</div>
+            <div>
+                <h2>Course details</h2>
+                <p>Fill in the information for your new course.</p>
+            </div>
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Start Date</label>
-        <InputDate @bind-Value="model.StartDate" class="form-control" />
-        <ValidationMessage For="() => model.StartDate" />
-    </div>
+        <EditForm Model="model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
 
-    <div class="mb-3">
-        <label class="form-label">End Date</label>
-        <InputDate @bind-Value="model.EndDate" class="form-control" />
-        <ValidationMessage For="() => model.EndDate" />
-    </div>
+            <div class="course-form-body">
+                <div class="mb-4">
+                    <label for="course-name" class="form-label">Name</label>
+                    <InputText id="course-name"
+                               @bind-Value="model.Name"
+                               class="form-control"
+                               placeholder="Enter course name" />
+                    <ValidationMessage For="() => model.Name" />
+                </div>
 
-    <button type="submit" class="btn btn-primary">Create</button>
-    <a href="/courses" class="btn btn-secondary">Cancel</a>
-</EditForm>
+                <div class="mb-4">
+                    <label for="course-description" class="form-label">Description</label>
+                    <InputTextArea id="course-description"
+                                   @bind-Value="model.Description"
+                                   class="form-control course-description-input"
+                                   placeholder="Describe the course" />
+                    <ValidationMessage For="() => model.Description" />
+                </div>
+
+                <div class="course-date-grid">
+                    <div class="mb-4">
+                        <label for="course-start-date" class="form-label">Start Date</label>
+                        <InputDate id="course-start-date"
+                                   @bind-Value="model.StartDate"
+                                   class="form-control" />
+                        <ValidationMessage For="() => model.StartDate" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="course-end-date" class="form-label">End Date</label>
+                        <InputDate id="course-end-date"
+                                   @bind-Value="model.EndDate"
+                                   class="form-control" />
+                        <ValidationMessage For="() => model.EndDate" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="course-form-footer">
+                <a href="/courses" class="btn btn-light course-cancel-button">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary course-submit-button">
+                    Create Course
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
     private CourseForCreationDto model = new()

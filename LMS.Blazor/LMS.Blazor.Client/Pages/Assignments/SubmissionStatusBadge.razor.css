@@ -1,0 +1,46 @@
+/* CSS for SubmissionStatusBadge component */
+
+.submission-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.status-not-submitted {
+    border-color: var(--lms-border, #e4e4e8);
+    background: var(--lms-surface-soft, #f8f8fa);
+    color: var(--lms-text-muted, #6b6b72);
+}
+
+.status-submitted {
+    border-color: #c7e8d5;
+    background: #e8f6ee;
+    color: #216e43;
+}
+
+.status-submitted-late {
+    border-color: #f1d69a;
+    background: #fff4d6;
+    color: #805b08;
+}
+
+.status-late {
+    border-color: #f2cbd2;
+    background: #fdecee;
+    color: #a52d40;
+}
+
+.status-unknown {
+    border-color: var(--lms-primary-soft, #ecebff);
+    background: var(--lms-primary-soft, #ecebff);
+    color: var(--lms-primary, #4b46d9);
+}

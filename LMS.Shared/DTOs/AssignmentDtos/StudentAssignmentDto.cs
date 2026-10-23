@@ -10,4 +10,5 @@ public record StudentAssignmentDto(
     DateTime? SubmittedAt,
     string? SubmittedFileName,
     SubmissionStatus Status,
-    bool HasFeedback);
+    bool HasFeedback,
+    int? SubmissionId);

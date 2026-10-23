@@ -15,4 +15,7 @@ public interface ISubmissionService
         string fileName,
         string contentType,
         long fileSize);
+
+    Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
+        string teacherId);
 }

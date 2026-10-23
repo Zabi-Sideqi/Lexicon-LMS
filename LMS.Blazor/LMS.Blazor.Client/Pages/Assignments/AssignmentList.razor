@@ -7,52 +7,108 @@
 
 <PageTitle>Uppgifter</PageTitle>
 
-<h1>Uppgifter</h1>
+<div class="assignment-list-page">
+    <header class="assignment-list-header">
+        <div>
+            <span class="assignment-list-eyebrow">LEXICON LMS</span>
+            <h1>Mina uppgifter</h1>
+            <p>Se dina uppgifter, deadlines, inlämningsstatus och feedback från läraren.</p>
+        </div>
 
-@if (errorMessage is not null)
-{
-    <div class="alert alert-danger">@errorMessage</div>
-}
-else if (assignments is null)
-{
-    <p><em>Laddar...</em></p>
-}
-else if (!assignments.Any())
-{
-    <p>Inga uppgifter hittades.</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Namn</th>
-                    <th>Beskrivning</th>
-                    <th>Deadline</th>
-                    <th>Status</th>
-                    <th>Feedback</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var assignment in assignments.OrderBy(a => a.Deadline))
-                {
-                    <tr>
-                        <td>@assignment.Name</td>
-                        <td>@assignment.Description</td>
-                        <td>@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td><SubmissionStatusBadge Status="assignment.Status" /></td>
-                        <td>@(assignment.HasFeedback ? "Ja" : "-")</td>
-                        <td>
-                            <a href="/assignments/@assignment.Id" class="btn btn-sm btn-secondary">Visa</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+        <div class="assignment-list-icon" aria-hidden="true">▤</div>
+    </header>
+
+    @if (errorMessage is not null)
+    {
+        <div class="assignment-list-error" role="alert">
+            <strong>Det gick inte att hämta uppgifterna</strong>
+            <p>@errorMessage</p>
+        </div>
+    }
+    else if (assignments is null)
+    {
+        <div class="assignment-list-state" role="status">
+            <span class="assignment-list-spinner" aria-hidden="true"></span>
+            <p>Laddar uppgifter...</p>
+        </div>
+    }
+    else if (!assignments.Any())
+    {
+        <div class="assignment-list-empty">
+            <div class="assignment-list-empty-icon" aria-hidden="true">✓</div>
+            <h2>Inga uppgifter ännu</h2>
+            <p>Det finns inga uppgifter att visa just nu.</p>
+        </div>
+    }
+    else
+    {
+        <section class="assignment-list-card">
+            <div class="assignment-list-card-heading">
+                <div>
+                    <h2>Uppgiftsöversikt</h2>
+                    <p>Här hittar du dina uppgifter och deras aktuella status.</p>
+                </div>
+                <span class="assignment-list-count">
+                    @assignments.Count() @(assignments.Count() == 1 ? "uppgift" : "uppgifter")
+                </span>
+            </div>
+
+            <div class="assignment-list-table-wrapper">
+                <table class="assignment-list-table">
+                    <thead>
+                        <tr>
+                            <th>Namn</th>
+                            <th>Beskrivning</th>
+                            <th>Deadline</th>
+                            <th>Status</th>
+                            <th>Feedback</th>
+                            <th><span class="visually-hidden">Åtgärd</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var assignment in assignments.OrderBy(a => a.Deadline))
+                        {
+                            <tr @key="assignment.Id">
+                                <td class="assignment-list-name">
+                                    @assignment.Name
+                                </td>
+                                <td class="assignment-list-description">
+                                    @assignment.Description
+                                </td>
+                                <td class="assignment-list-deadline">
+                                    @assignment.Deadline.ToString("yyyy-MM-dd HH:mm")
+                                </td>
+                                <td>
+                                    <SubmissionStatusBadge Status="assignment.Status" />
+                                </td>
+                                <td>
+                                    @if (assignment.HasFeedback)
+                                    {
+                                        <span class="assignment-list-feedback available">
+                                            Ja
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="assignment-list-feedback">
+                                            Inte ännu
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="/assignments/@assignment.Id"
+                                       class="assignment-list-view">
+                                        Visa <span aria-hidden="true">→</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>
 
 @code {
     private IEnumerable<StudentAssignmentDto>? assignments;
@@ -62,7 +118,8 @@ else
     {
         try
         {
-            assignments = await Proxy.GetAsync<IEnumerable<StudentAssignmentDto>>("assignments/my");
+            assignments = await Proxy.GetAsync<IEnumerable<StudentAssignmentDto>>(
+                "assignments/my");
         }
         catch (HttpRequestException)
         {

@@ -13,6 +13,8 @@ public class UnitOfWork : IUnitOfWork
     private readonly Lazy<IDocumentRepository> _documentRepository;
     private readonly Lazy<IActivityRepository> _activityRepository;
     private readonly Lazy<ISubmissionRepository> _submissionRepository;
+    private readonly Lazy<IFeedbackRepository> _feedbackRepository;
+    private readonly Lazy<INotificationRepository> _notificationRepository;
     private IUserRepository? _userRepository;
 
     public UnitOfWork(ApplicationDbContext context)
@@ -33,6 +35,10 @@ public class UnitOfWork : IUnitOfWork
 
         _submissionRepository = new Lazy<ISubmissionRepository>(
             () => new SubmissionRepository(context));
+        _feedbackRepository = new Lazy<IFeedbackRepository>(
+            () => new FeedbackRepository(context));
+        _notificationRepository = new Lazy<INotificationRepository>(
+            () => new NotificationRepository(context));
     }
 
     public ICourseRepository CourseRepository =>
@@ -62,4 +68,8 @@ public class UnitOfWork : IUnitOfWork
     public Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default) =>
         _context.SaveChangesAsync(cancellationToken);
+    public IFeedbackRepository FeedbackRepository => 
+        _feedbackRepository.Value;
+    public INotificationRepository NotificationRepository =>
+        _notificationRepository.Value;
 }

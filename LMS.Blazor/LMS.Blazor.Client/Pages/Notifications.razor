@@ -1,0 +1,65 @@
+﻿@page "/notifications"
+@using Microsoft.AspNetCore.Authorization
+@using Domain.Models.Entities
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize(Roles = "Student")]
+@inject IApiProxyClient Proxy
+
+<PageTitle>Mina notiser</PageTitle>
+
+<h1>Mina notiser</h1>
+
+@if (loading)
+{
+    <p><em>Hämtar notiser...</em></p>
+}
+else if (errorMessage is not null)
+{
+    <div class="alert alert-warning">
+        @errorMessage
+    </div>
+}
+else if (notifications is null || !notifications.Any())
+{
+    <div class="alert alert-info">
+        Du har inga notiser ännu.
+    </div>
+}
+else
+{
+    @foreach (var notification in notifications.OrderByDescending(n => n.CreatedAt))
+    {
+        <div class="card mb-3" @key="notification.Id">
+            <div class="card-body">
+                <p class="card-text">@notification.Message</p>
+                <small class="text-muted">
+                    @notification.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                </small>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private IEnumerable<Notification>? notifications;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            notifications = await Proxy.SendAsync<IEnumerable<Notification>>(
+                HttpMethod.Get,
+                "notifications");
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Det gick inte att hämta notiser. Försök igen senare.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

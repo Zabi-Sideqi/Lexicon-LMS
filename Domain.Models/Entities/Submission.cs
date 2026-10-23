@@ -16,4 +16,6 @@ public class Submission
     public long FileSize { get; set; }
 
     public DateTime SubmittedAt { get; set; }
+
+    public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 }

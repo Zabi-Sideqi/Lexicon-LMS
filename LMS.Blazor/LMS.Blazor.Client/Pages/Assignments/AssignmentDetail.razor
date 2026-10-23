@@ -1,96 +1,229 @@
 ﻿@page "/assignments/{Id:int}"
+@using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Authorization
 @using System.Net.Http
 @using LMS.Shared.DTOs.AssignmentDtos
+@using LMS.Shared.DTOs.FeedbackDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Student")]
 @inject IApiProxyClient Proxy
 
 <PageTitle>Uppgift</PageTitle>
 
-<p>
-    <a href="/assignments" class="btn btn-sm btn-outline-secondary">Tillbaka till uppgifter</a>
-</p>
+<div class="assignment-detail-page">
+    <a href="/assignments" class="assignment-detail-back">
+        <span aria-hidden="true">←</span> Tillbaka till uppgifter
+    </a>
 
-@if (loading)
-{
-    <p><em>Laddar...</em></p>
-}
-else if (assignment is null)
-{
-    <div class="alert alert-warning">Uppgiften hittades inte.</div>
-}
-else
-{
-    <h1>@assignment.Name</h1>
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <p class="card-text">@assignment.Description</p>
-
-            <dl class="row mb-0">
-                <dt class="col-sm-3">Deadline</dt>
-                <dd class="col-sm-9">@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</dd>
-
-                <dt class="col-sm-3">Status</dt>
-                <dd class="col-sm-9"><SubmissionStatusBadge Status="assignment.Status" /></dd>
-
-                <dt class="col-sm-3">Inlämningstid</dt>
-                <dd class="col-sm-9">@(assignment.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
-
-                <dt class="col-sm-3">Inlämnad fil</dt>
-                <dd class="col-sm-9">@(assignment.SubmittedFileName ?? "-")</dd>
-
-                <dt class="col-sm-3">Feedback</dt>
-                <dd class="col-sm-9">@(assignment.HasFeedback ? "Finns" : "Ingen ännu")</dd>
-            </dl>
-        </div>
-    </div>
-
-    <h2 class="h4">Lämna in</h2>
-
-    <div class="mb-3">
-        <label class="form-label">Fil (.pdf eller .docx, max 10 MB)</label>
-        <InputFile OnChange="HandleFileSelected"
-                   accept=".pdf,.docx"
-                   class="form-control" />
-        @if (selectedFile is not null)
-        {
-            <p class="text-muted mt-1">
-                Vald: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
-            </p>
-        }
-    </div>
-
-    <button type="button" class="btn btn-primary" @onclick="HandleSubmit"
-            disabled="@(selectedFile is null || isUploading)">
-        @(isUploading ? "Lämnar in..." : (assignment.SubmittedAt is null ? "Lämna in" : "Lämna in igen"))
-    </button>
-
-    @if (!string.IsNullOrEmpty(message))
+    @if (loading)
     {
-        <div class="alert @(messageIsError ? "alert-danger" : "alert-success") mt-3">
-            @message
+        <div class="assignment-detail-state" role="status">
+            <span class="assignment-detail-spinner" aria-hidden="true"></span>
+            <p>Laddar uppgift...</p>
         </div>
     }
-}
+    else if (assignment is null)
+    {
+        <div class="assignment-detail-error" role="alert">
+            Uppgiften hittades inte.
+        </div>
+    }
+    else
+    {
+        <header class="assignment-detail-header">
+            <div>
+                <span class="assignment-detail-eyebrow">LEXICON LMS</span>
+                <h1>@assignment.Name</h1>
+                <p>Uppgiftsdetaljer, inlämning och feedback från din lärare.</p>
+            </div>
+            <div class="assignment-detail-icon" aria-hidden="true">▤</div>
+        </header>
+
+        <section class="assignment-detail-card">
+            <div class="assignment-detail-card-heading">
+                <h2>Uppgiftsinformation</h2>
+                <p>Information om deadline, inlämning och status.</p>
+            </div>
+
+            <div class="assignment-detail-description">
+                @assignment.Description
+            </div>
+
+            <dl class="assignment-detail-meta">
+                <div class="assignment-detail-meta-item">
+                    <dt>Deadline</dt>
+                    <dd>@assignment.Deadline.ToString("yyyy-MM-dd HH:mm")</dd>
+                </div>
+
+                <div class="assignment-detail-meta-item">
+                    <dt>Status</dt>
+                    <dd><SubmissionStatusBadge Status="assignment.Status" /></dd>
+                </div>
+
+                <div class="assignment-detail-meta-item">
+                    <dt>Inlämningstid</dt>
+                    <dd>@(assignment.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+                </div>
+
+                <div class="assignment-detail-meta-item">
+                    <dt>Inlämnad fil</dt>
+                    <dd>@(assignment.SubmittedFileName ?? "-")</dd>
+                </div>
+
+                <div class="assignment-detail-meta-item">
+                    <dt>Feedback</dt>
+                    <dd>
+                        <span class="assignment-detail-feedback-status @(assignment.HasFeedback ? "available" : "")">
+                            @(assignment.HasFeedback ? "Finns" : "Ingen ännu")
+                        </span>
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="assignment-detail-card">
+            <div class="assignment-detail-card-heading">
+                <h2>Lämna in</h2>
+                <p>Ladda upp din inlämning som PDF eller DOCX.</p>
+            </div>
+
+            <div class="assignment-detail-submit-form">
+                <div class="mb-3">
+                    <label class="form-label">
+                        Fil (.pdf eller .docx, max 10 MB)
+                    </label>
+
+                    <InputFile OnChange="HandleFileSelected"
+                               accept=".pdf,.docx"
+                               class="form-control" />
+
+                    @if (selectedFile is not null)
+                    {
+                        <p class="text-muted mt-1">
+                            Vald: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+                        </p>
+                    }
+                </div>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        @onclick="HandleSubmit"
+                        disabled="@(selectedFile is null || isUploading)">
+                    @(isUploading
+                        ? "Lämnar in..."
+                        : assignment.SubmittedAt is null ? "Lämna in" : "Lämna in igen")
+                </button>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert @(messageIsError ? "alert-danger" : "alert-success") mt-3">
+                        @message
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (assignment.SubmissionId is null)
+        {
+            <div class="assignment-detail-notice">
+                <strong>Ingen inlämning ännu</strong>
+                <p>Feedback visas när du har lämnat in uppgiften och läraren har gett feedback.</p>
+            </div>
+        }
+        else
+        {
+            <section class="assignment-detail-feedback-section">
+                <div class="assignment-detail-section-heading">
+                    <div>
+                        <span class="assignment-detail-eyebrow">ÅTERKOPPLING</span>
+                        <h2>Feedback från läraren</h2>
+                        <p>Här kan du läsa lärarens kommentarer till din inlämning.</p>
+                    </div>
+                </div>
+
+                @if (loadingFeedback)
+                {
+                    <div class="assignment-detail-state" role="status">
+                        <span class="assignment-detail-spinner" aria-hidden="true"></span>
+                        <p>Hämtar feedback...</p>
+                    </div>
+                }
+                else if (feedbackError is not null)
+                {
+                    <div class="assignment-detail-error" role="alert">
+                        @feedbackError
+                    </div>
+                }
+                else if (feedback is null || !feedback.Any())
+                {
+                    <div class="assignment-detail-notice">
+                        <strong>Ingen feedback ännu</strong>
+                        <p>Du har inte fått någon feedback på den här inlämningen ännu.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var item in feedback.OrderByDescending(f => f.CreatedAt))
+                    {
+                        <article class="assignment-detail-feedback-card" @key="item.Id">
+                            <p class="assignment-detail-feedback-text">@item.Text</p>
+
+                            <div class="assignment-detail-feedback-footer">
+                                <span>
+                                    <strong>Lärare</strong>
+                                    @item.TeacherName
+                                </span>
+                                <span>
+                                    <strong>Datum</strong>
+                                    @item.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                                </span>
+                            </div>
+                        </article>
+                    }
+                }
+            </section>
+        }
+    }
+</div>
 
 @code {
     [Parameter]
     public int Id { get; set; }
 
+    private const long MaxFileSize = 10 * 1024 * 1024;
+
     private StudentAssignmentDto? assignment;
+    private IEnumerable<FeedbackDto>? feedback;
+
     private bool loading = true;
+    private bool loadingFeedback;
+    private string? feedbackError;
+
     private IBrowserFile? selectedFile;
     private string? message;
     private bool messageIsError;
     private bool isUploading;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        loading = true;
+        assignment = null;
+        feedback = null;
+        feedbackError = null;
+        selectedFile = null;
+        message = null;
+        messageIsError = false;
+
         try
         {
-            assignment = await Proxy.GetAsync<StudentAssignmentDto>($"assignments/my/{Id}");
+            assignment = await Proxy.SendAsync<StudentAssignmentDto>(
+                HttpMethod.Get,
+                $"assignments/my/{Id}");
+
+            if (assignment?.SubmissionId is int submissionId)
+            {
+                await LoadFeedbackAsync(submissionId);
+            }
         }
         catch (HttpRequestException)
         {
@@ -101,8 +234,6 @@ else
             loading = false;
         }
     }
-
-    private const long MaxFileSize = 10 * 1024 * 1024;
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -140,18 +271,24 @@ else
     private async Task HandleSubmit()
     {
         if (selectedFile is null)
+        {
             return;
+        }
 
         isUploading = true;
         message = null;
+        messageIsError = false;
 
         try
         {
             using var content = new MultipartFormDataContent();
-            var stream = selectedFile.OpenReadStream(maxAllowedSize: MaxFileSize);
-            var fileContent = new StreamContent(stream);
+
+            await using var stream = selectedFile.OpenReadStream(maxAllowedSize: MaxFileSize);
+            using var fileContent = new StreamContent(stream);
+
             fileContent.Headers.ContentType =
                 new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+
             content.Add(fileContent, "File", selectedFile.Name);
 
             var updated = await Proxy.SendAsync<StudentAssignmentDto>(
@@ -160,11 +297,17 @@ else
                 content);
 
             if (updated is not null)
+            {
                 assignment = updated;
+            }
 
             message = "Filen är inlämnad.";
-            messageIsError = false;
             selectedFile = null;
+
+            if (assignment?.SubmissionId is int submissionId)
+            {
+                await LoadFeedbackAsync(submissionId);
+            }
         }
         catch (Exception ex)
         {
@@ -174,6 +317,27 @@ else
         finally
         {
             isUploading = false;
+        }
+    }
+
+    private async Task LoadFeedbackAsync(int submissionId)
+    {
+        loadingFeedback = true;
+        feedbackError = null;
+
+        try
+        {
+            feedback = await Proxy.SendAsync<IEnumerable<FeedbackDto>>(
+                HttpMethod.Get,
+                $"feedback/submission/{submissionId}");
+        }
+        catch (HttpRequestException)
+        {
+            feedbackError = "Det gick inte att hämta feedback. Försök igen senare.";
+        }
+        finally
+        {
+            loadingFeedback = false;
         }
     }
 }
