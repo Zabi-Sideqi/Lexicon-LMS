@@ -286,8 +286,12 @@
             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: MaxFileSize);
             using var fileContent = new StreamContent(stream);
 
+            var contentType = string.IsNullOrWhiteSpace(selectedFile.ContentType)
+                ? "application/octet-stream"
+                : selectedFile.ContentType;
+
             fileContent.Headers.ContentType =
-                new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+                new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
 
             content.Add(fileContent, "File", selectedFile.Name);
 
