@@ -1,5 +1,7 @@
 ﻿@page "/assignments/{Id:int}"
+@using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Authorization
+@using System.Net.Http
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Shared.DTOs.FeedbackDtos
 @using LMS.Blazor.Client.Services.ApiProxy
@@ -32,7 +34,7 @@
             <div>
                 <span class="assignment-detail-eyebrow">LEXICON LMS</span>
                 <h1>@assignment.Name</h1>
-                <p>Uppgiftsdetaljer och feedback från din lärare.</p>
+                <p>Uppgiftsdetaljer, inlämning och feedback från din lärare.</p>
             </div>
             <div class="assignment-detail-icon" aria-hidden="true">▤</div>
         </header>
@@ -64,6 +66,11 @@
                 </div>
 
                 <div class="assignment-detail-meta-item">
+                    <dt>Inlämnad fil</dt>
+                    <dd>@(assignment.SubmittedFileName ?? "-")</dd>
+                </div>
+
+                <div class="assignment-detail-meta-item">
                     <dt>Feedback</dt>
                     <dd>
                         <span class="assignment-detail-feedback-status @(assignment.HasFeedback ? "available" : "")">
@@ -72,6 +79,48 @@
                     </dd>
                 </div>
             </dl>
+        </section>
+
+        <section class="assignment-detail-card">
+            <div class="assignment-detail-card-heading">
+                <h2>Lämna in</h2>
+                <p>Ladda upp din inlämning som PDF eller DOCX.</p>
+            </div>
+
+            <div class="assignment-detail-submit-form">
+                <div class="mb-3">
+                    <label class="form-label">
+                        Fil (.pdf eller .docx, max 10 MB)
+                    </label>
+
+                    <InputFile OnChange="HandleFileSelected"
+                               accept=".pdf,.docx"
+                               class="form-control" />
+
+                    @if (selectedFile is not null)
+                    {
+                        <p class="text-muted mt-1">
+                            Vald: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+                        </p>
+                    }
+                </div>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        @onclick="HandleSubmit"
+                        disabled="@(selectedFile is null || isUploading)">
+                    @(isUploading
+                        ? "Lämnar in..."
+                        : assignment.SubmittedAt is null ? "Lämna in" : "Lämna in igen")
+                </button>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert @(messageIsError ? "alert-danger" : "alert-success") mt-3">
+                        @message
+                    </div>
+                }
+            </div>
         </section>
 
         @if (assignment.SubmissionId is null)
@@ -141,11 +190,19 @@
     [Parameter]
     public int Id { get; set; }
 
+    private const long MaxFileSize = 10 * 1024 * 1024;
+
     private StudentAssignmentDto? assignment;
     private IEnumerable<FeedbackDto>? feedback;
+
     private bool loading = true;
     private bool loadingFeedback;
     private string? feedbackError;
+
+    private IBrowserFile? selectedFile;
+    private string? message;
+    private bool messageIsError;
+    private bool isUploading;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -153,6 +210,9 @@
         assignment = null;
         feedback = null;
         feedbackError = null;
+        selectedFile = null;
+        message = null;
+        messageIsError = false;
 
         try
         {
@@ -172,6 +232,95 @@
         finally
         {
             loading = false;
+        }
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = null;
+        message = null;
+        messageIsError = false;
+
+        var file = e.File;
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+        if (extension is not ".pdf" and not ".docx")
+        {
+            message = "Endast PDF- och DOCX-filer kan lämnas in.";
+            messageIsError = true;
+            return;
+        }
+
+        if (file.Size == 0)
+        {
+            message = "Filen är tom.";
+            messageIsError = true;
+            return;
+        }
+
+        if (file.Size > MaxFileSize)
+        {
+            message = "Filen är för stor. Maxstorleken är 10 MB.";
+            messageIsError = true;
+            return;
+        }
+
+        selectedFile = file;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (selectedFile is null)
+        {
+            return;
+        }
+
+        isUploading = true;
+        message = null;
+        messageIsError = false;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+
+            await using var stream = selectedFile.OpenReadStream(maxAllowedSize: MaxFileSize);
+            using var fileContent = new StreamContent(stream);
+
+            var contentType = string.IsNullOrWhiteSpace(selectedFile.ContentType)
+                ? "application/octet-stream"
+                : selectedFile.ContentType;
+
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
+            content.Add(fileContent, "File", selectedFile.Name);
+
+            var updated = await Proxy.SendAsync<StudentAssignmentDto>(
+                HttpMethod.Post,
+                $"assignments/my/{Id}/submission",
+                content);
+
+            if (updated is not null)
+            {
+                assignment = updated;
+            }
+
+            message = "Filen är inlämnad.";
+            selectedFile = null;
+
+            if (assignment?.SubmissionId is int submissionId)
+            {
+                await LoadFeedbackAsync(submissionId);
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Det gick inte att lämna in filen: {ex.Message}";
+            messageIsError = true;
+        }
+        finally
+        {
+            isUploading = false;
         }
     }
 
