@@ -63,14 +63,25 @@ public class AssignmentsController(IServiceManager serviceManager) : ControllerB
 
         await using var stream = dto.File.OpenReadStream();
 
-        var assignment = await _serviceManager.SubmissionService.SubmitAsync(
-            userId,
-            id,
-            stream,
-            dto.File.FileName,
-            dto.File.ContentType,
-            dto.File.Length);
+        try
+        {
+            var assignment = await _serviceManager.SubmissionService.SubmitAsync(
+                userId,
+                id,
+                stream,
+                dto.File.FileName,
+                dto.File.ContentType,
+                dto.File.Length);
 
-        return Ok(assignment);
+            return Ok(assignment);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }
