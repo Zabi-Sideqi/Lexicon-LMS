@@ -3,6 +3,7 @@
 @using LMS.Shared.DTOs.CourseDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @using Microsoft.AspNetCore.Authorization
+@using System.Net.Http
 @using System.Net.Http.Json
 
 @attribute [Authorize(Roles = "Teacher")]
@@ -128,7 +129,7 @@
     {
         try
         {
-            var result = await ApiProxyClient.GetAsync<List<CourseDto>>("courses");
+            var result = await ApiProxyClient.SendAsync<List<CourseDto>>(HttpMethod.Get, "courses");
             courses = result ?? new List<CourseDto>();
         }
         catch (Exception)
@@ -153,7 +154,7 @@
     {
         try
         {
-            var user = await ApiProxyClient.GetAsync<UserResponseDto>($"users/{id}");
+            var user = await ApiProxyClient.SendAsync<UserResponseDto>(HttpMethod.Get, $"users/{id}");
             if (user is null)
             {
                 userNotLoaded = true;
@@ -207,7 +208,7 @@
                 userModel.CourseId = null;
 
             using var content = JsonContent.Create(userModel);
-            var updatedUser = await ApiProxyClient.PutAsync<UserResponseDto>($"users/{id}", content);
+            var updatedUser = await ApiProxyClient.SendAsync<UserResponseDto>(HttpMethod.Put, $"users/{id}", content);
             if (updatedUser is null)
             {
                 errorMessage = "Användaren kunde inte uppdateras. Kontrollera uppgifterna och försök igen.";
