@@ -1,6 +1,6 @@
-﻿@page "/users/edit/{id}"
-
+@page "/users/edit/{id}"
 @using LMS.Shared.DTOs.UserDtos
+@using LMS.Shared.DTOs.CourseDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @using Microsoft.AspNetCore.Authorization
 @using System.Net.Http.Json
@@ -10,155 +10,99 @@
 <PageTitle>Redigera användare</PageTitle>
 
 <div class="users-page">
-
     <div class="page-header">
         <div>
             <h1>Redigera användare</h1>
-            <p class="text-muted mb-0">
-                US01 · Validering och kurskoppling
-            </p>
         </div>
-
-        <a class="btn btn-outline-primary" href="/users">
-            Tillbaka
-        </a>
+        <a class="btn btn-outline-primary" href="/users">Tillbaka</a>
     </div>
 
     <div class="card">
         <div class="card-body">
-
-            <h5 class="card-title mb-4">
-                Användaruppgifter
-            </h5>
-
             @if (isLoading)
             {
-                <div class="alert alert-info">
-                    Laddar användare...
-                </div>
+                <div class="alert alert-info">Laddar användare och kurser...</div>
             }
-            else if (!string.IsNullOrWhiteSpace(errorMessage))
+            else if (!string.IsNullOrWhiteSpace(errorMessage) && userNotLoaded)
             {
-                <div class="alert alert-danger">
-                    @errorMessage
-                </div>
+                <div class="alert alert-danger" role="alert">@errorMessage</div>
             }
             else
             {
-                <EditForm Model="@userModel"
-                          OnValidSubmit="@HandleValidSubmit">
-
+                <EditForm Model="@userModel" OnValidSubmit="@HandleValidSubmit">
                     <DataAnnotationsValidator />
-
                     <div class="form-grid">
-
                         <div class="mb-3">
-                            <label class="form-label">
-                                Användarnamn *
-                            </label>
-
-                            <InputText class="form-control"
-                                       @bind-Value="userModel.UserName"
-                                       placeholder="Användarnamn" />
-
+                            <label class="form-label">Användarnamn *</label>
+                            <InputText class="form-control" @bind-Value="userModel.UserName" />
                             <ValidationMessage For="@(() => userModel.UserName)" />
                         </div>
-
                         <div class="mb-3">
-                            <label class="form-label">
-                                E-post *
-                            </label>
-
-                            <InputText class="form-control"
-                                       type="email"
-                                       @bind-Value="userModel.Email"
-                                       placeholder="anna@example.com" />
-
+                            <label class="form-label">E-post *</label>
+                            <InputText class="form-control" type="email" @bind-Value="userModel.Email" />
                             <ValidationMessage For="@(() => userModel.Email)" />
                         </div>
-
                         <div class="mb-3">
-                            <label class="form-label">
-                                Roll *
-                            </label>
-                            <InputSelect class="form-select"
-                                         @bind-Value="userModel.Role"
-                                         @bind-Value:after="HandleRoleChanged">
-
+                            <label class="form-label">Roll *</label>
+                            <InputSelect class="form-select" @bind-Value="userModel.Role" @bind-Value:after="HandleRoleChanged">
                                 <option value="">Välj roll</option>
                                 <option value="Student">Student</option>
-                                <option value="Teacher">Teacher</option>
-
+                                <option value="Teacher">Lärare</option>
                             </InputSelect>
-
                             <ValidationMessage For="@(() => userModel.Role)" />
                         </div>
 
                         @if (userModel.Role == "Student")
                         {
                             <div class="mb-4">
-                                <label class="form-label">
-                                    Kurs *
-                                </label>
-
-                                <InputNumber class="form-control"
-                                             @bind-Value="userModel.CourseId"
-                                             placeholder="Kurs-ID" />
-
-                                <ValidationMessage For="@(() => userModel.CourseId)" />
+                                <label class="form-label">Kurs *</label>
+                                @if (isLoadingCourses)
+                                {
+                                    <p>Hämtar kurser...</p>
+                                }
+                                else if (courses.Count == 0)
+                                {
+                                    <div class="alert alert-warning">Inga kurser kunde hämtas. Studenten kan inte sparas utan en kurs.</div>
+                                }
+                                else
+                                {
+                                    <InputSelect class="form-select" @bind-Value="userModel.CourseId">
+                                        <option value="">Välj kurs</option>
+                                        @foreach (var course in courses)
+                                        {
+                                            <option value="@course.Id">@course.Name</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => userModel.CourseId)" />
+                                }
                             </div>
                         }
-
                     </div>
 
                     <ValidationSummary />
-
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">@errorMessage</div>
+                    }
                     @if (!string.IsNullOrWhiteSpace(successMessage))
                     {
-                        <div class="alert alert-success">
-                            @successMessage
-                        </div>
+                        <div class="alert alert-success" role="status">@successMessage</div>
                     }
 
-                    <div class="alert alert-info">
-                        Endast behörig Teacher ska kunna skapa och ändra användare.
-                        E-post och obligatoriska fält valideras.
-                    </div>
-
                     <div class="d-flex gap-2">
-
-                        <button class="btn btn-primary"
-                                type="submit"
-                                disabled="@isSaving">
-
-                            @if (isSaving)
-                            {
-                                <span>Sparar...</span>
-                            }
-                            else
-                            {
-                                <span>Spara användare</span>
-                            }
-
+                        <button class="btn btn-primary" type="submit"
+                                disabled="@(isSaving || isLoadingCourses && userModel.Role == "Student" || userModel.Role == "Student" && courses.Count == 0)">
+                            @(isSaving ? "Sparar..." : "Spara användare")
                         </button>
-
-                        <a class="btn btn-outline-secondary"
-                           href="/users">
-                            Avbryt
-                        </a>
-
+                        <a class="btn btn-outline-secondary" href="/users">Avbryt</a>
                     </div>
-
                 </EditForm>
             }
-
         </div>
     </div>
-
 </div>
 
 @code {
-
     [Parameter]
     public string id { get; set; } = string.Empty;
 
@@ -166,40 +110,53 @@
     private IApiProxyClient ApiProxyClient { get; set; } = default!;
 
     private UserUpdateDto userModel = new();
-
+    private List<CourseDto> courses = new();
     private bool isLoading = true;
+    private bool isLoadingCourses = true;
     private bool isSaving;
-
+    private bool userNotLoaded;
     private string? errorMessage;
     private string? successMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadUser();
+        await Task.WhenAll(LoadCourses(), LoadUser());
+        isLoading = false;
     }
+
+    private async Task LoadCourses()
+    {
+        try
+        {
+            var result = await ApiProxyClient.GetAsync<List<CourseDto>>("courses");
+            courses = result ?? new List<CourseDto>();
+        }
+        catch (Exception)
+        {
+            errorMessage = "Kurserna kunde inte hämtas. Ladda om sidan eller försök senare.";
+        }
+        finally
+        {
+            isLoadingCourses = false;
+        }
+    }
+
     private void HandleRoleChanged()
     {
-        if (userModel.Role == "Teacher")
-        {
-            userModel.CourseId = null;
-        }
-
         errorMessage = null;
         successMessage = null;
+        if (userModel.Role == "Teacher")
+            userModel.CourseId = null;
     }
 
     private async Task LoadUser()
     {
-        isLoading = true;
-        errorMessage = null;
-
         try
         {
-            var user = await ApiProxyClient.GetAsync<UserResponseDto>(
-                $"users/{id}");
-
+            var user = await ApiProxyClient.GetAsync<UserResponseDto>($"users/{id}");
             if (user is null)
             {
+                userNotLoaded = true;
                 errorMessage = "Användaren kunde inte hittas.";
                 return;
             }
@@ -209,24 +166,23 @@
                 UserName = user.UserName,
                 Email = user.Email,
                 Role = user.Role,
-                CourseId = user.CourseId 
+                CourseId = user.CourseId
             };
         }
         catch (UnauthorizedAccessException)
         {
+            userNotLoaded = true;
             errorMessage = "Din session är inte längre giltig. Logga in igen.";
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            errorMessage = $"Det gick inte att hämta användaren: {ex.Message}";
+            userNotLoaded = true;
+            errorMessage = "Användaren kunde inte hämtas. Kontrollera anslutningen och försök igen.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            errorMessage = $"Ett fel uppstod: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
+            userNotLoaded = true;
+            errorMessage = "Ett oväntat fel uppstod när användaren skulle hämtas.";
         }
     }
 
@@ -238,15 +194,23 @@
 
         try
         {
+            if (userModel.Role == "Student" &&
+                (!userModel.CourseId.HasValue ||
+                 userModel.CourseId.Value <= 0 ||
+                 !courses.Any(c => c.Id == userModel.CourseId.Value)))
+            {
+                errorMessage = "Välj en giltig kurs för studenten.";
+                return;
+            }
+
+            if (userModel.Role == "Teacher")
+                userModel.CourseId = null;
+
             using var content = JsonContent.Create(userModel);
-
-            var updatedUser = await ApiProxyClient.PutAsync<UserResponseDto>(
-                $"users/{id}",
-                content);
-
+            var updatedUser = await ApiProxyClient.PutAsync<UserResponseDto>($"users/{id}", content);
             if (updatedUser is null)
             {
-                errorMessage = "Användaren kunde inte uppdateras.";
+                errorMessage = "Användaren kunde inte uppdateras. Kontrollera uppgifterna och försök igen.";
                 return;
             }
 
@@ -256,13 +220,13 @@
         {
             errorMessage = "Din session är inte längre giltig. Logga in igen.";
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            errorMessage = $"Det gick inte att uppdatera användaren: {ex.Message}";
+            errorMessage = "Det gick inte att uppdatera användaren. Kontrollera e-post, roll och kurs och försök igen.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            errorMessage = $"Ett fel uppstod: {ex.Message}";
+            errorMessage = "Ett oväntat fel uppstod när användaren skulle uppdateras.";
         }
         finally
         {
