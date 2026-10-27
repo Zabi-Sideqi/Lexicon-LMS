@@ -8,14 +8,14 @@
 @inject IApiProxyClient Proxy
 @inject NavigationManager Navigation
 
-<PageTitle>Edit Module</PageTitle>
+<PageTitle>Redigera modul</PageTitle>
 
 <div class="module-edit-page">
     <div class="module-edit-header">
         <div>
             <span class="module-edit-eyebrow">LEXICON LMS</span>
-            <h1>Edit Module</h1>
-            <p>Update the module details and schedule for your course.</p>
+            <h1>Redigera modul</h1>
+            <p>Uppdatera modulens information och datum.</p>
         </div>
 
         <div class="module-edit-icon" aria-hidden="true">✎</div>
@@ -26,7 +26,7 @@
         <section class="module-edit-card">
             <div class="module-edit-state">
                 <span class="module-edit-spinner" aria-hidden="true"></span>
-                <p>Loading module details...</p>
+                <p>Laddar modulens uppgifter...</p>
             </div>
         </section>
     }
@@ -34,8 +34,8 @@
     {
         <section class="module-edit-card">
             <div class="module-edit-card-heading">
-                <h2>Module details</h2>
-                <p>Update the information below and save your changes.</p>
+                <h2>Moduluppgifter</h2>
+                <p>Ändra informationen nedan och spara.</p>
             </div>
 
             <EditForm Model="model" OnValidSubmit="HandleSubmit">
@@ -47,33 +47,33 @@
                         <span class="module-edit-error-icon"
                               aria-hidden="true">!</span>
                         <div>
-                            <strong>Unable to save module</strong>
+                            <strong>Modulen kunde inte sparas</strong>
                             <p>@errorMessage</p>
                         </div>
                     </div>
                 }
 
                 <div class="module-edit-field">
-                    <label for="module-edit-name">Name</label>
+                    <label for="module-edit-name">Namn</label>
                     <InputText id="module-edit-name"
                                @bind-Value="model.Name"
                                class="module-edit-input"
-                               placeholder="Enter module name" />
+                               placeholder="Ange modulens namn" />
                     <ValidationMessage For="() => model.Name" />
                 </div>
 
                 <div class="module-edit-field">
-                    <label for="module-edit-description">Description</label>
+                    <label for="module-edit-description">Beskrivning</label>
                     <InputTextArea id="module-edit-description"
                                    @bind-Value="model.Description"
                                    class="module-edit-input module-edit-textarea"
-                                   placeholder="Describe what this module covers" />
+                                   placeholder="Beskriv modulens innehåll" />
                     <ValidationMessage For="() => model.Description" />
                 </div>
 
                 <div class="module-edit-date-grid">
                     <div class="module-edit-field">
-                        <label for="module-edit-start-date">Start date</label>
+                        <label for="module-edit-start-date">Startdatum</label>
                         <InputDate id="module-edit-start-date"
                                    @bind-Value="model.StartDate"
                                    class="module-edit-input" />
@@ -81,7 +81,7 @@
                     </div>
 
                     <div class="module-edit-field">
-                        <label for="module-edit-end-date">End date</label>
+                        <label for="module-edit-end-date">Slutdatum</label>
                         <InputDate id="module-edit-end-date"
                                    @bind-Value="model.EndDate"
                                    class="module-edit-input" />
@@ -92,19 +92,19 @@
                 <div class="module-edit-actions">
                     <a href="/courses/@model.CourseId/modules"
                        class="module-edit-cancel">
-                        Cancel
+                        Avbryt
                     </a>
 
                     <button type="submit" class="module-edit-submit">
                         <span aria-hidden="true">✓</span>
-                        Save changes
+                        Spara ändringar
                     </button>
                 </div>
             </EditForm>
         </section>
 
         <p class="module-edit-footer">
-            Make sure the module dates are within the course schedule.
+            Kontrollera att modulens datum ligger inom kursens period.
         </p>
     }
 </div>
@@ -144,7 +144,7 @@
 
         if (model.EndDate < model.StartDate)
         {
-            errorMessage = "End date cannot be before start date.";
+            errorMessage = "Slutdatumet kan inte vara före startdatumet.";
             return;
         }
 
@@ -159,7 +159,7 @@
         }
         catch (Exception)
         {
-            errorMessage = "The module could not be saved. The server rejected it, for example because the dates overlap another module or fall outside the course dates.";
+            errorMessage = "Modulen kunde inte sparas. Kontrollera att datumen ligger inom kursens period och inte överlappar en annan modul.";
         }
     }
 }
