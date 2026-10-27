@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Shared.DTOs.FeedbackDtos
+@using LMS.Shared.DTOs.DashboardDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
@@ -17,6 +18,125 @@
         </div>
         <span class="role-badge">Lärare</span>
     </div>
+
+    @if (dashboard is not null)
+    {
+
+        <div class="activity-card">
+            <h2>Aktiva kurser</h2>
+
+            @if (dashboard.ActiveCourses is null ||
+                 !dashboard.ActiveCourses.Any())
+            {
+                <p>Du har inga aktiva kurser just nu.</p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var course in dashboard.ActiveCourses)
+                    {
+                        <div class="col-12 col-md-6 col-lg-4"
+                             @key="course.CourseId">
+                            <div class="stat-card h-100">
+                                <h3>@course.CourseName</h3>
+                                <p class="text-muted mb-0">
+                                    @course.StartDate.ToString("yyyy-MM-dd")
+                                    –
+                                    @course.EndDate.ToString("yyyy-MM-dd")
+                                </p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+
+            <div class="activity-card">
+                <h2>Kommande aktiviteter</h2>
+
+                @if (!dashboard.UpcomingActivities.Any())
+                {
+                    <p>Inga kommande aktiviteter under den närmaste veckan.</p>
+                }
+                else
+                {
+                    @foreach (var activity in dashboard.UpcomingActivities)
+                    {
+                        <div class="activity" @key="activity.ActivityId">
+                            <strong>@activity.ActivityName</strong>
+                            <span>@activity.CourseName</span>
+                            <span>
+                                @activity.StartTime.ToString("yyyy-MM-dd HH:mm")
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="activity-card">
+                <h2>Sena inlämningar</h2>
+
+                @if (!dashboard.LateSubmissions.Any())
+                {
+                    <p>Inga sena inlämningar att visa.</p>
+                }
+                else
+                {
+                    @foreach (var submission in dashboard.LateSubmissions)
+                    {
+                        <div class="activity" @key="submission.SubmissionId">
+                            <strong>@submission.ActivityName</strong>
+                            <span>
+                                Student: @submission.StudentName
+                            </span>
+                            <span>
+                                Kurs: @submission.CourseName
+                            </span>
+                            <span>
+                                Inlämnad:
+                                @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="activity-card">
+                <h2>Saknade inlämningar</h2>
+
+                @if (!dashboard.MissingSubmissions.Any())
+                {
+                    <p>Inga saknade inlämningar att visa.</p>
+                }
+                else
+                {
+                    @foreach (var missing in dashboard.MissingSubmissions)
+                    {
+                        <div class="activity" @key="@( $"{missing.ActivityId}-{missing.StudentId}")">
+                            <strong>@missing.ActivityName</strong>
+                            <span>Student: @missing.StudentName</span>
+                            <span>Kurs: @missing.CourseName</span>
+                            <span>
+                                Deadline:
+                                @missing.DueDate.ToString("yyyy-MM-dd HH:mm")
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+
+    }
+    @if (dashboardErrorMessage is not null)
+    {
+        <div class="alert alert-warning" role="alert">
+            @dashboardErrorMessage
+            <button class="btn btn-outline-primary btn-sm ms-2"
+                    @onclick="LoadDashboardAsync">
+                Försök igen
+            </button>
+        </div>
+    }
 
     @if (loading)
     {
@@ -212,6 +332,8 @@
 
 @code {
     private List<TeacherSubmissionDto> submissions = [];
+    private TeacherDashboardDto? dashboard;
+    private string? dashboardErrorMessage;
     private bool loading = true;
     private string? errorMessage;
 
@@ -232,6 +354,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadSubmissionsAsync();
+        await LoadDashboardAsync();
     }
 
     private async Task LoadSubmissionsAsync()
@@ -264,6 +387,33 @@
         finally
         {
             loading = false;
+        }
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        dashboardErrorMessage = null;
+
+        try
+        {
+            dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
+                HttpMethod.Get,
+                "dashboard/teacher");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            dashboardErrorMessage =
+                "Du saknar behörighet att hämta lärardashboarden. Logga in igen.";
+        }
+        catch (HttpRequestException)
+        {
+            dashboardErrorMessage =
+                "Kunde inte hämta dashboardinformationen från API:t.";
+        }
+        catch (Exception)
+        {
+            dashboardErrorMessage =
+                "Ett oväntat fel uppstod när dashboardinformationen hämtades.";
         }
     }
 

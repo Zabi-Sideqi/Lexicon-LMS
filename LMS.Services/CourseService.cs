@@ -46,10 +46,27 @@ public class CourseService : ICourseService
             course.EndDate);
     }
 
-    public async Task<CourseDto> CreateAsync(CourseForCreationDto dto)
+
+    public async Task<CourseDto> CreateAsync(
+        CourseForCreationDto dto,
+        string teacherId)
     {
         if (dto.StartDate > dto.EndDate)
-            throw new ArgumentException("Start date cannot be later than end date.");
+            throw new ArgumentException(
+                "Start date cannot be later than end date.");
+
+        if (string.IsNullOrWhiteSpace(teacherId))
+            throw new UnauthorizedAccessException(
+                "A signed-in teacher is required.");
+
+        var teacher = await _userManager.FindByIdAsync(teacherId);
+
+        if (teacher is null ||
+            !await _userManager.IsInRoleAsync(teacher, "Teacher"))
+        {
+            throw new UnauthorizedAccessException(
+                "Only teachers can create courses.");
+        }
 
         var course = new Course
         {
@@ -58,6 +75,8 @@ public class CourseService : ICourseService
             StartDate = dto.StartDate,
             EndDate = dto.EndDate
         };
+
+        course.Teachers.Add(teacher);
 
         _uow.CourseRepository.Create(course);
         await _uow.SaveChangesAsync();
@@ -69,6 +88,7 @@ public class CourseService : ICourseService
             course.StartDate,
             course.EndDate);
     }
+
 
     public async Task UpdateAsync(int id, CourseForUpdateDto dto)
     {

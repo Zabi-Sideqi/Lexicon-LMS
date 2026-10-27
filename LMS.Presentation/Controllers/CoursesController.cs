@@ -53,9 +53,17 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
         Description = "Creates a new course. Start date must not be after end date.")]
     [SwaggerResponse(StatusCodes.Status201Created, "Course created", typeof(CourseDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid data")]
+
     public async Task<ActionResult<CourseDto>> Create(CourseForCreationDto dto)
     {
-        var created = await _serviceManager.CourseService.CreateAsync(dto);
+        var teacherId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(teacherId))
+            return Unauthorized();
+
+        var created = await _serviceManager.CourseService
+            .CreateAsync(dto, teacherId);
+
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 

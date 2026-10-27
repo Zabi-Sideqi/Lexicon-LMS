@@ -11,4 +11,5 @@ public interface IServiceManager
     ISubmissionService SubmissionService { get; }
     IFeedbackService FeedbackService { get; }
     INotificationService NotificationService { get; }
+    IDashboardService DashboardService { get; }
 }
