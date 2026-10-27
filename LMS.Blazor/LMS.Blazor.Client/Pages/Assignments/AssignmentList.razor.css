@@ -292,3 +292,17 @@
         animation: none;
     }
 }
+
+.assignment-detail-submit-form {
+    padding: 0 30px 24px;
+}
+
+    .assignment-detail-submit-form .form-label {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .assignment-detail-submit-form .form-control {
+        width: 100%;
+        box-sizing: border-box;
+    }

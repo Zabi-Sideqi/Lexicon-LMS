@@ -58,6 +58,23 @@ public class ActivityRepository : IActivityRepository
         return await query.ToListAsync();
     }
 
+    public async Task<IEnumerable<Activity>> GetByCourseIdAsync(
+    int courseId,
+    bool trackChanges = false)
+    {
+        var query = _context.Activities
+            .Where(activity => activity.Module.CourseId == courseId);
+
+        if (!trackChanges)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query
+            .OrderBy(activity => activity.StartTime)
+            .ToListAsync();
+    }
+
     public void Create(Activity activity)
     {
         _context.Activities.Add(activity);

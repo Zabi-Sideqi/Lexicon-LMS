@@ -24,6 +24,7 @@ public static class ServiceExtensions
         services.AddScoped<ISubmissionService, SubmissionService>();
         services.AddScoped<IFeedbackService, FeedbackService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         services.AddLazy<IAuthService>();
         services.AddLazy<IUserService>();
@@ -34,5 +35,6 @@ public static class ServiceExtensions
         services.AddLazy<ISubmissionService>();
         services.AddLazy<IFeedbackService>();
         services.AddLazy<INotificationService>();
+        services.AddLazy<IDashboardService>();
     }
 }
