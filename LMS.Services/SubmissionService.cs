@@ -1,5 +1,4 @@
-﻿
-using Domain.Contracts;
+﻿using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Services.Helpers;
 using LMS.Shared.DTOs.AssignmentDtos;
@@ -11,13 +10,16 @@ namespace LMS.Services;
 public class SubmissionService : ISubmissionService
 {
     private readonly IUnitOfWork _uow;
+    private readonly IFileStorage _fileStorage;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public SubmissionService(
         IUnitOfWork uow,
+        IFileStorage fileStorage,
         UserManager<ApplicationUser> userManager)
     {
         _uow = uow;
+        _fileStorage = fileStorage;
         _userManager = userManager;
     }
 
@@ -73,6 +75,7 @@ public class SubmissionService : ISubmissionService
                 assignment.Description,
                 assignment.EndTime,
                 submittedAt,
+                submission?.FileName, // SubmittedFileName
                 SubmissionStatusCalculator.Calculate(
                     assignment.EndTime,
                     submittedAt,
@@ -93,7 +96,6 @@ public class SubmissionService : ISubmissionService
         return assignments.FirstOrDefault(
             assignment => assignment.Id == assignmentId);
     }
-
 
     public async Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
         string teacherId)
@@ -139,5 +141,42 @@ public class SubmissionService : ISubmissionService
             .ToList();
     }
 
+    public async Task<StudentAssignmentDto> SubmitAsync(
+        string userId,
+        int assignmentId,
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        long fileSize)
+    {
+        FileValidator.Validate(fileName, fileSize);
 
+        // The assignment must be in the student's own course.
+        // Anything else gets the same "not found", so nothing about other courses is revealed.
+        var assignment = await GetMyAssignmentAsync(userId, assignmentId);
+
+        if (assignment is null)
+            throw new KeyNotFoundException($"Assignment with id {assignmentId} not found.");
+
+        // The stored name is random, so nobody can guess or overwrite a file by its name.
+        var storedFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(fileName);
+        await _fileStorage.SaveAsync(fileStream, storedFileName);
+
+        var submission = new Submission
+        {
+            ActivityId = assignmentId,
+            StudentId = userId,
+            FileName = fileName,
+            StoredFileName = storedFileName,
+            ContentType = contentType,
+            FileSize = fileSize,
+            SubmittedAt = DateTime.UtcNow // set by the system, never by the client
+        };
+
+        _uow.SubmissionRepository.Create(submission);
+        await _uow.SaveChangesAsync();
+
+        // A late submission gets the status "SubmittedLate" from the status calculation.
+        return (await GetMyAssignmentAsync(userId, assignmentId))!;
+    }
 }
