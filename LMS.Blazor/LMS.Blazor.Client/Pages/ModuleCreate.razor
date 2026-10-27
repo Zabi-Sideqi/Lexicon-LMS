@@ -35,7 +35,7 @@
                 <div class="module-create-error" role="alert">
                     <span class="module-create-error-icon" aria-hidden="true">!</span>
                     <div>
-                        <strong>Unable to create module</strong>
+                        <strong>Modulen kunde inte skapas</strong>
                         <p>@errorMessage</p>
                     </div>
                 </div>
@@ -135,9 +135,27 @@
 
             Navigation.NavigateTo($"/courses/{CourseId}/modules");
         }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session har gått ut. Logga in igen.";
+        }
+        catch (HttpRequestException ex)
+        {
+            var message = ex.Message;
+            if (message.Contains("overlap", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("överlap", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "Modulens datum överlappar en annan modul. Välj ett annat datumintervall.";
+            else if (message.Contains("course", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("kurs", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("date", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("datum", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "Modulens datum måste ligga inom kursens start- och slutdatum.";
+            else
+                errorMessage = "Servern kunde inte skapa modulen. Kontrollera uppgifterna och försök igen.";
+        }
         catch (Exception)
         {
-            errorMessage = "Modulen kunde inte sparas. Kontrollera att datumen ligger inom kursens period och inte överlappar en annan modul.";
+            errorMessage = "Ett oväntat fel uppstod när modulen skulle skapas.";
         }
     }
 }
