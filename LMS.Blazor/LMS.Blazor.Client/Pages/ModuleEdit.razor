@@ -118,7 +118,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var module = await Proxy.GetAsync<ModuleDto>($"modules/{Id}");
+        var module = await Proxy.SendAsync<ModuleDto>(HttpMethod.Get, $"modules/{Id}");
 
         if (module is null)
         {
