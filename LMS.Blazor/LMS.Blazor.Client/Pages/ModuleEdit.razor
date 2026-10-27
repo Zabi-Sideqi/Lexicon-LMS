@@ -157,9 +157,27 @@
 
             Navigation.NavigateTo($"/courses/{model.CourseId}/modules");
         }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session har gått ut. Logga in igen.";
+        }
+        catch (HttpRequestException ex)
+        {
+            var message = ex.Message;
+            if (message.Contains("overlap", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("överlap", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "Modulens datum överlappar en annan modul. Välj ett annat datumintervall.";
+            else if (message.Contains("course", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("kurs", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("date", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("datum", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "Kontrollera att modulens datum ligger inom kursens period och försök igen.";
+            else
+                errorMessage = "Servern kunde inte spara modulen. Kontrollera uppgifterna och försök igen.";
+        }
         catch (Exception)
         {
-            errorMessage = "Modulen kunde inte sparas. Kontrollera att datumen ligger inom kursens period och inte överlappar en annan modul.";
+            errorMessage = "Ett oväntat fel uppstod när modulen skulle sparas.";
         }
     }
 }
