@@ -15,9 +15,6 @@
     <div class="page-header">
         <div>
             <h1>Skapa användare</h1>
-            <p class="text-muted mb-0">
-                US01 · Validering och kurskoppling
-            </p>
         </div>
 
         <a class="btn btn-outline-primary" href="/users">
@@ -83,7 +80,7 @@
 
                             <option value="">Välj roll</option>
                             <option value="Student">Student</option>
-                            <option value="Teacher">Teacher</option>
+                            <option value="Teacher">Lärare</option>
 
                         </InputSelect>
 
@@ -146,7 +143,7 @@
                 }
 
                 <div class="alert alert-info">
-                    Endast behörig Teacher ska kunna skapa och ändra användare.
+                    Endast behöriga lärare kan skapa och ändra användare.
                     Studenter måste kopplas till en kurs. Lärare behöver ingen kurs.
                 </div>
 
@@ -204,7 +201,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Det gick inte att hämta kurserna: {ex.Message}";
+            errorMessage = "Kurserna kunde inte hämtas. Ladda om sidan eller försök igen senare.";
         }
         finally
         {
@@ -284,7 +281,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Ett fel uppstod: {ex.Message}";
+            errorMessage = "Ett oväntat fel uppstod när användaren skulle skapas.";
         }
         finally
         {
