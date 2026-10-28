@@ -4,6 +4,7 @@
 @using LMS.Shared.DTOs.FeedbackDtos
 @using LMS.Shared.Enums
 @using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.CourseDtos
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
 
@@ -42,6 +43,19 @@
                         Ej inlämnad
                     </option>
                 </select>
+            </div>
+
+            <div>
+                <label for="courseFilter" class="form-label">Kurs</label>
+                <InputSelect id="courseFilter"
+                             class="form-select"
+                             @bind-Value="selectedCourseId">
+                    <option value="">Alla kurser</option>
+                    @foreach (var course in courses)
+                    {
+                        <option value="@course.Id">@course.Name</option>
+                    }
+                </InputSelect>
             </div>
 
             <button class="btn btn-primary"
@@ -263,6 +277,9 @@
 
     private string selectedStatus = string.Empty;
 
+    private List<CourseDto> courses = [];
+    private int? selectedCourseId;
+
     private int PendingCount =>
         submissions.Count(s => !s.HasFeedback);
 
@@ -273,6 +290,21 @@
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            courses = await Proxy.SendAsync<List<CourseDto>>(
+                HttpMethod.Get,
+                "courses") ?? [];
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session har gått ut. Logga in igen.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Kunde inte hämta kurserna. Kontrollera att API:t är igång och försök igen.";
+        }
+
         await LoadSubmissionsAsync();
     }
 
@@ -286,10 +318,22 @@
         {
             var endpoint = "submissions/teacher";
 
+            var queryParameters = new List<string>();
+
+            if (selectedCourseId is int courseId)
+            {
+                queryParameters.Add($"CourseId={courseId}");
+            }
+
             if (!string.IsNullOrWhiteSpace(selectedStatus))
             {
-                endpoint +=
-                    $"?Status={Uri.EscapeDataString(selectedStatus)}";
+                queryParameters.Add(
+                    $"Status={Uri.EscapeDataString(selectedStatus)}");
+            }
+
+            if (queryParameters.Count > 0)
+            {
+                endpoint += $"?{string.Join("&", queryParameters)}";
             }
 
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
