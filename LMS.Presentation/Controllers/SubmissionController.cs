@@ -35,4 +35,26 @@ public class SubmissionController : ControllerBase
 
         return Ok(submissions);
     }
+
+    [HttpGet("{submissionId:int}/download")]
+    public async Task<IActionResult> DownloadSubmission(int submissionId)
+    {
+        var teacherId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(teacherId))
+            return Unauthorized();
+
+        try
+        {
+            var (stream, fileName, contentType) = await _serviceManager
+                .SubmissionService
+                .DownloadSubmissionAsync(teacherId, submissionId);
+
+            return File(stream, contentType, fileName);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }

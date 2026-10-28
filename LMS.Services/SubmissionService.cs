@@ -188,6 +188,43 @@ public class SubmissionService : ISubmissionService
         return result.ToList();
     }
 
+    public async Task<(Stream Stream, string FileName, string ContentType)>
+    DownloadSubmissionAsync(string teacherId, int submissionId)
+    {
+        var teacher = await _userManager.FindByIdAsync(teacherId);
+
+        if (teacher is null ||
+            !await _userManager.IsInRoleAsync(teacher, "Teacher"))
+        {
+            throw new UnauthorizedAccessException(
+                "Only teachers can download submissions.");
+        }
+
+        var submission = await _uow.SubmissionRepository
+            .GetByIdAsync(submissionId);
+
+        if (submission is null)
+        {
+            throw new KeyNotFoundException(
+                $"Submission with id {submissionId} was not found.");
+        }
+
+        var courses = await _uow.CourseRepository
+            .GetByTeacherIdAsync(teacherId);
+
+        if (!courses.Any(course =>
+            course.Id == submission.Activity.Module.CourseId))
+        {
+            throw new UnauthorizedAccessException(
+                "You cannot access submissions for this course.");
+        }
+
+        var stream = await _fileStorage.OpenReadAsync(
+            submission.StoredFileName);
+
+        return (stream, submission.FileName, submission.ContentType);
+    }
+
     public async Task<StudentAssignmentDto> SubmitAsync(
         string userId,
         int assignmentId,

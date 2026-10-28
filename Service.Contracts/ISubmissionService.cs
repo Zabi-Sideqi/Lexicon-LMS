@@ -22,4 +22,7 @@ public interface ISubmissionService
     Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
         string teacherId,
         TeacherSubmissionFilterDto? filter = null);
+
+    Task<(Stream Stream, string FileName, string ContentType)>
+    DownloadSubmissionAsync(string teacherId, int submissionId);
 }

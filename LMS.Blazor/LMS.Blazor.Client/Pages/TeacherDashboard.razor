@@ -162,6 +162,11 @@
                                         <div class="text-muted small">
                                             @submission.FileName
                                         </div>
+                                        <a href="/api/proxy/submissions/@submission.SubmissionId/download"
+                                           download="@submission.FileName"
+                                           class="btn btn-sm btn-secondary mt-1">
+                                            Ladda ner
+                                        </a>
                                     </td>
                                     <td>
                                         @(submission.SubmittedAt.ToLocalTime()
