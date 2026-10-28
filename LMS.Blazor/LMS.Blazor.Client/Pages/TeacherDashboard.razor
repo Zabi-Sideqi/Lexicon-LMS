@@ -1,5 +1,4 @@
-﻿
-@page "/teacher-dashboard"
+﻿@page "/teacher-dashboard"
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Shared.DTOs.FeedbackDtos
@@ -200,8 +199,8 @@
                             @submission.SubmittedAt.ToLocalTime()
                             .ToString("yyyy-MM-dd HH:mm")
                             · @(submission.HasFeedback
-                                                            ? "Feedback lämnad"
-                                                            : "Feedback behövs")
+                                                                                                                    ? "Feedback lämnad"
+                                                                                                                    : "Feedback behövs")
                         </span>
                     </div>
                 }
@@ -243,7 +242,7 @@
         {
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
                 HttpMethod.Get,
-                "teacher/submissions");
+                "submissions/teacher");
 
             submissions = result?.ToList() ?? [];
         }
