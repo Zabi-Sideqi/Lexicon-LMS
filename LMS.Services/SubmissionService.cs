@@ -111,8 +111,7 @@ public class SubmissionService : ISubmissionService
                 "Only teachers can view course submissions.");
         }
 
-        var courses = await _uow.CourseRepository
-    .GetByTeacherIdAsync(teacherId);
+        var courses = await _uow.CourseRepository.GetAllAsync();
 
         if (filter?.CourseId is int courseId)
         {
@@ -223,16 +222,6 @@ public class SubmissionService : ISubmissionService
         {
             throw new KeyNotFoundException(
                 $"Submission with id {submissionId} was not found.");
-        }
-
-        var courses = await _uow.CourseRepository
-            .GetByTeacherIdAsync(teacherId);
-
-        if (!courses.Any(course =>
-            course.Id == submission.Activity.Module.CourseId))
-        {
-            throw new UnauthorizedAccessException(
-                "You cannot access submissions for this course.");
         }
 
         var stream = await _fileStorage.OpenReadAsync(
