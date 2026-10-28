@@ -1,8 +1,9 @@
 ﻿@page "/teacher-dashboard"
-@using Microsoft.AspNetCore.Authorization
+@using LMS.Blazor.Client.Services.ApiProxy
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Shared.DTOs.FeedbackDtos
-@using LMS.Blazor.Client.Services.ApiProxy
+@using LMS.Shared.Enums
+@using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
 
@@ -99,8 +100,8 @@
                                         .ToString("yyyy-MM-dd HH:mm")
                                     </td>
                                     <td>
-                                        <span class="badge bg-warning text-dark">
-                                            Väntar på feedback
+                                        <span class="@GetStatusCssClass(submission.Status)">
+                                            @GetStatusText(submission.Status)
                                         </span>
                                     </td>
                                     <td>
@@ -353,4 +354,37 @@
             sendingFeedback = false;
         }
     }
+    private static string GetStatusCssClass(SubmissionStatus status)
+    {
+        return status switch
+        {
+            SubmissionStatus.Submitted =>
+                "badge bg-success",
+
+            SubmissionStatus.SubmittedLate =>
+                "badge bg-warning text-dark",
+
+            SubmissionStatus.Late =>
+                "badge bg-danger",
+
+            SubmissionStatus.NotSubmitted =>
+                "badge bg-danger",
+
+            _ =>
+                "badge bg-secondary"
+        };
+    }
+
+    private static string GetStatusText(SubmissionStatus status)
+    {
+        return status switch
+        {
+            SubmissionStatus.Submitted => "Inlämnad",
+            SubmissionStatus.SubmittedLate => "Inlämnad sent",
+            SubmissionStatus.Late => "Försenad",
+            SubmissionStatus.NotSubmitted => "Ej inlämnad",
+            _ => "Okänd status"
+        };
+    }
+
 }
