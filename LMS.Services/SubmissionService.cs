@@ -124,56 +124,72 @@ public class SubmissionService : ISubmissionService
         if (!courses.Any())
             return [];
 
-        var submissions = new List<Submission>();
+        var now = SchoolTime.FromUtc(DateTime.UtcNow);
+        var result = new List<TeacherSubmissionDto>();
 
         foreach (var course in courses)
         {
+            var courseWithStudents = await _uow.CourseRepository
+                .GetCourseWithStudentsAsync(course.Id);
+
+            if (courseWithStudents is null)
+                continue;
+
+            var assignments = await _uow.ActivityRepository
+                .GetAssignmentsByCourseIdAsync(course.Id);
+
             var courseSubmissions = await _uow.SubmissionRepository
                 .GetByCourseIdAsync(course.Id);
 
-            submissions.AddRange(courseSubmissions);
+            var latestSubmissionByStudentAndActivity = courseSubmissions
+                .GroupBy(submission => (submission.StudentId, submission.ActivityId))
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .OrderByDescending(submission => submission.SubmittedAt)
+                        .First());
+
+            foreach (var assignment in assignments)
+            {
+                foreach (var student in courseWithStudents.Students)
+                {
+                    latestSubmissionByStudentAndActivity.TryGetValue(
+                        (student.Id, assignment.Id),
+                        out var submission);
+
+                    DateTime? submittedAt = submission is null
+                        ? null
+                        : SchoolTime.FromUtc(submission.SubmittedAt);
+
+                    result.Add(new TeacherSubmissionDto(
+                        submission?.Id,
+                        assignment.Id,
+                        assignment.Name,
+                        student.Id,
+                        student.UserName ?? student.Email ?? "Okänd student",
+                        submission?.FileName,
+                        submittedAt,
+                        assignment.EndTime,
+                        SubmissionStatusCalculator.Calculate(
+                            assignment.EndTime,
+                            submittedAt,
+                            now),
+                        submission?.Feedbacks.Any() ?? false));
+                }
+            }
         }
 
-        var now = SchoolTime.FromUtc(DateTime.UtcNow);
-
-        var result = submissions
-            .DistinctBy(submission => submission.Id)
-            .Select(submission =>
-            {
-                var submittedAt =
-                    SchoolTime.FromUtc(submission.SubmittedAt);
-
-                var deadline = submission.Activity.EndTime;
-
-                var status = SubmissionStatusCalculator.Calculate(
-                    deadline,
-                    submittedAt,
-                    now);
-
-                return new TeacherSubmissionDto(
-                    submission.Id,
-                    submission.ActivityId,
-                    submission.Activity.Name,
-                    submission.StudentId,
-                    submission.Student.UserName
-                        ?? submission.Student.Email
-                        ?? "Okänd student",
-                    submission.FileName,
-                    submittedAt,
-                    deadline,
-                    status,
-                    submission.Feedbacks.Any());
-            });
+        IEnumerable<TeacherSubmissionDto> filtered = result;
 
         if (filter?.ActivityId is int activityId)
         {
-            result = result.Where(
+            filtered = filtered.Where(
                 submission => submission.ActivityId == activityId);
         }
 
         if (!string.IsNullOrWhiteSpace(filter?.StudentSearch))
         {
-            result = result.Where(submission =>
+            filtered = filtered.Where(submission =>
                 submission.StudentName.Contains(
                     filter.StudentSearch,
                     StringComparison.OrdinalIgnoreCase));
@@ -181,11 +197,11 @@ public class SubmissionService : ISubmissionService
 
         if (filter?.Status is SubmissionStatus statusFilter)
         {
-            result = result.Where(
+            filtered = filtered.Where(
                 submission => submission.Status == statusFilter);
         }
 
-        return result.ToList();
+        return filtered.ToList();
     }
 
     public async Task<(Stream Stream, string FileName, string ContentType)>

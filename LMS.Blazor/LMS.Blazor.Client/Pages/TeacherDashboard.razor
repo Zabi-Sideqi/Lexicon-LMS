@@ -107,13 +107,13 @@
         <div class="stats">
             <div class="stat-card">
                 <span class="stat-icon">▣</span>
-                <strong>@submissions.Count</strong>
+                <strong>@submissions.Count(s => s.SubmissionId is not null)</strong>
                 <span>Inlämningar</span>
             </div>
 
             <div class="stat-card">
                 <span class="stat-icon">✓</span>
-                <strong>@submissions.Count(s => s.HasFeedback)</strong>
+                <strong>@submissions.Count(s => s.SubmissionId is not null && s.HasFeedback)</strong>
                 <span>Har fått feedback</span>
             </div>
 
@@ -125,7 +125,13 @@
 
             <div class="stat-card">
                 <span class="stat-icon">♙</span>
-                <strong>@submissions.Select(s => s.StudentId).Distinct().Count()</strong>
+                <strong>
+                    @(submissions
+                    .Where(s => s.SubmissionId is not null)
+                    .Select(s => s.StudentId)
+                    .Distinct()
+                    .Count())
+                </strong>
                 <span>Studenter med inlämning</span>
             </div>
         </div>
@@ -159,18 +165,22 @@
                                     <td>@submission.StudentName</td>
                                     <td>
                                         <strong>@submission.ActivityName</strong>
-                                        <div class="text-muted small">
-                                            @submission.FileName
-                                        </div>
-                                        <a href="/api/proxy/submissions/@submission.SubmissionId/download"
-                                           download="@submission.FileName"
-                                           class="btn btn-sm btn-secondary mt-1">
-                                            Ladda ner
-                                        </a>
+                                        @if (submission.FileName is not null)
+                                        {
+                                            <div class="text-muted small">@submission.FileName</div>
+                                        }
+
+                                        @if (submission.SubmissionId is int submissionId)
+                                        {
+                                            <a href="/api/proxy/submissions/@submissionId/download"
+                                               download="@submission.FileName"
+                                               class="btn btn-sm btn-secondary mt-1">
+                                                Ladda ner
+                                            </a>
+                                        }
                                     </td>
                                     <td>
-                                        @(submission.SubmittedAt.ToLocalTime()
-                                        .ToString("yyyy-MM-dd HH:mm"))
+                                        @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
                                     </td>
                                     <td>
                                         <span class="@GetStatusCssClass(submission.Status)">
@@ -178,10 +188,13 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-primary btn-sm"
-                                                @onclick="() => SelectSubmission(submission)">
-                                            Ge feedback
-                                        </button>
+                                        @if (submission.SubmissionId is not null)
+                                        {
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => SelectSubmission(submission)">
+                                                Ge feedback
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -270,8 +283,7 @@
                             @submission.StudentName – @submission.ActivityName
                         </strong>
                         <span>
-                            @(submission.SubmittedAt.ToLocalTime()
-                            .ToString("yyyy-MM-dd HH:mm"))
+                            @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
                             · @(submission.HasFeedback
                                                                                                                                                 ? "Feedback lämnad"
                                                                                                                                                 : "Feedback behövs")
@@ -303,7 +315,7 @@
     private int? selectedActivityId;
 
     private int PendingCount =>
-        submissions.Count(s => !s.HasFeedback);
+    submissions.Count(s => s.SubmissionId is not null && !s.HasFeedback);
 
     private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
         submissions
