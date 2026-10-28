@@ -136,8 +136,8 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @submission.SubmittedAt.ToLocalTime()
-                                        .ToString("yyyy-MM-dd HH:mm")
+                                        @(submission.SubmittedAt.ToLocalTime()
+                                        .ToString("yyyy-MM-dd HH:mm"))
                                     </td>
                                     <td>
                                         <span class="@GetStatusCssClass(submission.Status)">
@@ -237,8 +237,8 @@
                             @submission.StudentName – @submission.ActivityName
                         </strong>
                         <span>
-                            @submission.SubmittedAt.ToLocalTime()
-                            .ToString("yyyy-MM-dd HH:mm")
+                            @(submission.SubmittedAt.ToLocalTime()
+                            .ToString("yyyy-MM-dd HH:mm"))
                             · @(submission.HasFeedback
                                                                                                                                                 ? "Feedback lämnad"
                                                                                                                                                 : "Feedback behövs")
