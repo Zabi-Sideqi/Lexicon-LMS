@@ -1,4 +1,5 @@
-﻿
+﻿using LMS.Shared.Enums;
+
 namespace LMS.Shared.DTOs.AssignmentDtos;
 
 public sealed record TeacherSubmissionDto(
@@ -9,4 +10,6 @@ public sealed record TeacherSubmissionDto(
     string StudentName,
     string FileName,
     DateTime SubmittedAt,
+    DateTime Deadline,
+    SubmissionStatus Status,
     bool HasFeedback);

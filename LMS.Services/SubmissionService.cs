@@ -2,6 +2,7 @@
 using Domain.Models.Entities;
 using LMS.Services.Helpers;
 using LMS.Shared.DTOs.AssignmentDtos;
+using LMS.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
 
@@ -98,7 +99,8 @@ public class SubmissionService : ISubmissionService
     }
 
     public async Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
-        string teacherId)
+        string teacherId,
+        TeacherSubmissionFilterDto? filter = null)
     {
         var teacher = await _userManager.FindByIdAsync(teacherId);
 
@@ -110,7 +112,14 @@ public class SubmissionService : ISubmissionService
         }
 
         var courses = await _uow.CourseRepository
-            .GetByTeacherIdAsync(teacherId);
+    .GetByTeacherIdAsync(teacherId);
+
+        if (filter?.CourseId is int courseId)
+        {
+            courses = courses
+                .Where(course => course.Id == courseId)
+                .ToList();
+        }
 
         if (!courses.Any())
             return [];
@@ -125,20 +134,58 @@ public class SubmissionService : ISubmissionService
             submissions.AddRange(courseSubmissions);
         }
 
-        return submissions
+        var now = SchoolTime.FromUtc(DateTime.UtcNow);
+
+        var result = submissions
             .DistinctBy(submission => submission.Id)
-            .Select(submission => new TeacherSubmissionDto(
-                submission.Id,
-                submission.ActivityId,
-                submission.Activity.Name,
-                submission.StudentId,
-                submission.Student.UserName
-                    ?? submission.Student.Email
-                    ?? "Okänd student",
-                submission.FileName,
-                SchoolTime.FromUtc(submission.SubmittedAt),
-                submission.Feedbacks.Any()))
-            .ToList();
+            .Select(submission =>
+            {
+                var submittedAt =
+                    SchoolTime.FromUtc(submission.SubmittedAt);
+
+                var deadline = submission.Activity.EndTime;
+
+                var status = SubmissionStatusCalculator.Calculate(
+                    deadline,
+                    submittedAt,
+                    now);
+
+                return new TeacherSubmissionDto(
+                    submission.Id,
+                    submission.ActivityId,
+                    submission.Activity.Name,
+                    submission.StudentId,
+                    submission.Student.UserName
+                        ?? submission.Student.Email
+                        ?? "Okänd student",
+                    submission.FileName,
+                    submittedAt,
+                    deadline,
+                    status,
+                    submission.Feedbacks.Any());
+            });
+
+        if (filter?.ActivityId is int activityId)
+        {
+            result = result.Where(
+                submission => submission.ActivityId == activityId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter?.StudentSearch))
+        {
+            result = result.Where(submission =>
+                submission.StudentName.Contains(
+                    filter.StudentSearch,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filter?.Status is SubmissionStatus statusFilter)
+        {
+            result = result.Where(
+                submission => submission.Status == statusFilter);
+        }
+
+        return result.ToList();
     }
 
     public async Task<StudentAssignmentDto> SubmitAsync(
