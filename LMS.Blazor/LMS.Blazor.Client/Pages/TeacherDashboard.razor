@@ -18,6 +18,46 @@
         <span class="role-badge">Lärare</span>
     </div>
 
+    <div class="activity-card mb-3">
+        <div class="d-flex align-items-end gap-3">
+            <div>
+                <label for="statusFilter" class="form-label">
+                    Status
+                </label>
+
+                <select id="statusFilter"
+                        class="form-select"
+                        @bind="selectedStatus">
+                    <option value="">Alla statusar</option>
+                    <option value="@nameof(SubmissionStatus.Submitted)">
+                        Inlämnad
+                    </option>
+                    <option value="@nameof(SubmissionStatus.SubmittedLate)">
+                        Inlämnad sent
+                    </option>
+                    <option value="@nameof(SubmissionStatus.Late)">
+                        Försenad
+                    </option>
+                    <option value="@nameof(SubmissionStatus.NotSubmitted)">
+                        Ej inlämnad
+                    </option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary"
+                    type="button"
+                    @onclick="ApplyFilterAsync">
+                Filtrera
+            </button>
+
+            <button class="btn btn-outline-secondary"
+                    type="button"
+                    @onclick="ResetFilterAsync">
+                Rensa
+            </button>
+        </div>
+    </div>
+
     @if (loading)
     {
         <div class="activity-card">
@@ -200,8 +240,8 @@
                             @submission.SubmittedAt.ToLocalTime()
                             .ToString("yyyy-MM-dd HH:mm")
                             · @(submission.HasFeedback
-                                                                                                                    ? "Feedback lämnad"
-                                                                                                                    : "Feedback behövs")
+                                                                                                                                                ? "Feedback lämnad"
+                                                                                                                                                : "Feedback behövs")
                         </span>
                     </div>
                 }
@@ -221,6 +261,8 @@
     private string? feedbackSuccess;
     private bool sendingFeedback;
 
+    private string selectedStatus = string.Empty;
+
     private int PendingCount =>
         submissions.Count(s => !s.HasFeedback);
 
@@ -234,6 +276,7 @@
         await LoadSubmissionsAsync();
     }
 
+    
     private async Task LoadSubmissionsAsync()
     {
         loading = true;
@@ -241,9 +284,17 @@
 
         try
         {
+            var endpoint = "submissions/teacher";
+
+            if (!string.IsNullOrWhiteSpace(selectedStatus))
+            {
+                endpoint +=
+                    $"?Status={Uri.EscapeDataString(selectedStatus)}";
+            }
+
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
                 HttpMethod.Get,
-                "submissions/teacher");
+                endpoint);
 
             submissions = result?.ToList() ?? [];
         }
@@ -266,6 +317,7 @@
             loading = false;
         }
     }
+
 
     private void SelectSubmission(TeacherSubmissionDto submission)
     {
@@ -387,4 +439,14 @@
         };
     }
 
+    private async Task ApplyFilterAsync()
+    {
+        await LoadSubmissionsAsync();
+    }
+
+    private async Task ResetFilterAsync()
+    {
+        selectedStatus = string.Empty;
+        await LoadSubmissionsAsync();
+    }
 }
