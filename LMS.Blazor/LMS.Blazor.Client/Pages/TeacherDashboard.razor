@@ -5,6 +5,7 @@
 @using LMS.Shared.Enums
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.CourseDtos
+@using LMS.Shared.DTOs.ActivityDtos
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
 
@@ -54,6 +55,19 @@
                     @foreach (var course in courses)
                     {
                         <option value="@course.Id">@course.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div>
+                <label for="activityFilter" class="form-label">Uppgift</label>
+                <InputSelect id="activityFilter"
+                             class="form-select"
+                             @bind-Value="selectedActivityId">
+                    <option value="">Alla uppgifter</option>
+                    @foreach (var activity in activities)
+                    {
+                        <option value="@activity.Id">@activity.Name</option>
                     }
                 </InputSelect>
             </div>
@@ -280,6 +294,9 @@
     private List<CourseDto> courses = [];
     private int? selectedCourseId;
 
+    private List<ActivityDto> activities = [];
+    private int? selectedActivityId;
+
     private int PendingCount =>
         submissions.Count(s => !s.HasFeedback);
 
@@ -295,6 +312,10 @@
             courses = await Proxy.SendAsync<List<CourseDto>>(
                 HttpMethod.Get,
                 "courses") ?? [];
+
+            activities = await Proxy.SendAsync<List<ActivityDto>>(
+                HttpMethod.Get,
+                "Activities") ?? [];
         }
         catch (UnauthorizedAccessException)
         {
@@ -323,6 +344,11 @@
             if (selectedCourseId is int courseId)
             {
                 queryParameters.Add($"CourseId={courseId}");
+            }
+
+            if (selectedActivityId is int activityId)
+            {
+                queryParameters.Add($"ActivityId={activityId}");
             }
 
             if (!string.IsNullOrWhiteSpace(selectedStatus))
@@ -491,6 +517,8 @@
     private async Task ResetFilterAsync()
     {
         selectedStatus = string.Empty;
+        selectedCourseId = null;
+        selectedActivityId = null;
         await LoadSubmissionsAsync();
     }
 }
