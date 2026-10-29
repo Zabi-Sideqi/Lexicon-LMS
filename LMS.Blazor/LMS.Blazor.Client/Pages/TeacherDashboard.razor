@@ -7,21 +7,21 @@
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
 
-<PageTitle>Lärardashboard</PageTitle>
+<PageTitle>Teacher Dashboard</PageTitle>
 
 <div class="dashboard">
     <div class="page-head">
         <div>
-            <h1>Lärardashboard</h1>
-            <p>Översikt över kurser, aktiviteter, inlämningar och feedback.</p>
+            <h1>Teacher Dashboard</h1>
+            <p>Overview of courses, activities, submissions, and feedback.</p>
         </div>
-        <span class="role-badge">Lärare</span>
+        <span class="role-badge">Teacher</span>
     </div>
 
     @if (loading)
     {
         <div class="activity-card">
-            <p>Hämtar dashboarddata...</p>
+            <p>Loading dashboard data.</p>
         </div>
     }
     else if (errorMessage is not null)
@@ -30,7 +30,7 @@
             @errorMessage
             <button class="btn btn-outline-primary btn-sm ms-2"
                     @onclick="LoadSubmissionsAsync">
-                Försök igen
+                Try again
             </button>
         </div>
     }
@@ -38,22 +38,22 @@
     {
         <div class="stats">
             <a href="/courses" class="stat-card stat-card-link">
-                <span class="stat-icon">?</span>
+                <span class="stat-icon">ðŸ“š</span>
                 <strong>@(dashboard?.Courses.Count ?? 0)</strong>
-                <span>Kurser</span>
+                <span>Courses</span>
             </a>
 
             <a href="/calendar" class="stat-card stat-card-link">
-                <span class="stat-icon">?</span>
+                <span class="stat-icon">ðŸ“…</span>
                 <strong>@(dashboard?.UpcomingActivities.Count ?? 0)</strong>
-                <span>Kommande aktiviteter</span>
+                <span>Upcoming activities</span>
             </a>
 
             <a href="#pending-feedback"
                class="stat-card stat-card-link">
-                <span class="stat-icon">?</span>
+                <span class="stat-icon">ðŸ’¬</span>
                 <strong>@(dashboard?.PendingFeedbackCount ?? 0)</strong>
-                <span>Väntar på feedback</span>
+                <span>Awaiting feedback</span>
             </a>
 
 
@@ -63,14 +63,14 @@
                     @((dashboard?.LateSubmissionCount ?? 0)
                         + (dashboard?.MissingSubmissionCount ?? 0))
                 </strong>
-                <span>Sena eller saknade inlämningar</span>
+                <span>Late or missing submissions</span>
             </a>
 
         </div>
 
         <div class="activity-card">
             <div class="section-head">
-                <h2>Mina kurser</h2>
+                <h2>My Courses</h2>
             </div>
 
             @if (dashboard?.Courses.Count > 0)
@@ -80,21 +80,21 @@
                     <div class="activity" @key="course.Id">
                         <strong>@course.Name</strong>
                         <span>
-                            @course.StudentCount studenter
-                            · @course.UpcomingActivityCount kommande aktiviteter
+                            @course.StudentCount students
+                            Â· @course.UpcomingActivityCount upcoming activities
                         </span>
                     </div>
                 }
             }
             else
             {
-                <p>Inga kurser att visa.</p>
+                <p>No courses to display.</p>
             }
         </div>
 
         <div class="activity-card">
             <div class="section-head">
-                <h2>Kommande aktiviteter</h2>
+                <h2>Upcoming activities</h2>
             </div>
 
             @if (dashboard?.UpcomingActivities.Count > 0)
@@ -105,20 +105,20 @@
                         <strong>@activity.Name</strong>
                         <span>
                             @activity.CourseName
-                            · @activity.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            Â· @activity.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
                         </span>
                     </div>
                 }
             }
             else
             {
-                <p>Inga kommande aktiviteter att visa.</p>
+                <p>Inga upcoming activities att visa.</p>
             }
         </div>
 
         <div class="activity-card" id="attention-items">
             <div class="section-head">
-                <h2>Behöver uppmärksamhet</h2>
+                <h2>Needs Attention</h2>
             </div>
 
             @if (dashboard?.AttentionItems.Count > 0)
@@ -127,43 +127,43 @@
                 {
                     <div class="activity"
                          @key="(item.ActivityId, item.StudentId)">
-                        <strong>@item.StudentName – @item.ActivityName</strong>
+                        <strong>@item.StudentName â€“ @item.ActivityName</strong>
                         <span>
                             @item.CourseName
-                            · Deadline: @item.DueAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            Â· Due: @item.DueAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
                         </span>
 
-                        @if (item.Status == "Försenad inlämning")
+                        @if (item.Status == "FÃ¶rsenad inlÃ¤mning")
                         {
-                            <span class="badge bg-danger">Sen inlämning</span>
+                            <span class="badge bg-danger">Late submission</span>
                         }
                         else
                         {
                             <span class="badge bg-warning text-dark">
-                                Saknad inlämning
+                                Missing submission
                             </span>
                         }
                         <a class="btn btn-outline-primary btn-sm"
                            href="@($"/courses/{item.CourseId}/modules")">
-                            Öppna kursens moduler
+                            Open course modules
                         </a>
                     </div>
                 }
             }
             else
             {
-                <p>Det finns inga sena eller saknade inlämningar att visa.</p>
+                <p>Det finns inga sena eller saknade inlÃ¤mningar att visa.</p>
             }
         </div>
 
         <div class="activity-card" id="pending-feedback">
             <div class="section-head">
-                <h2>Inlämningar som väntar på feedback</h2>
+                <h2>Submissions Awaiting Feedback</h2>
             </div>
 
             @if (!PendingSubmissions.Any())
             {
-                <p>Det finns inga inlämningar som väntar på feedback.</p>
+                <p>Det finns inga inlÃ¤mningar som vÃ¤ntar pÃ¥ feedback.</p>
             }
             else
             {
@@ -172,10 +172,10 @@
                         <thead>
                             <tr>
                                 <th>Student</th>
-                                <th>Uppgift</th>
-                                <th>Inlämnad</th>
+                                <th>Assignment</th>
+                                <th>Submitted</th>
                                 <th>Status</th>
-                                <th>Åtgärd</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -195,13 +195,13 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-warning text-dark">
-                                            Väntar på feedback
+                                            Awaiting feedback
                                         </span>
                                     </td>
                                     <td>
                                         <button class="btn btn-primary btn-sm"
                                                 @onclick="() => SelectSubmission(submission)">
-                                            Ge feedback
+                                            Give feedback
                                         </button>
                                     </td>
                                 </tr>
@@ -215,7 +215,7 @@
         @if (selectedSubmission is not null)
         {
             <div class="activity-card">
-                <h2>Ge feedback</h2>
+                <h2>Give feedback</h2>
 
                 <p>
                     <strong>Student:</strong>
@@ -223,13 +223,13 @@
                 </p>
 
                 <p>
-                    <strong>Uppgift:</strong>
+                    <strong>Assignment:</strong>
                     @selectedSubmission.ActivityName
                 </p>
 
                 <div class="mb-3">
                     <label for="feedbackText" class="form-label">
-                        Feedback till studenten
+                        Feedback for the student
                     </label>
 
                     <textarea id="feedbackText"
@@ -237,7 +237,7 @@
                               rows="5"
                               maxlength="2000"
                               @bind="feedbackText"
-                              placeholder="Skriv din feedback här..."></textarea>
+                              placeholder="Enter your feedback here..."></textarea>
 
                     <small class="text-muted">
                         @feedbackText.Length / 2000 tecken
@@ -261,24 +261,24 @@
                 <button class="btn btn-primary"
                         disabled="@sendingFeedback"
                         @onclick="SubmitFeedbackAsync">
-                    @(sendingFeedback ? "Skickar..." : "Skicka feedback")
+                    @(sendingFeedback ? "Sending..." : "Send feedback")
                 </button>
 
                 <button class="btn btn-outline-secondary ms-2"
                         disabled="@sendingFeedback"
                         @onclick="CancelFeedback">
-                    Avbryt
+                    Cancel
                 </button>
             </div>
         }
 
 
         <div class="activity-card">
-            <h2>Senaste inlämningar</h2>
+            <h2>Recent Submissions</h2>
 
             @if (!submissions.Any())
             {
-                <p>Det finns inga inlämningar att visa ännu.</p>
+                <p>There are no submissions to display yet.</p>
             }
             else
             {
@@ -293,21 +293,21 @@
 
                     <div class="activity" @key="submission.SubmissionId">
                         <strong>
-                            @submission.StudentName – @submission.ActivityName
+                            @submission.StudentName â€“ @submission.ActivityName
 
                             @if (recentlySubmitted)
                             {
                                 <span class="badge bg-primary ms-2">
-                                    Ny · senaste 24 h
+                                    New Â· last 24 hours
                                 </span>
                             }
                         </strong>
 
                         <span>
                             @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
-                            · @(submission.HasFeedback
-                                                    ? "Feedback lämnad"
-                                                    : "Feedback behövs")
+                            Â· @(submission.HasFeedback
+                                                    ? "Feedback provided"
+                                                    : "Feedback needed")
                         </span>
                     </div>
                 }
@@ -358,17 +358,17 @@
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session har gått ut. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException)
         {
             errorMessage =
-                "Kunde inte hämta dashboarddata. Kontrollera att API:t är igång och försök igen.";
+                "Could not load dashboard data. Check that the API is running and try again.";
         }
         catch (Exception)
         {
             errorMessage =
-                "Ett oväntat fel uppstod när dashboarden skulle laddas.";
+                "An unexpected error occurred while loading the dashboard.";
         }
         finally
         {
@@ -396,7 +396,7 @@
     {
         if (selectedSubmission is null)
         {
-            feedbackError = "Välj en inlämning först.";
+            feedbackError = "Select a submission first.";
             return;
         }
 
@@ -404,13 +404,13 @@
 
         if (string.IsNullOrWhiteSpace(text))
         {
-            feedbackError = "Skriv feedback innan du skickar.";
+            feedbackError = "Enter feedback before sending.";
             return;
         }
 
         if (text.Length > 2000)
         {
-            feedbackError = "Feedback får innehålla högst 2000 tecken.";
+            feedbackError = "Feedback can contain a maximum of 2,000 characters.";
             return;
         }
 
@@ -433,7 +433,7 @@
                     System.Text.Encoding.UTF8,
                     "application/json"));
 
-            feedbackSuccess = "Feedback har skickats till studenten.";
+            feedbackSuccess = "Feedback has been sent to the student.";
             feedbackText = "";
 
             var submittedId = selectedSubmission.SubmissionId;
@@ -446,17 +446,17 @@
         catch (UnauthorizedAccessException)
         {
             feedbackError =
-                "Du saknar behörighet eller så har din session gått ut. Logga in igen.";
+                "You do not have permission, or your session has expired. Please log in again.";
         }
         catch (HttpRequestException)
         {
             feedbackError =
-                "Kunde inte skicka feedback. Kontrollera anslutningen och försök igen.";
+                "Could not send feedback. Check your connection and try again.";
         }
         catch (Exception)
         {
             feedbackError =
-                "Ett oväntat fel uppstod när feedback skulle skickas.";
+                "An unexpected error occurred while sending feedback.";
         }
         finally
         {
