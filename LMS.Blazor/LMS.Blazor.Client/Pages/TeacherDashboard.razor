@@ -1,9 +1,11 @@
-﻿
-@page "/teacher-dashboard"
-@using Microsoft.AspNetCore.Authorization
+﻿@page "/teacher-dashboard"
+@using LMS.Blazor.Client.Services.ApiProxy
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Shared.DTOs.FeedbackDtos
-@using LMS.Blazor.Client.Services.ApiProxy
+@using LMS.Shared.Enums
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.CourseDtos
+@using LMS.Shared.DTOs.ActivityDtos
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
 
@@ -16,6 +18,72 @@
             <p>Översikt över studenternas inlämningar och feedback.</p>
         </div>
         <span class="role-badge">Lärare</span>
+    </div>
+
+    <div class="activity-card mb-3">
+        <div class="d-flex align-items-end gap-3">
+            <div>
+                <label for="statusFilter" class="form-label">
+                    Status
+                </label>
+
+                <select id="statusFilter"
+                        class="form-select"
+                        @bind="selectedStatus">
+                    <option value="">Alla statusar</option>
+                    <option value="@nameof(SubmissionStatus.Submitted)">
+                        Inlämnad
+                    </option>
+                    <option value="@nameof(SubmissionStatus.SubmittedLate)">
+                        Inlämnad sent
+                    </option>
+                    <option value="@nameof(SubmissionStatus.Late)">
+                        Försenad
+                    </option>
+                    <option value="@nameof(SubmissionStatus.NotSubmitted)">
+                        Ej inlämnad
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label for="courseFilter" class="form-label">Kurs</label>
+                <InputSelect id="courseFilter"
+                             class="form-select"
+                             @bind-Value="selectedCourseId">
+                    <option value="">Alla kurser</option>
+                    @foreach (var course in courses)
+                    {
+                        <option value="@course.Id">@course.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div>
+                <label for="activityFilter" class="form-label">Uppgift</label>
+                <InputSelect id="activityFilter"
+                             class="form-select"
+                             @bind-Value="selectedActivityId">
+                    <option value="">Alla uppgifter</option>
+                    @foreach (var activity in activities)
+                    {
+                        <option value="@activity.Id">@activity.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <button class="btn btn-primary"
+                    type="button"
+                    @onclick="ApplyFilterAsync">
+                Filtrera
+            </button>
+
+            <button class="btn btn-outline-secondary"
+                    type="button"
+                    @onclick="ResetFilterAsync">
+                Rensa
+            </button>
+        </div>
     </div>
 
     @if (loading)
@@ -39,13 +107,13 @@
         <div class="stats">
             <div class="stat-card">
                 <span class="stat-icon">▣</span>
-                <strong>@submissions.Count</strong>
+                <strong>@submissions.Count(s => s.SubmissionId is not null)</strong>
                 <span>Inlämningar</span>
             </div>
 
             <div class="stat-card">
                 <span class="stat-icon">✓</span>
-                <strong>@submissions.Count(s => s.HasFeedback)</strong>
+                <strong>@submissions.Count(s => s.SubmissionId is not null && s.HasFeedback)</strong>
                 <span>Har fått feedback</span>
             </div>
 
@@ -57,7 +125,13 @@
 
             <div class="stat-card">
                 <span class="stat-icon">♙</span>
-                <strong>@submissions.Select(s => s.StudentId).Distinct().Count()</strong>
+                <strong>
+                    @(submissions
+                    .Where(s => s.SubmissionId is not null)
+                    .Select(s => s.StudentId)
+                    .Distinct()
+                    .Count())
+                </strong>
                 <span>Studenter med inlämning</span>
             </div>
         </div>
@@ -91,24 +165,36 @@
                                     <td>@submission.StudentName</td>
                                     <td>
                                         <strong>@submission.ActivityName</strong>
-                                        <div class="text-muted small">
-                                            @submission.FileName
-                                        </div>
+                                        @if (submission.FileName is not null)
+                                        {
+                                            <div class="text-muted small">@submission.FileName</div>
+                                        }
+
+                                        @if (submission.SubmissionId is int submissionId)
+                                        {
+                                            <a href="/api/proxy/submissions/@submissionId/download"
+                                               download="@submission.FileName"
+                                               class="btn btn-sm btn-secondary mt-1">
+                                                Ladda ner
+                                            </a>
+                                        }
                                     </td>
                                     <td>
-                                        @submission.SubmittedAt.ToLocalTime()
-                                        .ToString("yyyy-MM-dd HH:mm")
+                                        @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
                                     </td>
                                     <td>
-                                        <span class="badge bg-warning text-dark">
-                                            Väntar på feedback
+                                        <span class="@GetStatusCssClass(submission.Status)">
+                                            @GetStatusText(submission.Status)
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-primary btn-sm"
-                                                @onclick="() => SelectSubmission(submission)">
-                                            Ge feedback
-                                        </button>
+                                        @if (submission.SubmissionId is not null)
+                                        {
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => SelectSubmission(submission)">
+                                                Ge feedback
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -197,11 +283,10 @@
                             @submission.StudentName – @submission.ActivityName
                         </strong>
                         <span>
-                            @submission.SubmittedAt.ToLocalTime()
-                            .ToString("yyyy-MM-dd HH:mm")
+                            @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
                             · @(submission.HasFeedback
-                                                            ? "Feedback lämnad"
-                                                            : "Feedback behövs")
+                                                                                                                                                ? "Feedback lämnad"
+                                                                                                                                                : "Feedback behövs")
                         </span>
                     </div>
                 }
@@ -221,8 +306,16 @@
     private string? feedbackSuccess;
     private bool sendingFeedback;
 
+    private string selectedStatus = string.Empty;
+
+    private List<CourseDto> courses = [];
+    private int? selectedCourseId;
+
+    private List<ActivityDto> activities = [];
+    private int? selectedActivityId;
+
     private int PendingCount =>
-        submissions.Count(s => !s.HasFeedback);
+    submissions.Count(s => s.SubmissionId is not null && !s.HasFeedback);
 
     private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
         submissions
@@ -231,9 +324,29 @@
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            courses = await Proxy.SendAsync<List<CourseDto>>(
+                HttpMethod.Get,
+                "courses") ?? [];
+
+            activities = await Proxy.SendAsync<List<ActivityDto>>(
+                HttpMethod.Get,
+                "Activities") ?? [];
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session har gått ut. Logga in igen.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Kunde inte hämta kurserna. Kontrollera att API:t är igång och försök igen.";
+        }
+
         await LoadSubmissionsAsync();
     }
 
+    
     private async Task LoadSubmissionsAsync()
     {
         loading = true;
@@ -241,9 +354,34 @@
 
         try
         {
+            var endpoint = "submissions/teacher";
+
+            var queryParameters = new List<string>();
+
+            if (selectedCourseId is int courseId)
+            {
+                queryParameters.Add($"CourseId={courseId}");
+            }
+
+            if (selectedActivityId is int activityId)
+            {
+                queryParameters.Add($"ActivityId={activityId}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedStatus))
+            {
+                queryParameters.Add(
+                    $"Status={Uri.EscapeDataString(selectedStatus)}");
+            }
+
+            if (queryParameters.Count > 0)
+            {
+                endpoint += $"?{string.Join("&", queryParameters)}";
+            }
+
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
                 HttpMethod.Get,
-                "teacher/submissions");
+                endpoint);
 
             submissions = result?.ToList() ?? [];
         }
@@ -266,6 +404,7 @@
             loading = false;
         }
     }
+
 
     private void SelectSubmission(TeacherSubmissionDto submission)
     {
@@ -353,5 +492,50 @@
         {
             sendingFeedback = false;
         }
+    }
+    private static string GetStatusCssClass(SubmissionStatus status)
+    {
+        return status switch
+        {
+            SubmissionStatus.Submitted =>
+                "badge bg-success",
+
+            SubmissionStatus.SubmittedLate =>
+                "badge bg-warning text-dark",
+
+            SubmissionStatus.Late =>
+                "badge bg-danger",
+
+            SubmissionStatus.NotSubmitted =>
+                "badge bg-danger",
+
+            _ =>
+                "badge bg-secondary"
+        };
+    }
+
+    private static string GetStatusText(SubmissionStatus status)
+    {
+        return status switch
+        {
+            SubmissionStatus.Submitted => "Inlämnad",
+            SubmissionStatus.SubmittedLate => "Inlämnad sent",
+            SubmissionStatus.Late => "Försenad",
+            SubmissionStatus.NotSubmitted => "Ej inlämnad",
+            _ => "Okänd status"
+        };
+    }
+
+    private async Task ApplyFilterAsync()
+    {
+        await LoadSubmissionsAsync();
+    }
+
+    private async Task ResetFilterAsync()
+    {
+        selectedStatus = string.Empty;
+        selectedCourseId = null;
+        selectedActivityId = null;
+        await LoadSubmissionsAsync();
     }
 }
