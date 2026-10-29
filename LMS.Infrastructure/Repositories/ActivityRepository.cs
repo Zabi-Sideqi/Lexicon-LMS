@@ -2,6 +2,8 @@
 using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Infrastructure.Data;
+using LMS.Infrastructure.Extensions;
+using LMS.Shared.DTOs.CommonDtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMS.Infrastructure.Repositories;
@@ -107,5 +109,28 @@ public class ActivityRepository : IActivityRepository
         return await query
             .OrderBy(activity => activity.EndTime)
             .ToListAsync();
+    }
+
+    public async Task<PagedList<Activity>> GetPagedAsync(PageParameters pageParameters)
+    {
+        var query = _context.Activities
+            .Include(a => a.Module)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(pageParameters.SearchTerm))
+        {
+            var search = pageParameters.SearchTerm;
+            query = query.Where(a => a.Name.Contains(search));
+        }
+
+        query = pageParameters.SortOrder switch
+        {
+            "start" => query.OrderBy(a => a.StartTime),
+            "start_desc" => query.OrderByDescending(a => a.StartTime),
+            "name" => query.OrderBy(a => a.Name),
+            _ => query.OrderBy(a => a.StartTime)
+        };
+
+        return await query.ToPagedListAsync(pageParameters);
     }
 }

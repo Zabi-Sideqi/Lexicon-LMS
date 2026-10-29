@@ -1,4 +1,5 @@
 ﻿using LMS.Shared.DTOs.AssignmentDtos;
+using LMS.Shared.DTOs.CommonDtos;
 
 namespace Service.Contracts;
 
@@ -23,6 +24,11 @@ public interface ISubmissionService
         string teacherId,
         TeacherSubmissionFilterDto? filter = null);
 
+    Task<PagedList<TeacherSubmissionDto>> GetSubmissionsForTeacherPagedAsync(
+        string teacherId,
+        PageParameters pageParameters,
+        bool? hasFeedback = null);
+
     Task<(Stream Stream, string FileName, string ContentType)>
-    DownloadSubmissionAsync(string teacherId, int submissionId);
+        DownloadSubmissionAsync(string teacherId, int submissionId);
 }

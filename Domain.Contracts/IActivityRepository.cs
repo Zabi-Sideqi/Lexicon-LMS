@@ -1,4 +1,5 @@
 ﻿using Domain.Models.Entities;
+using LMS.Shared.DTOs.CommonDtos;
 
 namespace Domain.Contracts
 {
@@ -21,5 +22,6 @@ namespace Domain.Contracts
         Task<IEnumerable<Activity>> GetAssignmentsByCourseIdAsync(
             int courseId, 
             bool trackChanges = false);
+        Task<PagedList<Activity>> GetPagedAsync(PageParameters pageParameters);
     }
 }

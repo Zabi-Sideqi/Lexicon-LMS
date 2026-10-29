@@ -3,6 +3,7 @@ using Domain.Contracts;
 using Domain.Models.Entities;
 using Domain.Models.Exceptions;
 using LMS.Shared.DTOs.ActivityDtos;
+using LMS.Shared.DTOs.CommonDtos;
 using Service.Contracts;
 
 namespace LMS.Services;
@@ -205,6 +206,18 @@ public class ActivityService : IActivityService
             throw new ArgumentException(
                 "Activity times cannot overlap with another activity in the same module.");
         }
+    }
+
+    public async Task<PagedList<ActivityDto>> GetPagedAsync(PageParameters pageParameters)
+    {
+        var paged = await _uow.ActivityRepository.GetPagedAsync(pageParameters);
+
+        return new PagedList<ActivityDto>(
+            paged.Items.Select(a => new ActivityDto(
+                a.Id, a.ModuleId, a.Type.ToString(),
+                a.Name, a.Description, a.StartTime, a.EndTime)).ToList(),
+            paged.PageNumber, paged.PageSize,
+            paged.TotalCount, paged.TotalPages);
     }
 
     private static ActivityType ParseActivityType(string type)
