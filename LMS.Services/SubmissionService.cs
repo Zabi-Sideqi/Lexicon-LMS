@@ -107,12 +107,10 @@ public class SubmissionService : ISubmissionService
                 "Only teachers can view course submissions.");
         }
 
-        var courses = await _uow.CourseRepository
-            .GetByTeacherIdAsync(teacherId);
-
-        if (!courses.Any())
-            return [];
-
+        // US02 states that teachers can see all courses.
+        // Therefore, list submissions from every course, not only courses
+        // linked to the current teacher in the course-teacher join table.
+        var courses = await _uow.CourseRepository.GetAllAsync();
         var submissions = new List<Submission>();
 
         foreach (var course in courses)
