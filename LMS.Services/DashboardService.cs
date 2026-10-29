@@ -44,9 +44,11 @@ public sealed class DashboardService : IDashboardService
         var tomorrow = today.AddDays(1);
         var upcomingCutoff = today.AddDays(8);
 
+        // US02 requires all teachers to be able to see all courses.
+        // Dashboard data must not depend on a course-teacher assignment.
         var courses = (
             await _unitOfWork.CourseRepository
-                .GetByTeacherIdAsync(teacherId))
+                .GetAllAsync())
             .ToList();
 
         var activeCourses = new List<TeacherDashboardCourseDto>();
