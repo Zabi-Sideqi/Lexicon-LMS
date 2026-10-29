@@ -222,8 +222,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @submission.SubmittedAt.ToLocalTime()
-                                        .ToString("yyyy-MM-dd HH:mm")
+                                        @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
                                     </td>
                                     <td>
                                         <span class="badge bg-warning text-dark">
@@ -307,13 +306,9 @@
         <div class="activity-card">
             <h2>Recent Submissions</h2>
 
-            @if (!submissions.Any())
+            @if (dashboard?.RecentSubmissions.Count > 0)
             {
-                <p>There are no submissions to display yet.</p>
-            }
-            else
-            {
-                @foreach (var submission in dashboard?.RecentSubmissions ?? [])
+                @foreach (var submission in dashboard.RecentSubmissions)
                 {
                     var age = DateTime.Now - submission.SubmittedAt;
                     var recentlySubmitted =
@@ -331,21 +326,24 @@
                         }
 
                         @if (recentlySubmitted)
-                            {
-                                <span class="badge bg-primary ms-2">
-                                    New · last 24 hours
-                                </span>
-                            }
-                        </strong>
+                        {
+                            <span class="badge bg-primary ms-2">
+                                New · last 24 hours
+                            </span>
+                        }
 
                         <span>
                             @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
                             · @(submission.HasFeedback
-                                                            ? "Feedback provided"
-                                                            : "Feedback needed")
+                                ? "Feedback provided"
+                                : "Feedback needed")
                         </span>
                     </div>
                 }
+            }
+            else
+            {
+                <p>There are no recent submissions to display yet.</p>
             }
         </div>
     }
