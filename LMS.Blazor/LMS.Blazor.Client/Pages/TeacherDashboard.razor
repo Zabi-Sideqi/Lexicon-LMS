@@ -111,6 +111,9 @@
                             @course.StudentCount students
                             · @course.UpcomingActivityCount upcoming activities
                         </span>
+                        <span class="badge @(course.IsActive ? "bg-success" : "bg-secondary")">
+                            @(course.IsActive ? "Active course" : "Not currently active")
+                        </span>
                     </div>
                 }
             }
@@ -158,10 +161,10 @@
                         <strong>@item.StudentName – @item.ActivityName</strong>
                         <span>
                             @item.CourseName
-                            · Due: @item.DueAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            · Due: @item.DueAt.ToString("yyyy-MM-dd HH:mm")
                         </span>
 
-                        @if (item.Status == "Försenad inlämning")
+                        @if (item.Status == "Late submission")
                         {
                             <span class="badge bg-danger">Late submission</span>
                         }
@@ -310,9 +313,7 @@
             }
             else
             {
-                @foreach (var submission in submissions
-                    .OrderByDescending(s => s.SubmittedAt)
-                    .Take(5))
+                @foreach (var submission in dashboard?.RecentSubmissions ?? [])
                 {
                     var age = DateTime.Now - submission.SubmittedAt;
                     var recentlySubmitted =
@@ -322,8 +323,14 @@
                     <div class="activity" @key="submission.SubmissionId">
                         <strong>
                             @submission.StudentName – @submission.ActivityName
+                        </strong>
 
-                            @if (recentlySubmitted)
+                        @if (submission.IsLate)
+                        {
+                            <span class="badge bg-danger ms-2">Late submission</span>
+                        }
+
+                        @if (recentlySubmitted)
                             {
                                 <span class="badge bg-primary ms-2">
                                     New · last 24 hours
