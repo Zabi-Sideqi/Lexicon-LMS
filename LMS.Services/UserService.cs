@@ -4,6 +4,7 @@ using Domain.Models.Entities;
 using LMS.Shared.DTOs.UserDtos;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
+using LMS.Shared.DTOs.CommonDtos;
 
 namespace LMS.Services;
 
@@ -134,6 +135,32 @@ public class UserService : IUserService
         }
 
         return result;
+    }
+
+    public async Task<PagedList<UserResponseDto>> GetPagedAsync(PageParameters pageParameters)
+    {
+        var paged = await _unitOfWork.UserRepository.GetPagedAsync(pageParameters);
+
+        var dtos = new List<UserResponseDto>();
+        foreach (var user in paged.Items)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            dtos.Add(new UserResponseDto
+            {
+                Id = user.Id,
+                UserName = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Role = roles.FirstOrDefault() ?? string.Empty,
+                CourseId = user.CourseId
+            });
+        }
+
+        return new PagedList<UserResponseDto>(
+            dtos,
+            paged.PageNumber,
+            paged.PageSize,
+            paged.TotalCount,
+            paged.TotalPages);
     }
 
     public async Task<UserResponseDto> GetUserByIdAsync(string id)

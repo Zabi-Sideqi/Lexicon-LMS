@@ -1,5 +1,5 @@
-﻿
-﻿using LMS.Shared.DTOs.UserDtos;
+﻿using LMS.Shared.DTOs.CommonDtos;
+using LMS.Shared.DTOs.UserDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
@@ -41,6 +41,15 @@ public class UserController : ControllerBase
         {
             return NotFound("User not found.");
         }
+    }
+
+    // GET: api/users/paged?pageNumber=1&pageSize=10&searchTerm=...
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedList<UserResponseDto>>> GetPagedUsers(
+    [FromQuery] PageParameters pageParameters)
+    {
+        var paged = await _serviceManager.UserService.GetPagedAsync(pageParameters);
+        return Ok(paged);
     }
 
     // POST: api/users
