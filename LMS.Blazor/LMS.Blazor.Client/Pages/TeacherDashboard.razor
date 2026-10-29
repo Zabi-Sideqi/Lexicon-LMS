@@ -247,13 +247,13 @@
         <div class="stats">
             <div class="stat-card">
                 <span class="stat-icon">▣</span>
-                <strong>@submissions.Count</strong>
+                <strong>@submissions.Count(s => s.SubmissionId is not null)</strong>
                 <span>Submissions</span>
             </div>
 
             <div class="stat-card">
                 <span class="stat-icon">✓</span>
-                <strong>@submissions.Count(s => s.HasFeedback)</strong>
+                <strong>@submissions.Count(s => s.SubmissionId is not null && s.HasFeedback)</strong>
                 <span>Feedback provided</span>
             </div>
 
@@ -265,7 +265,7 @@
 
             <div class="stat-card">
                 <span class="stat-icon">♙</span>
-                <strong>@submissions.Select(s => s.StudentId).Distinct().Count()</strong>
+                <strong>@submissions.Where(s => s.SubmissionId is not null).Select(s => s.StudentId).Distinct().Count()</strong>
                 <span>Students with submissions</span>
             </div>
         </div>
@@ -402,6 +402,7 @@
             else
             {
                 @foreach (var submission in submissions
+                    .Where(s => s.SubmissionId is not null)
                     .OrderByDescending(s => s.SubmittedAt)
                     .Take(5))
                 {
