@@ -4,9 +4,12 @@ namespace Service.Contracts;
 
 public interface ISubmissionService
 {
-    Task<IEnumerable<StudentAssignmentDto>> GetMyAssignmentsAsync(string userId);
+    Task<IEnumerable<StudentAssignmentDto>> GetMyAssignmentsAsync(
+        string userId);
 
-    Task<StudentAssignmentDto?> GetMyAssignmentAsync(string userId, int assignmentId);
+    Task<StudentAssignmentDto?> GetMyAssignmentAsync(
+        string userId,
+        int assignmentId);
 
     Task<StudentAssignmentDto> SubmitAsync(
         string userId,
@@ -17,5 +20,9 @@ public interface ISubmissionService
         long fileSize);
 
     Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
-        string teacherId);
+        string teacherId,
+        TeacherSubmissionFilterDto? filter = null);
+
+    Task<(Stream Stream, string FileName, string ContentType)>
+    DownloadSubmissionAsync(string teacherId, int submissionId);
 }
