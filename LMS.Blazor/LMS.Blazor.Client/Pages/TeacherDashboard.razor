@@ -1,9 +1,12 @@
-﻿
+
 @page "/teacher-dashboard"
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Shared.DTOs.FeedbackDtos
 @using LMS.Shared.DTOs.DashboardDtos
+@using LMS.Shared.DTOs.CourseDtos
+@using LMS.Shared.DTOs.ActivityDtos
+@using LMS.Shared.Enums
 @using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
@@ -17,6 +20,44 @@
             <p>An overview of student submissions, upcoming activities, and feedback that needs your attention.</p>
         </div>
         <span class="role-badge">Teacher</span>
+    </div>
+
+
+    <div class="activity-card mb-3">
+        <div class="d-flex flex-wrap align-items-end gap-3">
+            <div>
+                <label for="statusFilter" class="form-label">Status</label>
+                <select id="statusFilter" class="form-select" @bind="selectedStatus">
+                    <option value="">All statuses</option>
+                    <option value="@nameof(SubmissionStatus.Submitted)">Submitted</option>
+                    <option value="@nameof(SubmissionStatus.SubmittedLate)">Submitted late</option>
+                    <option value="@nameof(SubmissionStatus.Late)">Late</option>
+                    <option value="@nameof(SubmissionStatus.NotSubmitted)">Not submitted</option>
+                </select>
+            </div>
+            <div>
+                <label for="courseFilter" class="form-label">Course</label>
+                <InputSelect id="courseFilter" class="form-select" @bind-Value="selectedCourseId">
+                    <option value="">All courses</option>
+                    @foreach (var course in courses)
+                    {
+                        <option value="@course.Id">@course.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <div>
+                <label for="activityFilter" class="form-label">Assignment</label>
+                <InputSelect id="activityFilter" class="form-select" @bind-Value="selectedActivityId">
+                    <option value="">All assignments</option>
+                    @foreach (var activity in activities)
+                    {
+                        <option value="@activity.Id">@activity.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <button class="btn btn-primary" type="button" @onclick="ApplyFilterAsync">Filter</button>
+            <button class="btn btn-outline-secondary" type="button" @onclick="ResetFilterAsync">Clear</button>
+        </div>
     </div>
 
     @if (dashboard is not null)
@@ -263,19 +304,24 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @submission.SubmittedAt.ToLocalTime()
-                                        .ToString("yyyy-MM-dd HH:mm")
+                                        @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
                                     </td>
                                     <td>
-                                        <span class="badge bg-warning text-dark">
-                                            Awaiting feedback
+                                        <span class="@GetStatusCssClass(submission.Status)">
+                                            @GetStatusText(submission.Status)
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-primary btn-sm"
-                                                @onclick="() => SelectSubmission(submission)">
-                                            Provide feedback
-                                        </button>
+                                        @if (submission.SubmissionId is int submissionId)
+                                        {
+                                            <a href="/api/proxy/submissions/@submissionId/download"
+                                               download="@submission.FileName"
+                                               class="btn btn-sm btn-secondary me-1">Download</a>
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => SelectSubmission(submission)">
+                                                Provide feedback
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -390,18 +436,40 @@
     private string? feedbackSuccess;
     private bool sendingFeedback;
 
-    // Only actual submissions can be waiting for feedback.
-    // Rows without a SubmissionId represent missing submissions.
+    private string selectedStatus = string.Empty;
+    private List<CourseDto> courses = [];
+    private int? selectedCourseId;
+    private List<ActivityDto> activities = [];
+    private int? selectedActivityId;
+
+    // Rows without a SubmissionId represent missing submissions, not pending feedback.
     private int PendingCount =>
-        submissions.Count(s => !s.HasFeedback);
+        submissions.Count(s => s.SubmissionId is not null && !s.HasFeedback);
 
     private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
         submissions
-            .Where(s => !s.HasFeedback)
+            .Where(s => s.SubmissionId is not null && !s.HasFeedback)
             .OrderBy(s => s.SubmittedAt);
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            courses = await Proxy.SendAsync<List<CourseDto>>(
+                HttpMethod.Get, "courses") ?? [];
+
+            activities = await Proxy.SendAsync<List<ActivityDto>>(
+                HttpMethod.Get, "Activities") ?? [];
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Your session has expired. Please sign in again.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not load courses and activities. Check that the API is running and try again.";
+        }
+
         await LoadSubmissionsAsync();
         await LoadDashboardAsync();
     }
@@ -413,9 +481,23 @@
 
         try
         {
+            var endpoint = "teacher/submissions";
+            var queryParameters = new List<string>();
+
+            if (selectedCourseId is int courseId)
+                queryParameters.Add("CourseId=" + courseId);
+
+            if (selectedActivityId is int activityId)
+                queryParameters.Add("ActivityId=" + activityId);
+
+            if (!string.IsNullOrWhiteSpace(selectedStatus))
+                queryParameters.Add("Status=" + Uri.EscapeDataString(selectedStatus));
+
+            if (queryParameters.Count > 0)
+                endpoint += "?" + string.Join("&", queryParameters);
+
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
-                HttpMethod.Get,
-                "teacher/submissions");
+                HttpMethod.Get, endpoint);
 
             submissions = result?.ToList() ?? [];
         }
@@ -425,13 +507,11 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage =
-                "Could not load submissions. Check that the API is running and try again.";
+            errorMessage = "Could not load submissions. Check that the API is running and try again.";
         }
         catch (Exception)
         {
-            errorMessage =
-                "An unexpected error occurred while loading the dashboard.";
+            errorMessage = "An unexpected error occurred while loading submissions.";
         }
         finally
         {
@@ -446,28 +526,27 @@
         try
         {
             dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
-                HttpMethod.Get,
-                "dashboard/teacher");
+                HttpMethod.Get, "dashboard/teacher");
         }
         catch (UnauthorizedAccessException)
         {
-            dashboardErrorMessage =
-                "You are not authorized to load the teacher dashboard. Please sign in again.";
+            dashboardErrorMessage = "You are not authorized to load the teacher dashboard. Please sign in again.";
         }
         catch (HttpRequestException)
         {
-            dashboardErrorMessage =
-                "Could not load dashboard data from the API.";
+            dashboardErrorMessage = "Could not load dashboard data from the API.";
         }
         catch (Exception)
         {
-            dashboardErrorMessage =
-                "An unexpected error occurred while loading dashboard data.";
+            dashboardErrorMessage = "An unexpected error occurred while loading dashboard data.";
         }
     }
 
     private void SelectSubmission(TeacherSubmissionDto submission)
     {
+        if (submission.SubmissionId is null)
+            return;
+
         selectedSubmission = submission;
         feedbackText = "";
         feedbackError = null;
@@ -484,9 +563,9 @@
 
     private async Task SubmitFeedbackAsync()
     {
-        if (selectedSubmission is null)
+        if (selectedSubmission?.SubmissionId is not int submissionId)
         {
-            feedbackError = "Select a submission first.";
+            feedbackError = "Select a submitted assignment first.";
             return;
         }
 
@@ -510,14 +589,11 @@
 
         try
         {
-            var dto = new FeedbackForCreationDto
-            {
-                Text = text
-            };
+            var dto = new FeedbackForCreationDto { Text = text };
 
             await Proxy.SendAsync<object>(
                 HttpMethod.Post,
-                $"feedback/submission/{selectedSubmission.SubmissionId}",
+                "feedback/submission/" + submissionId,
                 new StringContent(
                     System.Text.Json.JsonSerializer.Serialize(dto),
                     System.Text.Encoding.UTF8,
@@ -526,31 +602,57 @@
             feedbackSuccess = "Feedback has been sent to the student.";
             feedbackText = "";
 
-            var submittedId = selectedSubmission.SubmissionId;
-
             await LoadSubmissionsAsync();
+            await LoadDashboardAsync();
 
             selectedSubmission = submissions.FirstOrDefault(
-                s => s.SubmissionId == submittedId);
+                s => s.SubmissionId == submissionId);
         }
         catch (UnauthorizedAccessException)
         {
-            feedbackError =
-                "You are not authorized, or your session has expired. Please sign in again.";
+            feedbackError = "You are not authorized, or your session has expired. Please sign in again.";
         }
         catch (HttpRequestException)
         {
-            feedbackError =
-                "Could not send feedback. Check your connection and try again.";
+            feedbackError = "Could not send feedback. Check your connection and try again.";
         }
         catch (Exception)
         {
-            feedbackError =
-                "An unexpected error occurred while sending feedback.";
+            feedbackError = "An unexpected error occurred while sending feedback.";
         }
         finally
         {
             sendingFeedback = false;
         }
+    }
+
+    private static string GetStatusCssClass(SubmissionStatus status) =>
+        status switch
+        {
+            SubmissionStatus.Submitted => "badge bg-success",
+            SubmissionStatus.SubmittedLate => "badge bg-warning text-dark",
+            SubmissionStatus.Late => "badge bg-danger",
+            SubmissionStatus.NotSubmitted => "badge bg-danger",
+            _ => "badge bg-secondary"
+        };
+
+    private static string GetStatusText(SubmissionStatus status) =>
+        status switch
+        {
+            SubmissionStatus.Submitted => "Submitted",
+            SubmissionStatus.SubmittedLate => "Submitted late",
+            SubmissionStatus.Late => "Late",
+            SubmissionStatus.NotSubmitted => "Not submitted",
+            _ => "Unknown status"
+        };
+
+    private Task ApplyFilterAsync() => LoadSubmissionsAsync();
+
+    private async Task ResetFilterAsync()
+    {
+        selectedStatus = string.Empty;
+        selectedCourseId = null;
+        selectedActivityId = null;
+        await LoadSubmissionsAsync();
     }
 }
