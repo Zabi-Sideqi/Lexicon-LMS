@@ -174,7 +174,7 @@ public class DashboardService : IDashboardService
                     submission.Id,
                     submission.Student.UserName
                         ?? submission.Student.Email
-                        ?? "Okänd student",
+                        ?? "Unknown student",
                     submission.Activity.Name,
                     course.Name,
                     submittedAt,
@@ -214,7 +214,7 @@ public class DashboardService : IDashboardService
                                 student.Id,
                                 student.UserName ?? student.Email ?? "Okänd student",
                                 assignment.EndTime,
-                                "Försenad inlämning"));
+                                "Late submission"));
                         }
 
                         continue;
@@ -232,7 +232,7 @@ public class DashboardService : IDashboardService
                             student.Id,
                             student.UserName ?? student.Email ?? "Okänd student",
                             assignment.EndTime,
-                            "Saknad inlämning"));
+                            "Missing submission"));
                     }
                 }
             }
