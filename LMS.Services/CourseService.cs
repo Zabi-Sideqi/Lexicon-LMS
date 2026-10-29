@@ -76,8 +76,6 @@ public class CourseService : ICourseService
             EndDate = dto.EndDate
         };
 
-        course.Teachers.Add(teacher);
-
         _uow.CourseRepository.Create(course);
         await _uow.SaveChangesAsync();
 
