@@ -61,7 +61,7 @@
                         <path d="m9 15 2 2 4-4" />
                     </svg>
                 </span>
-                <strong>@(dashboard?.UpcomingActivities.Count ?? 0)</strong>
+                <strong>@(dashboard?.Courses.Sum(course => course.UpcomingActivityCount) ?? 0)</strong>
                 <span>Upcoming activities</span>
             </a>
 
