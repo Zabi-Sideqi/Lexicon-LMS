@@ -21,7 +21,7 @@
     @if (loading)
     {
         <div class="activity-card">
-            <p>Loading dashboard data...</p>
+            <p>HÃ¤mtar dashboarddata...</p>
         </div>
     }
     else if (errorMessage is not null)
@@ -38,20 +38,20 @@
     {
         <div class="stats">
             <a href="/courses" class="stat-card stat-card-link">
-                <span class="stat-icon">??</span>
+                <span class="stat-icon">?</span>
                 <strong>@(dashboard?.Courses.Count ?? 0)</strong>
                 <span>Courses</span>
             </a>
 
             <a href="/calendar" class="stat-card stat-card-link">
-                <span class="stat-icon">??</span>
+                <span class="stat-icon">?</span>
                 <strong>@(dashboard?.UpcomingActivities.Count ?? 0)</strong>
                 <span>Upcoming activities</span>
             </a>
 
             <a href="#pending-feedback"
                class="stat-card stat-card-link">
-                <span class="stat-icon">??</span>
+                <span class="stat-icon">?</span>
                 <strong>@(dashboard?.PendingFeedbackCount ?? 0)</strong>
                 <span>Awaiting feedback</span>
             </a>
@@ -79,7 +79,7 @@
                         <strong>@course.Name</strong>
                         <span>
                             @course.StudentCount students
-                            · @course.UpcomingActivityCount upcoming activities
+                            Â· @course.UpcomingActivityCount upcoming activities
                         </span>
                     </div>
                 }
@@ -92,7 +92,7 @@
 
         <div class="activity-card">
             <div class="section-head">
-                <h2>Upcoming Activities</h2>
+                <h2>Kommande aktiviteter</h2>
             </div>
 
             @if (dashboard?.UpcomingActivities.Count > 0)
@@ -103,14 +103,14 @@
                         <strong>@activity.Name</strong>
                         <span>
                             @activity.CourseName
-                            · @activity.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            Â· @activity.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
                         </span>
                     </div>
                 }
             }
             else
             {
-                <p>No upcoming activities to display.</p>
+                <p>Inga kommande aktiviteter att visa.</p>
             }
         </div>
 
@@ -125,13 +125,13 @@
                 {
                     <div class="activity"
                          @key="(item.ActivityId, item.StudentId)">
-                        <strong>@item.StudentName – @item.ActivityName</strong>
+                        <strong>@item.StudentName â€“ @item.ActivityName</strong>
                         <span>
                             @item.CourseName
-                            · Due: @item.DueAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            Â· Due: @item.DueAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
                         </span>
 
-                        @if (item.Status == "Försenad inlämning")
+                        @if (item.Status == "FÃ¶rsenad inlÃ¤mning")
                         {
                             <span class="badge bg-danger">Late submission</span>
                         }
@@ -214,7 +214,7 @@
         @if (selectedSubmission is not null)
         {
             <div class="activity-card">
-                <h2>Give Feedback</h2>
+                <h2>Ge feedback</h2>
 
                 <p>
                     <strong>Student:</strong>
@@ -260,7 +260,7 @@
                 <button class="btn btn-primary"
                         disabled="@sendingFeedback"
                         @onclick="SubmitFeedbackAsync">
-                    @(sendingFeedback ? "Sending..." : "Send Feedback")
+                    @(sendingFeedback ? "Skickar..." : "Skicka feedback")
                 </button>
 
                 <button class="btn btn-outline-secondary ms-2"
@@ -291,21 +291,21 @@
 
                     <div class="activity" @key="submission.SubmissionId">
                         <strong>
-                            @submission.StudentName – @submission.ActivityName
+                            @submission.StudentName â€“ @submission.ActivityName
 
                             @if (recentlySubmitted)
                             {
                                 <span class="badge bg-primary ms-2">
-                                    New · last 24 hours
+                                    New Â· last 24 hours
                                 </span>
                             }
                         </strong>
 
                         <span>
                             @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
-                            · @(submission.HasFeedback
-                                                            ? "Feedback provided"
-                                                            : "Feedback needed")
+                            Â· @(submission.HasFeedback
+                                                    ? "Feedback lÃ¤mnad"
+                                                    : "Feedback behÃ¶vs")
                         </span>
                     </div>
                 }
