@@ -64,7 +64,6 @@ internal class DataSeedService : IHostedService
             await CreateUserIfMissingAsync(TeacherEmail, TeacherRole);
             await CreateUserIfMissingAsync(StudentEmail, StudentRole);
 
-            await AssignTeacherToExistingCoursesAsync(dbContext);
             await AssignStudentToModuleCourseAsync(dbContext);
 
             logger.LogInformation("Seed complete");
@@ -130,43 +129,6 @@ internal class DataSeedService : IHostedService
         }
     }
 
-
-    private async Task AssignTeacherToExistingCoursesAsync(
-        ApplicationDbContext dbContext)
-    {
-        var teacher = await userManager.FindByEmailAsync(TeacherEmail);
-
-        if (teacher is null)
-        {
-            logger.LogWarning(
-                "Demo teacher {Email} was not found.",
-                TeacherEmail);
-
-            return;
-        }
-
-        var courses = await dbContext.Courses
-            .Include(course => course.Teachers)
-            .ToListAsync();
-
-        foreach (var course in courses)
-        {
-            if (course.Teachers.Any(existingTeacher =>
-                    existingTeacher.Id == teacher.Id))
-            {
-                continue;
-            }
-
-            course.Teachers.Add(teacher);
-        }
-
-        await dbContext.SaveChangesAsync();
-
-        logger.LogInformation(
-            "Assigned demo teacher {Email} to {CourseCount} existing courses.",
-            TeacherEmail,
-            courses.Count);
-    }
 
     private async Task AssignStudentToModuleCourseAsync(
         ApplicationDbContext dbContext)
