@@ -212,7 +212,7 @@ public class DashboardService : IDashboardService
                                 course.Id,
                                 course.Name,
                                 student.Id,
-                                student.UserName ?? student.Email ?? "Okänd student",
+                                student.UserName ?? student.Email ?? "Unknown student",
                                 assignment.EndTime,
                                 "Late submission"));
                         }
@@ -230,7 +230,7 @@ public class DashboardService : IDashboardService
                             course.Id,
                             course.Name,
                             student.Id,
-                            student.UserName ?? student.Email ?? "Okänd student",
+                            student.UserName ?? student.Email ?? "Unknown student",
                             assignment.EndTime,
                             "Missing submission"));
                     }
