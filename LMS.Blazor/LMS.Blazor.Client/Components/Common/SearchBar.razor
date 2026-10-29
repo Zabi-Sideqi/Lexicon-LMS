@@ -1,0 +1,57 @@
+﻿@implements IDisposable
+
+<div class="input-group mb-3">
+    <input type="text"
+           class="form-control"
+           placeholder="@Placeholder"
+           @bind="SearchTerm"
+           @bind:event="oninput"
+           @onkeyup="HandleKeyUp" />
+
+    @if (!string.IsNullOrEmpty(SearchTerm))
+    {
+        <button class="btn btn-outline-secondary"
+                type="button"
+                @onclick="ClearSearch">
+            ×
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public string Placeholder { get; set; } = "Sök...";
+    [Parameter] public EventCallback<string> OnSearch { get; set; }
+    [Parameter] public int DebounceMs { get; set; } = 300;
+
+    private string SearchTerm { get; set; } = string.Empty;
+    private CancellationTokenSource? _debounceCts;
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        try
+        {
+            await Task.Delay(DebounceMs, token);
+            await OnSearch.InvokeAsync(SearchTerm);
+        }
+        catch (TaskCanceledException)
+        {
+            // Nytt tangenttryck innan delayen hann klart
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchTerm = string.Empty;
+        await OnSearch.InvokeAsync(string.Empty);
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+    }
+}
