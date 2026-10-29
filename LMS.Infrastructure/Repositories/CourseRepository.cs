@@ -1,7 +1,9 @@
 using Domain.Contracts;
 using Domain.Models.Entities;
 using LMS.Infrastructure.Data;
+using LMS.Shared.DTOs.CommonDtos;
 using Microsoft.EntityFrameworkCore;
+using LMS.Infrastructure.Extensions;
 
 namespace LMS.Infrastructure.Repositories;
 
@@ -79,5 +81,26 @@ public class CourseRepository : ICourseRepository
     public void Create(Course course)
     {
         _context.Courses.Add(course);
+    }
+
+    public async Task<PagedList<Course>> GetPagedAsync(PageParameters pageParameters)
+    {
+        var query = _context.Courses.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(pageParameters.SearchTerm))
+        {
+            query = query.Where(c => c.Name.Contains(pageParameters.SearchTerm));
+        }
+
+        query = pageParameters.SortOrder switch
+        {
+            "name" => query.OrderBy(c => c.Name),
+            "name_desc" => query.OrderByDescending(c => c.Name),
+            "startDate" => query.OrderBy(c => c.StartDate),
+            "endDate" => query.OrderBy(c => c.EndDate),
+            _ => query.OrderBy(c => c.Id)
+        };
+
+        return await query.ToPagedListAsync(pageParameters);
     }
 }
