@@ -32,6 +32,18 @@ public class FeedbackRepository : IFeedbackRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Feedback>> GetByStudentIdAsync(
+    string studentId, bool trackChanges = false)
+    {
+        var query = _context.Feedbacks
+            .Include(f => f.Submission)
+            .Include(f => f.Teacher)
+            .Where(f => f.Submission.StudentId == studentId);
+
+        if (!trackChanges) query = query.AsNoTracking();
+        return await query.ToListAsync();
+    }
+
     public void Create(Feedback feedback)
     {
         _context.Feedbacks.Add(feedback);

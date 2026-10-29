@@ -66,6 +66,8 @@ internal class DataSeedService : IHostedService
 
             await AssignStudentToModuleCourseAsync(dbContext);
 
+            await AssignTeacherToCoursesAsync(dbContext);
+
             logger.LogInformation("Seed complete");
         }
         catch (Exception ex)
@@ -185,6 +187,50 @@ internal class DataSeedService : IHostedService
             StudentEmail,
             module.CourseId,
             StudentModuleName);
+    }
+
+    private async Task AssignTeacherToCoursesAsync(
+    ApplicationDbContext dbContext)
+    {
+        var teacher = await userManager.FindByEmailAsync(TeacherEmail);
+
+        if (teacher is null)
+        {
+            logger.LogWarning(
+                "Demo teacher {Email} was not found.",
+                TeacherEmail);
+
+            return;
+        }
+
+        var courses = await dbContext.Courses
+            .Include(course => course.Teachers)
+            .ToListAsync();
+
+        if (courses.Count == 0)
+        {
+            logger.LogWarning("No courses were found.");
+            return;
+        }
+
+        foreach (var course in courses)
+        {
+            if (course.Teachers.Any(
+                existingTeacher => existingTeacher.Id == teacher.Id))
+            {
+                continue;
+            }
+
+            course.Teachers.Add(teacher);
+
+            logger.LogInformation(
+                "Assigned demo teacher {Email} to course {CourseId} ({CourseName}).",
+                TeacherEmail,
+                course.Id,
+                course.Name);
+        }
+
+        await dbContext.SaveChangesAsync();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

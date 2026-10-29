@@ -77,3 +77,23 @@ a,
 .content {
     padding-top: 1.1rem;
 }
+
+
+.assignment-detail-submit-form {
+    padding: 0 30px 24px;
+    box-sizing: border-box;
+}
+
+    .assignment-detail-submit-form .mb-3 {
+        margin: 0 0 16px;
+    }
+
+    .assignment-detail-submit-form .form-label {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .assignment-detail-submit-form .form-control {
+        width: 100%;
+        box-sizing: border-box;
+    }

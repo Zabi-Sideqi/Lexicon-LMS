@@ -299,9 +299,19 @@
                                     <td>@submission.StudentName</td>
                                     <td>
                                         <strong>@submission.ActivityName</strong>
-                                        <div class="text-muted small">
-                                            @submission.FileName
-                                        </div>
+                                        @if (submission.FileName is not null)
+                                        {
+                                            <div class="text-muted small">@submission.FileName</div>
+                                        }
+
+                                        @if (submission.SubmissionId is int submissionId)
+                                        {
+                                            <a href="/api/proxy/submissions/@submissionId/download"
+                                               download="@submission.FileName"
+                                               class="btn btn-sm btn-secondary mt-1">
+                                                Ladda ner
+                                            </a>
+                                        }
                                     </td>
                                     <td>
                                         @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
@@ -411,8 +421,7 @@
                             @submission.StudentName – @submission.ActivityName
                         </strong>
                         <span>
-                            @submission.SubmittedAt.ToLocalTime()
-                            .ToString("yyyy-MM-dd HH:mm")
+                            @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
                             · @(submission.HasFeedback
                                                             ? "Feedback provided"
                                                             : "Feedback needed")
@@ -475,6 +484,7 @@
         await LoadDashboardAsync();
     }
 
+    
     private async Task LoadSubmissionsAsync()
     {
         loading = true;

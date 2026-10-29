@@ -12,6 +12,9 @@ namespace Domain.Contracts
         Task<IEnumerable<Activity>> GetByModuleIdAsync(
             int moduleId,
             bool trackChanges = false);
+        Task<IEnumerable<Activity>> GetByCourseIdAsync(
+            int courseId,
+            bool trackChanges = false);
         void Create(Activity activity);
         void Update(Activity activity);
         void Delete(Activity activity);
