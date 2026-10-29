@@ -301,7 +301,10 @@ namespace LMS.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FeedbackId")
+                    b.Property<int?>("DocumentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FeedbackId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsRead")
@@ -311,13 +314,19 @@ namespace LMS.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RecipientId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("StudentId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DocumentId");
+
                     b.HasIndex("FeedbackId");
+
+                    b.HasIndex("RecipientId");
 
                     b.HasIndex("StudentId");
 
@@ -596,19 +605,31 @@ namespace LMS.Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.Entities.Notification", b =>
                 {
+                    b.HasOne("Domain.Models.Entities.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Domain.Models.Entities.Feedback", "Feedback")
                         .WithMany()
                         .HasForeignKey("FeedbackId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Domain.Models.Entities.ApplicationUser", "Recipient")
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("Domain.Models.Entities.ApplicationUser", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Document");
 
                     b.Navigation("Feedback");
+
+                    b.Navigation("Recipient");
 
                     b.Navigation("Student");
                 });

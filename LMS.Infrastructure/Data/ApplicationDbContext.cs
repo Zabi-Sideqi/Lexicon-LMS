@@ -48,6 +48,7 @@ public class ApplicationDbContext
             .OnDelete(DeleteBehavior.NoAction);
 
 
+
         // Notis kopplad till studenten.
         modelBuilder.Entity<Notification>()
             .HasOne(notification => notification.Student)
@@ -55,12 +56,28 @@ public class ApplicationDbContext
             .HasForeignKey(notification => notification.StudentId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        // Generell mottagare för notiser till elever och lärare.
+        modelBuilder.Entity<Notification>()
+            .HasOne(notification => notification.Recipient)
+            .WithMany()
+            .HasForeignKey(notification => notification.RecipientId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+
         // Notis kopplad till feedbacken som utlöste den.
         modelBuilder.Entity<Notification>()
             .HasOne(notification => notification.Feedback)
             .WithMany()
             .HasForeignKey(notification => notification.FeedbackId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Notis kopplad till kursmaterialet som utlöste den.
+        modelBuilder.Entity<Notification>()
+            .HasOne(notification => notification.Document)
+            .WithMany()
+            .HasForeignKey(notification => notification.DocumentId)
+            .OnDelete(DeleteBehavior.NoAction);
+
 
     }
 
