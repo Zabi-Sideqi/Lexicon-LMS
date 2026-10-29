@@ -116,6 +116,25 @@
     line-height: 1.4;
 }
 
+/* Klickbart kort – Väntar på feedback */
+
+.stat-card-link {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+    .stat-card-link:hover,
+    .stat-card-link:focus-visible {
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .stat-card-link:focus-visible {
+        outline: 3px solid #222;
+        outline-offset: 3px;
+    }
+
 /* Rubriker och sektioner */
 
 .section-head {

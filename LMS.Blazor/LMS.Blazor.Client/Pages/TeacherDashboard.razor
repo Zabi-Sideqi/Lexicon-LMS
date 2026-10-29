@@ -1,27 +1,27 @@
-ï»¿
 @page "/teacher-dashboard"
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.AssignmentDtos
 @using LMS.Shared.DTOs.FeedbackDtos
+@using LMS.Shared.DTOs.DashboardDtos
 @using LMS.Blazor.Client.Services.ApiProxy
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
 
-<PageTitle>LÃ¤rardashboard</PageTitle>
+<PageTitle>Lärardashboard</PageTitle>
 
 <div class="dashboard">
     <div class="page-head">
         <div>
-            <h1>LÃ¤rardashboard</h1>
-            <p>Ã–versikt Ã¶ver studenternas inlÃ¤mningar och feedback.</p>
+            <h1>Lärardashboard</h1>
+            <p>Översikt över kurser, aktiviteter, inlämningar och feedback.</p>
         </div>
-        <span class="role-badge">LÃ¤rare</span>
+        <span class="role-badge">Lärare</span>
     </div>
 
     @if (loading)
     {
         <div class="activity-card">
-            <p>HÃ¤mtar inlÃ¤mningar...</p>
+            <p>Hämtar dashboarddata...</p>
         </div>
     }
     else if (errorMessage is not null)
@@ -30,46 +30,140 @@
             @errorMessage
             <button class="btn btn-outline-primary btn-sm ms-2"
                     @onclick="LoadSubmissionsAsync">
-                FÃ¶rsÃ¶k igen
+                Försök igen
             </button>
         </div>
     }
     else
     {
         <div class="stats">
-            <div class="stat-card">
-                <span class="stat-icon">â–£</span>
-                <strong>@submissions.Count</strong>
-                <span>InlÃ¤mningar</span>
-            </div>
+            <a href="/courses" class="stat-card stat-card-link">
+                <span class="stat-icon">?</span>
+                <strong>@(dashboard?.Courses.Count ?? 0)</strong>
+                <span>Kurser</span>
+            </a>
 
-            <div class="stat-card">
-                <span class="stat-icon">âœ“</span>
-                <strong>@submissions.Count(s => s.HasFeedback)</strong>
-                <span>Har fÃ¥tt feedback</span>
-            </div>
+            <a href="/calendar" class="stat-card stat-card-link">
+                <span class="stat-icon">?</span>
+                <strong>@(dashboard?.UpcomingActivities.Count ?? 0)</strong>
+                <span>Kommande aktiviteter</span>
+            </a>
 
-            <div class="stat-card">
-                <span class="stat-icon">âŒ›</span>
-                <strong>@PendingCount</strong>
-                <span>VÃ¤ntar pÃ¥ feedback</span>
-            </div>
+            <a href="#pending-feedback"
+               class="stat-card stat-card-link">
+                <span class="stat-icon">?</span>
+                <strong>@(dashboard?.PendingFeedbackCount ?? 0)</strong>
+                <span>Väntar på feedback</span>
+            </a>
 
-            <div class="stat-card">
-                <span class="stat-icon">â™™</span>
-                <strong>@submissions.Select(s => s.StudentId).Distinct().Count()</strong>
-                <span>Studenter med inlÃ¤mning</span>
-            </div>
+
+            <a href="#attention-items" class="stat-card stat-card-link">
+                <span class="stat-icon">!</span>
+                <strong>
+                    @((dashboard?.LateSubmissionCount ?? 0)
+                        + (dashboard?.MissingSubmissionCount ?? 0))
+                </strong>
+                <span>Sena eller saknade inlämningar</span>
+            </a>
+
         </div>
 
         <div class="activity-card">
             <div class="section-head">
-                <h2>InlÃ¤mningar som vÃ¤ntar pÃ¥ feedback</h2>
+                <h2>Mina kurser</h2>
+            </div>
+
+            @if (dashboard?.Courses.Count > 0)
+            {
+                @foreach (var course in dashboard.Courses)
+                {
+                    <div class="activity" @key="course.Id">
+                        <strong>@course.Name</strong>
+                        <span>
+                            @course.StudentCount studenter
+                            · @course.UpcomingActivityCount kommande aktiviteter
+                        </span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Inga kurser att visa.</p>
+            }
+        </div>
+
+        <div class="activity-card">
+            <div class="section-head">
+                <h2>Kommande aktiviteter</h2>
+            </div>
+
+            @if (dashboard?.UpcomingActivities.Count > 0)
+            {
+                @foreach (var activity in dashboard.UpcomingActivities)
+                {
+                    <div class="activity" @key="activity.Id">
+                        <strong>@activity.Name</strong>
+                        <span>
+                            @activity.CourseName
+                            · @activity.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                        </span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Inga kommande aktiviteter att visa.</p>
+            }
+        </div>
+
+        <div class="activity-card" id="attention-items">
+            <div class="section-head">
+                <h2>Behöver uppmärksamhet</h2>
+            </div>
+
+            @if (dashboard?.AttentionItems.Count > 0)
+            {
+                @foreach (var item in dashboard.AttentionItems)
+                {
+                    <div class="activity"
+                         @key="(item.ActivityId, item.StudentId)">
+                        <strong>@item.StudentName – @item.ActivityName</strong>
+                        <span>
+                            @item.CourseName
+                            · Deadline: @item.DueAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                        </span>
+
+                        @if (item.Status == "Försenad inlämning")
+                        {
+                            <span class="badge bg-danger">Sen inlämning</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">
+                                Saknad inlämning
+                            </span>
+                        }
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@($"/courses/{item.CourseId}/modules")">
+                            Öppna kursens moduler
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Det finns inga sena eller saknade inlämningar att visa.</p>
+            }
+        </div>
+
+        <div class="activity-card" id="pending-feedback">
+            <div class="section-head">
+                <h2>Inlämningar som väntar på feedback</h2>
             </div>
 
             @if (!PendingSubmissions.Any())
             {
-                <p>Det finns inga inlÃ¤mningar som vÃ¤ntar pÃ¥ feedback.</p>
+                <p>Det finns inga inlämningar som väntar på feedback.</p>
             }
             else
             {
@@ -79,9 +173,9 @@
                             <tr>
                                 <th>Student</th>
                                 <th>Uppgift</th>
-                                <th>InlÃ¤mnad</th>
+                                <th>Inlämnad</th>
                                 <th>Status</th>
-                                <th>Ã…tgÃ¤rd</th>
+                                <th>Åtgärd</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -101,7 +195,7 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-warning text-dark">
-                                            VÃ¤ntar pÃ¥ feedback
+                                            Väntar på feedback
                                         </span>
                                     </td>
                                     <td>
@@ -143,8 +237,7 @@
                               rows="5"
                               maxlength="2000"
                               @bind="feedbackText"
-                              placeholder="Skriv din feedback hÃ¤r...">
-                    </textarea>
+                              placeholder="Skriv din feedback här..."></textarea>
 
                     <small class="text-muted">
                         @feedbackText.Length / 2000 tecken
@@ -179,12 +272,13 @@
             </div>
         }
 
+
         <div class="activity-card">
-            <h2>Senaste inlÃ¤mningar</h2>
+            <h2>Senaste inlämningar</h2>
 
             @if (!submissions.Any())
             {
-                <p>Det finns inga inlÃ¤mningar att visa Ã¤nnu.</p>
+                <p>Det finns inga inlämningar att visa ännu.</p>
             }
             else
             {
@@ -192,26 +286,40 @@
                     .OrderByDescending(s => s.SubmittedAt)
                     .Take(5))
                 {
+                    var age = DateTime.Now - submission.SubmittedAt;
+                    var recentlySubmitted =
+                        age >= TimeSpan.Zero &&
+                        age <= TimeSpan.FromHours(24);
+
                     <div class="activity" @key="submission.SubmissionId">
                         <strong>
-                            @submission.StudentName â€“ @submission.ActivityName
+                            @submission.StudentName – @submission.ActivityName
+
+                            @if (recentlySubmitted)
+                            {
+                                <span class="badge bg-primary ms-2">
+                                    Ny · senaste 24 h
+                                </span>
+                            }
                         </strong>
+
                         <span>
-                            @submission.SubmittedAt.ToLocalTime()
-                            .ToString("yyyy-MM-dd HH:mm")
-                            Â· @(submission.HasFeedback
-                                                            ? "Feedback lÃ¤mnad"
-                                                            : "Feedback behÃ¶vs")
+                            @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
+                            · @(submission.HasFeedback
+                                                    ? "Feedback lämnad"
+                                                    : "Feedback behövs")
                         </span>
                     </div>
                 }
             }
         </div>
+
     }
 </div>
 
 @code {
     private List<TeacherSubmissionDto> submissions = [];
+    private TeacherDashboardDto? dashboard;
     private bool loading = true;
     private string? errorMessage;
 
@@ -220,9 +328,6 @@
     private string? feedbackError;
     private string? feedbackSuccess;
     private bool sendingFeedback;
-
-    private int PendingCount =>
-        submissions.Count(s => !s.HasFeedback);
 
     private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
         submissions
@@ -241,6 +346,10 @@
 
         try
         {
+            dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
+                HttpMethod.Get,
+                "dashboard/teacher");
+
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
                 HttpMethod.Get,
                 "teacher/submissions");
@@ -249,17 +358,17 @@
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session har gÃ¥tt ut. Logga in igen.";
+            errorMessage = "Din session har gått ut. Logga in igen.";
         }
         catch (HttpRequestException)
         {
             errorMessage =
-                "Kunde inte hÃ¤mta inlÃ¤mningarna. Kontrollera att API:t Ã¤r igÃ¥ng och fÃ¶rsÃ¶k igen.";
+                "Kunde inte hämta dashboarddata. Kontrollera att API:t är igång och försök igen.";
         }
         catch (Exception)
         {
             errorMessage =
-                "Ett ovÃ¤ntat fel uppstod nÃ¤r dashboarden skulle laddas.";
+                "Ett oväntat fel uppstod när dashboarden skulle laddas.";
         }
         finally
         {
@@ -287,7 +396,7 @@
     {
         if (selectedSubmission is null)
         {
-            feedbackError = "VÃ¤lj en inlÃ¤mning fÃ¶rst.";
+            feedbackError = "Välj en inlämning först.";
             return;
         }
 
@@ -301,7 +410,7 @@
 
         if (text.Length > 2000)
         {
-            feedbackError = "Feedback fÃ¥r innehÃ¥lla hÃ¶gst 2000 tecken.";
+            feedbackError = "Feedback får innehålla högst 2000 tecken.";
             return;
         }
 
@@ -337,17 +446,17 @@
         catch (UnauthorizedAccessException)
         {
             feedbackError =
-                "Du saknar behÃ¶righet eller sÃ¥ har din session gÃ¥tt ut. Logga in igen.";
+                "Du saknar behörighet eller så har din session gått ut. Logga in igen.";
         }
         catch (HttpRequestException)
         {
             feedbackError =
-                "Kunde inte skicka feedback. Kontrollera anslutningen och fÃ¶rsÃ¶k igen.";
+                "Kunde inte skicka feedback. Kontrollera anslutningen och försök igen.";
         }
         catch (Exception)
         {
             feedbackError =
-                "Ett ovÃ¤ntat fel uppstod nÃ¤r feedback skulle skickas.";
+                "Ett oväntat fel uppstod när feedback skulle skickas.";
         }
         finally
         {

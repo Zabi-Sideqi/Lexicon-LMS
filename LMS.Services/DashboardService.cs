@@ -9,7 +9,7 @@ using LMS.Shared.DTOs.NotificationDtos;
 using LMS.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
-
+using LMS.Services.Helpers;
 namespace LMS.Services;
 
 public class DashboardService : IDashboardService
@@ -89,6 +89,176 @@ public class DashboardService : IDashboardService
             recentFeedback,
             unreadNotifications);
     }
+
+
+    public async Task<TeacherDashboardDto> GetTeacherDashboardAsync(string teacherId)
+    {
+        if (string.IsNullOrWhiteSpace(teacherId))
+            throw new UnauthorizedAccessException("A signed-in teacher is required.");
+
+        var teacher = await _userManager.FindByIdAsync(teacherId);
+
+        if (teacher is null || !await _userManager.IsInRoleAsync(teacher, "Teacher"))
+            throw new UnauthorizedAccessException("Only teachers can view their dashboard.");
+
+        var now = SchoolTime.FromUtc(DateTime.UtcNow);
+        var courses = (await _uow.CourseRepository.GetByTeacherIdAsync(teacherId))
+            .OrderBy(course => course.StartDate)
+            .ToList();
+
+        var courseDtos = new List<TeacherDashboardCourseDto>();
+        var upcomingActivities = new List<TeacherDashboardActivityDto>();
+        var recentSubmissions = new List<TeacherDashboardSubmissionDto>();
+        var attentionItems = new List<TeacherDashboardAttentionDto>();
+
+        var totalSubmissions = 0;
+        var pendingFeedbackCount = 0;
+        var lateSubmissionCount = 0;
+        var missingSubmissionCount = 0;
+        var totalStudentIds = new HashSet<string>();
+
+        foreach (var course in courses)
+        {
+            var courseWithStudents =
+                await _uow.CourseRepository.GetCourseWithStudentsAsync(course.Id);
+
+            var students = courseWithStudents?.Students.ToList() ?? [];
+
+            foreach (var student in students)
+                totalStudentIds.Add(student.Id);
+
+            var activities = (await _uow.ActivityRepository
+                .GetByCourseIdAsync(course.Id)).ToList();
+
+            var courseUpcoming = activities
+                .Where(activity => activity.StartTime >= now)
+                .OrderBy(activity => activity.StartTime)
+                .ToList();
+
+            upcomingActivities.AddRange(courseUpcoming.Select(activity =>
+                new TeacherDashboardActivityDto(
+                    activity.Id,
+                    activity.Name,
+                    activity.Type.ToString(),
+                    course.Id,
+                    course.Name,
+                    activity.StartTime,
+                    activity.EndTime)));
+
+            courseDtos.Add(new TeacherDashboardCourseDto(
+                course.Id,
+                course.Name,
+                course.StartDate,
+                course.EndDate,
+                students.Count,
+                courseUpcoming.Count,
+                course.StartDate.Date <= now.Date &&
+                course.EndDate.Date >= now.Date));
+
+            var courseSubmissions = (await _uow.SubmissionRepository
+                .GetByCourseIdAsync(course.Id)).ToList();
+
+            totalSubmissions += courseSubmissions.Count;
+
+            pendingFeedbackCount += courseSubmissions.Count(
+                submission => !submission.Feedbacks.Any());
+
+            foreach (var submission in courseSubmissions)
+            {
+                var submittedAt = SchoolTime.FromUtc(submission.SubmittedAt);
+                var isLate = submittedAt > submission.Activity.EndTime;
+
+
+
+                recentSubmissions.Add(new TeacherDashboardSubmissionDto(
+                    submission.Id,
+                    submission.Student.UserName
+                        ?? submission.Student.Email
+                        ?? "Okänd student",
+                    submission.Activity.Name,
+                    course.Name,
+                    submittedAt,
+                    isLate,
+                    submission.Feedbacks.Any()));
+            }
+
+            var assignments = activities
+                .Where(activity => activity.Type == ActivityType.Assignment)
+                .ToList();
+
+            foreach (var assignment in assignments)
+            {
+                foreach (var student in students)
+                {
+                    var latestSubmission = courseSubmissions
+                        .Where(submission =>
+                            submission.ActivityId == assignment.Id &&
+                            submission.StudentId == student.Id)
+                        .OrderByDescending(submission => submission.SubmittedAt)
+                        .FirstOrDefault();
+
+                    if (latestSubmission is not null)
+                    {
+                        var submittedAt =
+                            SchoolTime.FromUtc(latestSubmission.SubmittedAt);
+
+                        if (submittedAt > assignment.EndTime)
+                        {
+                            lateSubmissionCount++;
+
+                            attentionItems.Add(new TeacherDashboardAttentionDto(
+                                assignment.Id,
+                                assignment.Name,
+                                course.Id,
+                                course.Name,
+                                student.Id,
+                                student.UserName ?? student.Email ?? "Okänd student",
+                                assignment.EndTime,
+                                "Försenad inlämning"));
+                        }
+
+                        continue;
+                    }
+
+                    if (assignment.EndTime < now)
+                    {
+                        missingSubmissionCount++;
+
+                        attentionItems.Add(new TeacherDashboardAttentionDto(
+                            assignment.Id,
+                            assignment.Name,
+                            course.Id,
+                            course.Name,
+                            student.Id,
+                            student.UserName ?? student.Email ?? "Okänd student",
+                            assignment.EndTime,
+                            "Saknad inlämning"));
+                    }
+                }
+            }
+        }
+
+        return new TeacherDashboardDto(
+            courseDtos,
+            upcomingActivities
+                .OrderBy(activity => activity.StartTime)
+                .Take(5)
+                .ToList(),
+            recentSubmissions
+                .OrderByDescending(submission => submission.SubmittedAt)
+                .Take(5)
+                .ToList(),
+            attentionItems
+                .OrderBy(item => item.DueAt)
+                .Take(8)
+                .ToList(),
+            totalSubmissions,
+            pendingFeedbackCount,
+            lateSubmissionCount,
+            missingSubmissionCount,
+            totalStudentIds.Count);
+    }
+
 
     private static ActivityDto MapToActivityDto(Activity a) =>
         new(a.Id, a.ModuleId, a.Type.ToString(), a.Name, a.Description, a.StartTime, a.EndTime);
