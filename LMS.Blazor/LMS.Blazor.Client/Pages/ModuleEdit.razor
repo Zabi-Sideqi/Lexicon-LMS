@@ -8,14 +8,14 @@
 @inject IApiProxyClient Proxy
 @inject NavigationManager Navigation
 
-<PageTitle>Redigera modul</PageTitle>
+<PageTitle>Edit Module</PageTitle>
 
 <div class="module-edit-page">
     <div class="module-edit-header">
         <div>
             <span class="module-edit-eyebrow">LEXICON LMS</span>
-            <h1>Redigera modul</h1>
-            <p>Uppdatera modulens information och datum.</p>
+            <h1>Edit Module</h1>
+            <p>Update the module details and schedule for your course.</p>
         </div>
 
         <div class="module-edit-icon" aria-hidden="true">✎</div>
@@ -26,7 +26,7 @@
         <section class="module-edit-card">
             <div class="module-edit-state">
                 <span class="module-edit-spinner" aria-hidden="true"></span>
-                <p>Laddar modulens uppgifter...</p>
+                <p>Loading module details...</p>
             </div>
         </section>
     }
@@ -34,8 +34,8 @@
     {
         <section class="module-edit-card">
             <div class="module-edit-card-heading">
-                <h2>Moduluppgifter</h2>
-                <p>Ändra informationen nedan och spara.</p>
+                <h2>Module Details</h2>
+                <p>Update the information below and save your changes.</p>
             </div>
 
             <EditForm Model="model" OnValidSubmit="HandleSubmit">
@@ -47,33 +47,33 @@
                         <span class="module-edit-error-icon"
                               aria-hidden="true">!</span>
                         <div>
-                            <strong>Modulen kunde inte sparas</strong>
+                            <strong>Unable to Save Module</strong>
                             <p>@errorMessage</p>
                         </div>
                     </div>
                 }
 
                 <div class="module-edit-field">
-                    <label for="module-edit-name">Namn</label>
+                    <label for="module-edit-name">Name</label>
                     <InputText id="module-edit-name"
                                @bind-Value="model.Name"
                                class="module-edit-input"
-                               placeholder="Ange modulens namn" />
+                               placeholder="Enter module name" />
                     <ValidationMessage For="() => model.Name" />
                 </div>
 
                 <div class="module-edit-field">
-                    <label for="module-edit-description">Beskrivning</label>
+                    <label for="module-edit-description">Description</label>
                     <InputTextArea id="module-edit-description"
                                    @bind-Value="model.Description"
                                    class="module-edit-input module-edit-textarea"
-                                   placeholder="Beskriv modulens innehåll" />
+                                   placeholder="Describe what this module covers" />
                     <ValidationMessage For="() => model.Description" />
                 </div>
 
                 <div class="module-edit-date-grid">
                     <div class="module-edit-field">
-                        <label for="module-edit-start-date">Startdatum</label>
+                        <label for="module-edit-start-date">Start Date</label>
                         <InputDate id="module-edit-start-date"
                                    @bind-Value="model.StartDate"
                                    class="module-edit-input" />
@@ -81,7 +81,7 @@
                     </div>
 
                     <div class="module-edit-field">
-                        <label for="module-edit-end-date">Slutdatum</label>
+                        <label for="module-edit-end-date">End Date</label>
                         <InputDate id="module-edit-end-date"
                                    @bind-Value="model.EndDate"
                                    class="module-edit-input" />
@@ -92,19 +92,19 @@
                 <div class="module-edit-actions">
                     <a href="/courses/@model.CourseId/modules"
                        class="module-edit-cancel">
-                        Avbryt
+                        Cancel
                     </a>
 
                     <button type="submit" class="module-edit-submit">
                         <span aria-hidden="true">✓</span>
-                        Spara ändringar
+                        Save Changes
                     </button>
                 </div>
             </EditForm>
         </section>
 
         <p class="module-edit-footer">
-            Kontrollera att modulens datum ligger inom kursens period.
+            Make sure the module dates are within the course schedule.
         </p>
     }
 </div>
@@ -144,7 +144,7 @@
 
         if (model.EndDate < model.StartDate)
         {
-            errorMessage = "Slutdatumet kan inte vara före startdatumet.";
+            errorMessage = "End Dateet kan inte vara före startdatumet.";
             return;
         }
 
@@ -159,25 +159,25 @@
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session har gått ut. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException ex)
         {
             var message = ex.Message;
             if (message.Contains("overlap", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("överlap", StringComparison.OrdinalIgnoreCase))
-                errorMessage = "Modulens datum överlappar en annan modul. Välj ett annat datumintervall.";
+                errorMessage = "The module dates overlap with another module. Choose a different date range.";
             else if (message.Contains("course", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("kurs", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("date", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("datum", StringComparison.OrdinalIgnoreCase))
-                errorMessage = "Kontrollera att modulens datum ligger inom kursens period och försök igen.";
+                errorMessage = "Make sure the module dates fall within the course schedule and try again.";
             else
-                errorMessage = "Servern kunde inte spara modulen. Kontrollera uppgifterna och försök igen.";
+                errorMessage = "The server could not save the module. Check the details and try again.";
         }
         catch (Exception)
         {
-            errorMessage = "Ett oväntat fel uppstod när modulen skulle sparas.";
+            errorMessage = "An unexpected error occurred while saving the module.";
         }
     }
 }
