@@ -203,7 +203,7 @@
         }
         catch (Exception)
         {
-            errorMessage = "Courseerna kunde inte hämtas. Ladda om sidan eller försök igen senare.";
+            errorMessage = "Courses could not be loaded. Reload the page or try again later.";
         }
         finally
         {
@@ -232,9 +232,11 @@
         {
             // Validate the course requirement before sending the user to the API.
             if (userModel.Role == "Student" &&
-                (!userModel.CourseId.HasValue || userModel.CourseId.Value <= 0))
+                (!userModel.CourseId.HasValue ||
+                 userModel.CourseId.Value <= 0 ||
+                 !courses.Any(c => c.Id == userModel.CourseId.Value)))
             {
-                errorMessage = "Select a course for the student.";
+                errorMessage = "Select a valid course for the student.";
                 return;
             }
 
@@ -279,7 +281,7 @@
             }
             catch (JsonException)
             {
-                // Behåll det generella felmeddelandet.
+                // Keep the generic error message.
             }
         }
         catch (Exception)
