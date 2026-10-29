@@ -8,14 +8,14 @@
 @inject IApiProxyClient Proxy
 @inject NavigationManager Navigation
 
-<PageTitle>Skapa modul</PageTitle>
+<PageTitle>Create Module</PageTitle>
 
 <div class="module-create-page">
     <div class="module-create-header">
         <div>
             <span class="module-create-eyebrow">LEXICON LMS</span>
-            <h1>Skapa modul</h1>
-            <p>Lägg till en modul i kursen och ange dess datum.</p>
+            <h1>Create Module</h1>
+            <p>Add a module to your course and set its schedule.</p>
         </div>
 
         <div class="module-create-icon" aria-hidden="true">＋</div>
@@ -23,8 +23,8 @@
 
     <div class="module-create-card">
         <div class="module-create-card-heading">
-            <h2>Moduluppgifter</h2>
-            <p>Fyll i informationen för den nya modulen.</p>
+            <h2>Module Details</h2>
+            <p>Enter the information for your new module.</p>
         </div>
 
         <EditForm Model="model" OnValidSubmit="HandleSubmit">
@@ -35,33 +35,33 @@
                 <div class="module-create-error" role="alert">
                     <span class="module-create-error-icon" aria-hidden="true">!</span>
                     <div>
-                        <strong>Modulen kunde inte skapas</strong>
+                        <strong>Unable to Create Module</strong>
                         <p>@errorMessage</p>
                     </div>
                 </div>
             }
 
             <div class="module-create-field">
-                <label for="module-name">Namn</label>
+                <label for="module-name">Name</label>
                 <InputText id="module-name"
                            @bind-Value="model.Name"
                            class="module-create-input"
-                           placeholder="Ange modulens namn" />
+                           placeholder="Enter module name" />
                 <ValidationMessage For="() => model.Name" />
             </div>
 
             <div class="module-create-field">
-                <label for="module-description">Beskrivning</label>
+                <label for="module-description">Description</label>
                 <InputTextArea id="module-description"
                                @bind-Value="model.Description"
                                class="module-create-input module-create-textarea"
-                               placeholder="Beskriv modulens innehåll" />
+                               placeholder="Describe what this module covers" />
                 <ValidationMessage For="() => model.Description" />
             </div>
 
             <div class="module-create-date-grid">
                 <div class="module-create-field">
-                    <label for="module-start-date">Startdatum</label>
+                    <label for="module-start-date">Start Date</label>
                     <InputDate id="module-start-date"
                                @bind-Value="model.StartDate"
                                class="module-create-input" />
@@ -69,7 +69,7 @@
                 </div>
 
                 <div class="module-create-field">
-                    <label for="module-end-date">Slutdatum</label>
+                    <label for="module-end-date">End Date</label>
                     <InputDate id="module-end-date"
                                @bind-Value="model.EndDate"
                                class="module-create-input" />
@@ -80,24 +80,24 @@
             <div class="module-create-actions">
                 <a href="/courses/@CourseId/modules"
                    class="module-create-cancel">
-                    Avbryt
+                    Cancel
                 </a>
 
                 <button type="submit" class="module-create-submit">
                     <span aria-hidden="true">＋</span>
-                    Skapa modul
+                    Create Module
                 </button>
             </div>
         </EditForm>
     </div>
 
     <p class="module-create-footer">
-        Kontrollera att modulens datum ligger inom kursens period.
+        Make sure the module dates are within the course schedule.
     </p>
 </div>
 
 @code {
-    // A module belongs to a course, so the course id comes from the address.
+    // A module belongs to a course, so the course ID comes from the route.
     [Parameter]
     public int CourseId { get; set; }
 
@@ -122,7 +122,7 @@
 
         if (model.EndDate < model.StartDate)
         {
-            errorMessage = "Slutdatumet kan inte vara före startdatumet.";
+            errorMessage = "End Dateet kan inte vara före startdatumet.";
             return;
         }
 
@@ -137,25 +137,25 @@
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session har gått ut. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException ex)
         {
             var message = ex.Message;
             if (message.Contains("overlap", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("överlap", StringComparison.OrdinalIgnoreCase))
-                errorMessage = "Modulens datum överlappar en annan modul. Välj ett annat datumintervall.";
+                errorMessage = "The module dates overlap with another module. Choose a different date range.";
             else if (message.Contains("course", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("kurs", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("date", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("datum", StringComparison.OrdinalIgnoreCase))
-                errorMessage = "Modulens datum måste ligga inom kursens start- och slutdatum.";
+                errorMessage = "The module dates must fall within the course start and end dates.";
             else
-                errorMessage = "Servern kunde inte skapa modulen. Kontrollera uppgifterna och försök igen.";
+                errorMessage = "The server could not create the module. Check the details and try again.";
         }
         catch (Exception)
         {
-            errorMessage = "Ett oväntat fel uppstod när modulen skulle skapas.";
+            errorMessage = "An unexpected error occurred while creating the module.";
         }
     }
 }
