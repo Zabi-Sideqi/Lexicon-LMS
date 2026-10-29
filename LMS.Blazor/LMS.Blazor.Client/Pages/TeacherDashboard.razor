@@ -21,7 +21,7 @@
     @if (loading)
     {
         <div class="activity-card">
-            <p>Hämtar dashboarddata...</p>
+            <p>Loading dashboard data...</p>
         </div>
     }
     else if (errorMessage is not null)
@@ -122,7 +122,7 @@
 
         <div class="activity-card">
             <div class="section-head">
-                <h2>Kommande aktiviteter</h2>
+                <h2>Upcoming Activities</h2>
             </div>
 
             @if (dashboard?.UpcomingActivities.Count > 0)
@@ -133,7 +133,7 @@
                         <strong>@activity.Name</strong>
                         <span>
                             @activity.CourseName
-                            · @activity.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            · @activity.StartTime.ToString("yyyy-MM-dd HH:mm")
                         </span>
                     </div>
                 }
@@ -244,7 +244,7 @@
         @if (selectedSubmission is not null)
         {
             <div class="activity-card">
-                <h2>Ge feedback</h2>
+                <h2>Give Feedback</h2>
 
                 <p>
                     <strong>Student:</strong>
@@ -290,7 +290,7 @@
                 <button class="btn btn-primary"
                         disabled="@sendingFeedback"
                         @onclick="SubmitFeedbackAsync">
-                    @(sendingFeedback ? "Skickar..." : "Skicka feedback")
+                    @(sendingFeedback ? "Sending..." : "Send Feedback")
                 </button>
 
                 <button class="btn btn-outline-secondary ms-2"
@@ -334,8 +334,8 @@
                         <span>
                             @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
                             · @(submission.HasFeedback
-                                                            ? "Feedback lämnad"
-                                                            : "Feedback behövs")
+                                                            ? "Feedback provided"
+                                                            : "Feedback needed")
                         </span>
                     </div>
                 }
