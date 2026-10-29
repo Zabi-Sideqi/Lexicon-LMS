@@ -8,21 +8,21 @@
 
 @attribute [Authorize(Roles = "Teacher")]
 
-<PageTitle>Redigera användare</PageTitle>
+<PageTitle>Edit User</PageTitle>
 
 <div class="users-page">
     <div class="page-header">
         <div>
-            <h1>Redigera användare</h1>
+            <h1>Edit User</h1>
         </div>
-        <a class="btn btn-outline-primary" href="/users">Tillbaka</a>
+        <a class="btn btn-outline-primary" href="/users">Back</a>
     </div>
 
     <div class="card">
         <div class="card-body">
             @if (isLoading)
             {
-                <div class="alert alert-info">Laddar användare och kurser...</div>
+                <div class="alert alert-info">Loading user and courses...</div>
             }
             else if (!string.IsNullOrWhiteSpace(errorMessage) && userNotLoaded)
             {
@@ -34,21 +34,21 @@
                     <DataAnnotationsValidator />
                     <div class="form-grid">
                         <div class="mb-3">
-                            <label class="form-label">Användarnamn *</label>
+                            <label class="form-label">Username *</label>
                             <InputText class="form-control" @bind-Value="userModel.UserName" />
                             <ValidationMessage For="@(() => userModel.UserName)" />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">E-post *</label>
+                            <label class="form-label">Email *</label>
                             <InputText class="form-control" type="email" @bind-Value="userModel.Email" />
                             <ValidationMessage For="@(() => userModel.Email)" />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Roll *</label>
+                            <label class="form-label">Role *</label>
                             <InputSelect class="form-select" @bind-Value="userModel.Role" @bind-Value:after="HandleRoleChanged">
-                                <option value="">Välj roll</option>
+                                <option value="">Select a role</option>
                                 <option value="Student">Student</option>
-                                <option value="Teacher">Lärare</option>
+                                <option value="Teacher">Teacher</option>
                             </InputSelect>
                             <ValidationMessage For="@(() => userModel.Role)" />
                         </div>
@@ -56,19 +56,19 @@
                         @if (userModel.Role == "Student")
                         {
                             <div class="mb-4">
-                                <label class="form-label">Kurs *</label>
+                                <label class="form-label">Course *</label>
                                 @if (isLoadingCourses)
                                 {
-                                    <p>Hämtar kurser...</p>
+                                    <p>Loading courses...</p>
                                 }
                                 else if (courses.Count == 0)
                                 {
-                                    <div class="alert alert-warning">Inga kurser kunde hämtas. Studenten kan inte sparas utan en kurs.</div>
+                                    <div class="alert alert-warning">No courses could be loaded. The student cannot be saved without a course.</div>
                                 }
                                 else
                                 {
                                     <InputSelect class="form-select" @bind-Value="userModel.CourseId">
-                                        <option value="">Välj kurs</option>
+                                        <option value="">Select a course</option>
                                         @foreach (var course in courses)
                                         {
                                             <option value="@course.Id">@course.Name</option>
@@ -93,9 +93,9 @@
                     <div class="d-flex gap-2">
                         <button class="btn btn-primary" type="submit"
                                 disabled="@(isSaving || isLoadingCourses && userModel.Role == "Student" || userModel.Role == "Student" && courses.Count == 0)">
-                            @(isSaving ? "Sparar..." : "Spara användare")
+                            @(isSaving ? "Saving..." : "Save User")
                         </button>
-                        <a class="btn btn-outline-secondary" href="/users">Avbryt</a>
+                        <a class="btn btn-outline-secondary" href="/users">Cancel</a>
                     </div>
                 </EditForm>
             }
@@ -134,7 +134,7 @@
         }
         catch (Exception)
         {
-            errorMessage = "Kurserna kunde inte hämtas. Ladda om sidan eller försök senare.";
+            errorMessage = "Courseerna kunde inte hämtas. Ladda om sidan eller försök senare.";
         }
         finally
         {
@@ -158,7 +158,7 @@
             if (user is null)
             {
                 userNotLoaded = true;
-                errorMessage = "Användaren kunde inte hittas.";
+                errorMessage = "The user could not be found.";
                 return;
             }
 
@@ -173,17 +173,17 @@
         catch (UnauthorizedAccessException)
         {
             userNotLoaded = true;
-            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException)
         {
             userNotLoaded = true;
-            errorMessage = "Användaren kunde inte hämtas. Kontrollera anslutningen och försök igen.";
+            errorMessage = "Could not load the user. Check your connection and try again.";
         }
         catch (Exception)
         {
             userNotLoaded = true;
-            errorMessage = "Ett oväntat fel uppstod när användaren skulle hämtas.";
+            errorMessage = "An unexpected error occurred while loading the user.";
         }
     }
 
@@ -200,7 +200,7 @@
                  userModel.CourseId.Value <= 0 ||
                  !courses.Any(c => c.Id == userModel.CourseId.Value)))
             {
-                errorMessage = "Välj en giltig kurs för studenten.";
+                errorMessage = "Select a valid course for the student.";
                 return;
             }
 
@@ -211,23 +211,23 @@
             var updatedUser = await ApiProxyClient.SendAsync<UserResponseDto>(HttpMethod.Put, $"users/{id}", content);
             if (updatedUser is null)
             {
-                errorMessage = "Användaren kunde inte uppdateras. Kontrollera uppgifterna och försök igen.";
+                errorMessage = "The user could not be updated. Check the details and try again.";
                 return;
             }
 
-            successMessage = "Användaren uppdaterades.";
+            successMessage = "User updated successfully.";
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Det gick inte att uppdatera användaren. Kontrollera e-post, roll och kurs och försök igen.";
+            errorMessage = "Could not update the user. Check the email, role, and course, then try again.";
         }
         catch (Exception)
         {
-            errorMessage = "Ett oväntat fel uppstod när användaren skulle uppdateras.";
+            errorMessage = "An unexpected error occurred while updating the user.";
         }
         finally
         {
