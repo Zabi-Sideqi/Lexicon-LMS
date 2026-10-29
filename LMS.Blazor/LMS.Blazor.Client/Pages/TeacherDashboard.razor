@@ -27,7 +27,7 @@
                 <strong>@dashboard.PendingFeedback.Count</strong>
                 <span>Pending Feedback</span>
             </a>
-            <a class="stat-card h-100 text-decoration-none" href="/courses">
+            <a class="stat-card h-100 text-decoration-none" href="#active-courses">
                 <span class="stat-icon">▣</span>
                 <strong>@dashboard.ActiveCourses.Count</strong>
                 <span>Active Courses</span>
@@ -80,6 +80,26 @@
 
 
             <div class="activity-card" id="today-schedule">
+                <h2>Today's Schedule</h2>
+
+                @if (!dashboard.TodayActivities.Any())
+                {
+                    <p>No activities scheduled for today.</p>
+                }
+                else
+                {
+                    @foreach (var activity in dashboard.TodayActivities)
+                    {
+                        <div class="activity" @key="activity.ActivityId">
+                            <strong>@activity.ActivityName</strong>
+                            <span>@activity.CourseName</span>
+                            <span>@activity.StartTime.ToString("HH:mm") - @activity.EndTime.ToString("HH:mm")</span>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="activity-card" id="upcoming-activities">
                 <h2>Upcoming Activities</h2>
 
                 @if (!dashboard.UpcomingActivities.Any())
@@ -254,7 +274,7 @@
                                     <td>
                                         <button class="btn btn-primary btn-sm"
                                                 @onclick="() => SelectSubmission(submission)">
-                                            Ge feedback
+                                            Provide feedback
                                         </button>
                                     </td>
                                 </tr>
@@ -294,7 +314,7 @@
                     </textarea>
 
                     <small class="text-muted">
-                        @feedbackText.Length / 2000 tecken
+                        @feedbackText.Length / 2000 characters
                     </small>
                 </div>
 
