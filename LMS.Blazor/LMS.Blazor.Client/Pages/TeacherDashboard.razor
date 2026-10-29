@@ -343,12 +343,14 @@
     private string? feedbackSuccess;
     private bool sendingFeedback;
 
+    // Only actual submissions can be waiting for feedback.
+    // Rows without a SubmissionId represent missing submissions.
     private int PendingCount =>
-        submissions.Count(s => !s.HasFeedback);
+        submissions.Count(s => s.SubmissionId is not null && !s.HasFeedback);
 
     private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
         submissions
-            .Where(s => !s.HasFeedback)
+            .Where(s => s.SubmissionId is not null && !s.HasFeedback)
             .OrderBy(s => s.SubmittedAt);
 
     protected override async Task OnInitializedAsync()
