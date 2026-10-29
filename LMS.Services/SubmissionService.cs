@@ -134,7 +134,7 @@ public class SubmissionService : ISubmissionService
                 submission.StudentId,
                 submission.Student.UserName
                     ?? submission.Student.Email
-                    ?? "Okänd student",
+                    ?? "Unknown student",
                 submission.FileName,
                 SchoolTime.FromUtc(submission.SubmittedAt),
                 submission.Feedbacks.Any()))
