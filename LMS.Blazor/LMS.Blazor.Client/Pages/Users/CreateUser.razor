@@ -9,17 +9,17 @@
 
 @attribute [Authorize(Roles = "Teacher")]
 
-<PageTitle>Skapa användare</PageTitle>
+<PageTitle>Create User</PageTitle>
 
 <div class="users-page">
 
     <div class="page-header">
         <div>
-            <h1>Skapa användare</h1>
+            <h1>Create User</h1>
         </div>
 
         <a class="btn btn-outline-primary" href="/users">
-            Tillbaka
+            Back
         </a>
     </div>
 
@@ -27,7 +27,7 @@
         <div class="card-body">
 
             <h5 class="card-title mb-4">
-                Användaruppgifter
+                User Details
             </h5>
 
             <EditForm Model="@userModel" OnValidSubmit="@HandleValidSubmit">
@@ -36,20 +36,20 @@
 
                 <div class="form-grid">
 
-                    <!-- Användarnamn -->
+                    <!-- Username -->
                     <div class="mb-3">
-                        <label class="form-label">Användarnamn *</label>
+                        <label class="form-label">Username *</label>
 
                         <InputText class="form-control"
                                    @bind-Value="userModel.UserName"
-                                   placeholder="Användarnamn" />
+                                   placeholder="Username" />
 
                         <ValidationMessage For="@(() => userModel.UserName)" />
                     </div>
 
-                    <!-- E-post -->
+                    <!-- Email -->
                     <div class="mb-3">
-                        <label class="form-label">E-post *</label>
+                        <label class="form-label">Email *</label>
 
                         <InputText class="form-control"
                                    type="email"
@@ -59,50 +59,50 @@
                         <ValidationMessage For="@(() => userModel.Email)" />
                     </div>
 
-                    <!-- Lösenord -->
+                    <!-- Password -->
                     <div class="mb-3">
-                        <label class="form-label">Lösenord *</label>
+                        <label class="form-label">Password *</label>
 
                         <InputText class="form-control"
                                    type="password"
                                    @bind-Value="userModel.Password"
-                                   placeholder="Lösenord" />
+                                   placeholder="Password" />
 
                         <ValidationMessage For="@(() => userModel.Password)" />
                     </div>
 
-                    <!-- Roll -->
+                    <!-- Role -->
                     <div class="mb-3">
-                        <label class="form-label">Roll *</label>
+                        <label class="form-label">Role *</label>
 
                         <InputSelect class="form-select"
                                      @bind-Value="userModel.Role"
                                      @bind-Value:after="HandleRoleChanged">
 
-                            <option value="">Välj roll</option>
+                            <option value="">Select a role</option>
                             <option value="Student">Student</option>
-                            <option value="Teacher">Lärare</option>
+                            <option value="Teacher">Teacher</option>
 
                         </InputSelect>
 
                         <ValidationMessage For="@(() => userModel.Role)" />
                     </div>
 
-                    <!-- Kurs: endast obligatorisk för Student -->
+                    <!-- Course: required for students only -->
                     @if (userModel.Role == "Student")
                     {
                         <div class="mb-4">
-                            <label class="form-label">Kurs *</label>
+                            <label class="form-label">Course *</label>
 
                             @if (isLoadingCourses)
                             {
-                                <p>Hämtar kurser...</p>
+                                <p>Loading courses...</p>
                             }
                             else if (courses.Count == 0)
                             {
                                 <div class="alert alert-warning">
-                                    Inga kurser kunde hämtas.
-                                    Studenten kan inte skapas utan en kurs.
+                                    No courses could be loaded.
+                                    The student cannot be created without a course.
                                 </div>
                             }
                             else
@@ -110,7 +110,7 @@
                                 <InputSelect class="form-select"
                                              @bind-Value="userModel.CourseId"
                                              required>
-                                    <option value="">Välj kurs</option>
+                                    <option value="">Select a course</option>
 
                                     @foreach (var course in courses)
                                     {
@@ -144,8 +144,8 @@
                 }
 
                 <div class="alert alert-info">
-                    Endast behöriga lärare kan skapa och ändra användare.
-                    Studenter måste kopplas till en kurs. Lärare behöver ingen kurs.
+                    Only authorized teachers can create and edit users.
+                    Studenter måste kopplas till en kurs. Teacher behöver ingen kurs.
                 </div>
 
                 <div class="d-flex gap-2">
@@ -158,17 +158,17 @@
 
                         @if (isSaving)
                         {
-                            <span>Skapar användare...</span>
+                            <span>Creating user...</span>
                         }
                         else
                         {
-                            <span>Spara användare</span>
+                            <span>Save User</span>
                         }
 
                     </button>
 
                     <a class="btn btn-outline-secondary" href="/users">
-                        Avbryt
+                        Cancel
                     </a>
 
                 </div>
@@ -203,7 +203,7 @@
         }
         catch (Exception)
         {
-            errorMessage = "Kurserna kunde inte hämtas. Ladda om sidan eller försök igen senare.";
+            errorMessage = "Courseerna kunde inte hämtas. Ladda om sidan eller försök igen senare.";
         }
         finally
         {
@@ -230,11 +230,11 @@
 
         try
         {
-            // Kontrollera kurskravet innan användaren skickas till API:t.
+            // Validate the course requirement before sending the user to the API.
             if (userModel.Role == "Student" &&
                 (!userModel.CourseId.HasValue || userModel.CourseId.Value <= 0))
             {
-                errorMessage = "Välj en kurs för studenten.";
+                errorMessage = "Select a course for the student.";
                 return;
             }
 
@@ -252,20 +252,20 @@
 
             if (createdUser is null)
             {
-                errorMessage = "Användaren kunde inte skapas.";
+                errorMessage = "The user could not be created.";
                 return;
             }
 
-            successMessage = "Användaren skapades.";
+            successMessage = "User created successfully.";
             userModel = new UserCreateDto();
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException ex)
         {
-            errorMessage = "Det gick inte att skapa användaren.";
+            errorMessage = "Could not create the user.";
 
             try
             {
@@ -274,7 +274,7 @@
                 if (document.RootElement.TryGetProperty("message", out var message))
                 {
                     errorMessage = message.GetString()
-                        ?? "Det gick inte att skapa användaren.";
+                        ?? "Could not create the user.";
                 }
             }
             catch (JsonException)
@@ -284,7 +284,7 @@
         }
         catch (Exception)
         {
-            errorMessage = "Ett oväntat fel uppstod när användaren skulle skapas.";
+            errorMessage = "An unexpected error occurred while creating the user.";
         }
         finally
         {
