@@ -5,6 +5,7 @@ using LMS.Shared.DTOs.AssignmentDtos;
 using LMS.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
+using LMS.Shared.DTOs.CommonDtos;
 
 namespace LMS.Services;
 
@@ -296,5 +297,41 @@ if (filter?.CourseId is int courseId)
         // Return the updated assignment information.
         return (await GetMyAssignmentAsync(userId, assignmentId))!;
 
+    }
+
+    public async Task<PagedList<TeacherSubmissionDto>> GetSubmissionsForTeacherPagedAsync(
+    string teacherId,
+    PageParameters pageParameters,
+    bool? hasFeedback = null)
+    {
+        var teacher = await _userManager.FindByIdAsync(teacherId);
+        if (teacher is null || !await _userManager.IsInRoleAsync(teacher, "Teacher"))
+            throw new UnauthorizedAccessException("Only teachers can view submissions.");
+
+        var paged = await _uow.SubmissionRepository.GetPagedAsync(pageParameters, hasFeedback);
+
+        var now = SchoolTime.FromUtc(DateTime.UtcNow);
+        var dtos = paged.Items.Select(s =>
+        {
+            var submittedAt = SchoolTime.FromUtc(s.SubmittedAt);
+
+            return new TeacherSubmissionDto(
+                s.Id,
+                s.ActivityId,
+                s.Activity.Name,
+                s.StudentId,
+                s.Student.UserName ?? "Okänd",
+                s.FileName,
+                submittedAt,
+                s.Activity.EndTime,
+                SubmissionStatusCalculator.Calculate(
+                    s.Activity.EndTime,
+                    submittedAt,
+                    now),
+                s.Feedbacks.Any());
+        }).ToList();
+
+        return new PagedList<TeacherSubmissionDto>(
+            dtos, paged.PageNumber, paged.PageSize, paged.TotalCount, paged.TotalPages);
     }
 }

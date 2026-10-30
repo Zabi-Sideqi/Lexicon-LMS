@@ -304,7 +304,7 @@
                 <h2>Submissions Awaiting Feedback</h2>
             </div>
 
-            @if (!PendingSubmissions.Any())
+            @if (!PagedSubmissions.Any())
             {
                 <p>There are no submissions awaiting feedback.</p>
             }
@@ -322,7 +322,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var submission in PendingSubmissions)
+                            @foreach (var submission in PagedSubmissions)
                             {
                                 <tr @key="submission.SubmissionId">
                                     <td>@submission.StudentName</td>
@@ -366,6 +366,10 @@
                     </table>
                 </div>
             }
+
+            <Pager PageNumber="_pageNumber"
+                   TotalPages="TotalPages"
+                   OnPageChange="OnPageChangedAsync" />
         </div>
 
         @if (selectedSubmission is not null)
@@ -406,9 +410,6 @@
                         @feedbackError
                     </div>
                 }
-
-
-
 
                 <button class="btn btn-primary"
                         disabled="@sendingFeedback"
@@ -461,12 +462,11 @@
                             </span>
                         }
 
-
                         <span>
                             @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
                             · @(submission.HasFeedback
-                                                                ? "Feedback provided"
-                                                                : "Feedback required")
+                                                                                            ? "Feedback provided"
+                                                                                            : "Feedback required")
                         </span>
                     </div>
                 }
@@ -494,6 +494,9 @@
 
     private string selectedStatus = string.Empty;
 
+    private int _pageNumber = 1;
+    private int _pageSize = 10;
+
     private List<CourseDto> courses = [];
 
     private int? selectedCourseId;
@@ -502,97 +505,103 @@
 
     private int? selectedActivityId;
 
-
-
     private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
         submissions
             .Where(s => s.SubmissionId is not null && !s.HasFeedback)
             .OrderBy(s => s.SubmittedAt);
 
+    private int TotalPages =>
+        PendingSubmissions.Count() == 0
+            ? 1
+            : (int)Math.Ceiling(PendingSubmissions.Count() / (double)_pageSize);
+
+    private IEnumerable<TeacherSubmissionDto> PagedSubmissions =>
+        PendingSubmissions
+            .Skip((_pageNumber - 1) * _pageSize)
+            .Take(_pageSize);
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardAsync();
     }
+
     private async Task LoadDashboardAsync()
-{
-    loading = true;
-    errorMessage = null;
-    initializationError = null;
-
-    try
     {
-        courses = await Proxy.SendAsync<List<CourseDto>>(
-            HttpMethod.Get,
-            "courses") ?? [];
+        loading = true;
+        errorMessage = null;
+        initializationError = null;
 
-        activities = await Proxy.SendAsync<List<ActivityDto>>(
-            HttpMethod.Get,
-            "Activities") ?? [];
-
-        dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
-            HttpMethod.Get,
-            "dashboard/teacher");
-
-        var endpoint = "submissions/teacher";
-        var queryParameters = new List<string>();
-
-        if (selectedCourseId is int courseId)
+        try
         {
-            queryParameters.Add($"CourseId={courseId}");
-        }
+            courses = await Proxy.SendAsync<List<CourseDto>>(
+                HttpMethod.Get,
+                "courses") ?? [];
 
-        if (selectedActivityId is int activityId)
+            activities = await Proxy.SendAsync<List<ActivityDto>>(
+                HttpMethod.Get,
+                "Activities") ?? [];
+
+            dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
+                HttpMethod.Get,
+                "dashboard/teacher");
+
+            var endpoint = "submissions/teacher";
+            var queryParameters = new List<string>();
+
+            if (selectedCourseId is int courseId)
+            {
+                queryParameters.Add($"CourseId={courseId}");
+            }
+
+            if (selectedActivityId is int activityId)
+            {
+                queryParameters.Add($"ActivityId={activityId}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedStatus))
+            {
+                queryParameters.Add(
+                    $"Status={Uri.EscapeDataString(selectedStatus)}");
+            }
+
+            if (queryParameters.Count > 0)
+            {
+                endpoint += $"?{string.Join("&", queryParameters)}";
+            }
+
+            var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
+                HttpMethod.Get,
+                endpoint);
+
+            submissions = result?.ToList() ?? [];
+        }
+        catch (UnauthorizedAccessException)
         {
-            queryParameters.Add($"ActivityId={activityId}");
+            errorMessage = "Your session has expired. Please log in again.";
         }
-
-        if (!string.IsNullOrWhiteSpace(selectedStatus))
+        catch (HttpRequestException)
         {
-            queryParameters.Add(
-                $"Status={Uri.EscapeDataString(selectedStatus)}");
+            errorMessage =
+                "Could not load dashboard data. Check that the API is running and try again.";
         }
-
-        if (queryParameters.Count > 0)
+        catch (Exception)
         {
-            endpoint += $"?{string.Join("&", queryParameters)}";
+            errorMessage =
+                "An unexpected error occurred while loading the dashboard.";
         }
-
-        var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
-            HttpMethod.Get,
-            endpoint);
-
-        submissions = result?.ToList() ?? [];
+        finally
+        {
+            loading = false;
+        }
     }
-    catch (UnauthorizedAccessException)
-    {
-        errorMessage = "Your session has expired. Please log in again.";
-    }
-    catch (HttpRequestException)
-    {
-        errorMessage =
-            "Could not load dashboard data. Check that the API is running and try again.";
-    }
-    catch (Exception)
-    {
-        errorMessage =
-            "An unexpected error occurred while loading the dashboard.";
-    }
-    finally
-    {
-        loading = false;
-    }
-}
 
     private async Task LoadSubmissionsAsync()
     {
         loading = true;
         errorMessage = null;
 
-
         try
         {
-
             dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
                 HttpMethod.Get,
                 "dashboard/teacher");
@@ -622,7 +631,6 @@
                 endpoint += $"?{string.Join("&", queryParameters)}";
             }
 
-
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
                 HttpMethod.Get,
                 endpoint);
@@ -648,7 +656,6 @@
             loading = false;
         }
     }
-
 
     private void SelectSubmission(TeacherSubmissionDto submission)
     {
@@ -769,6 +776,7 @@
 
     private async Task ApplyFilterAsync()
     {
+        _pageNumber = 1;
         await LoadDashboardAsync();
     }
 
@@ -778,6 +786,13 @@
         selectedCourseId = null;
         selectedActivityId = null;
 
+        _pageNumber = 1;
         await LoadDashboardAsync();
+    }
+
+    private Task OnPageChangedAsync(int page)
+    {
+        _pageNumber = page;
+        return Task.CompletedTask;
     }
 }

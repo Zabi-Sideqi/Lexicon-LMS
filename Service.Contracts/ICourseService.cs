@@ -1,4 +1,5 @@
-﻿using LMS.Shared.DTOs.CourseDtos;
+﻿using LMS.Shared.DTOs.CommonDtos;
+using LMS.Shared.DTOs.CourseDtos;
 
 namespace Service.Contracts;
 
@@ -11,4 +12,5 @@ public interface ICourseService
 
     Task<StudentCourseDto?> GetMyCourseAsync(string userId);
     Task<IEnumerable<CourseParticipantDto>> GetCourseParticipantsAsync(string userId);
+    Task<PagedList<CourseDto>> GetPagedAsync(PageParameters pageParameters);
 }

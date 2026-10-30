@@ -1,4 +1,4 @@
-﻿
+﻿using LMS.Shared.DTOs.CommonDtos;
 using Domain.Models.Entities;
 
 namespace Domain.Contracts;
@@ -15,6 +15,10 @@ public interface ISubmissionRepository
     Task<IEnumerable<Submission>> GetByCourseIdAsync(
         int courseId,
         bool trackChanges = false);
+
+    Task<PagedList<Submission>> GetPagedAsync(
+        PageParameters pageParameters,
+        bool? hasFeedback = null);
 
     void Create(Submission submission);
 }

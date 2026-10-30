@@ -1,4 +1,5 @@
-﻿using LMS.Shared.DTOs.CourseDtos;
+﻿using LMS.Shared.DTOs.CommonDtos;
+using LMS.Shared.DTOs.CourseDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -103,5 +104,16 @@ public class CoursesController(IServiceManager serviceManager) : ControllerBase
         var participants = await _serviceManager.CourseService.GetCourseParticipantsAsync(userId);
 
         return Ok(participants);
+    }
+
+    [HttpGet("paged")]
+    [Authorize(Roles = "Teacher")]
+    public async Task<ActionResult<PagedList<CourseDto>>> GetPaged(
+    [FromQuery] PageParameters pageParameters)
+    {
+        var paged = await _serviceManager.CourseService
+            .GetPagedAsync(pageParameters);
+
+        return Ok(paged);
     }
 }

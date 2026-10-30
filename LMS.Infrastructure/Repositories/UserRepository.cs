@@ -2,6 +2,8 @@
 using Domain.Models.Entities;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using LMS.Infrastructure.Extensions;
+using LMS.Shared.DTOs.CommonDtos;
 
 namespace LMS.Infrastructure.Repositories;
 
@@ -37,6 +39,30 @@ public class UserRepository : IUserRepository
     public async Task DeleteUserAsync(ApplicationUser user)
     {
         _context.Users.Remove(user);
-    } 
+    }
+
+    public async Task<PagedList<ApplicationUser>> GetPagedAsync(PageParameters pageParameters)
+    {
+        var query = _context.Users.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(pageParameters.SearchTerm))
+        {
+            var search = pageParameters.SearchTerm;
+            query = query.Where(u =>
+                (u.Email != null && u.Email.Contains(search)) ||
+                (u.UserName != null && u.UserName.Contains(search)));
+        }
+
+        query = pageParameters.SortOrder switch
+        {
+            "email" => query.OrderBy(u => u.Email),
+            "email_desc" => query.OrderByDescending(u => u.Email),
+            "username" => query.OrderBy(u => u.UserName),
+            "username_desc" => query.OrderByDescending(u => u.UserName),
+            _ => query.OrderBy(u => u.UserName)
+        };
+
+        return await query.ToPagedListAsync(pageParameters);
+    }
 
 }
