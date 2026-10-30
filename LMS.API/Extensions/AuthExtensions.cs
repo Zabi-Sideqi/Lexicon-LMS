@@ -74,6 +74,10 @@ public static class AuthExtensions
             {
                 policy.RequireRole("Teacher");
             })
+            .AddPolicy("StudentOrTeacher", policy =>
+            {
+                policy.RequireRole("Student", "Teacher");
+            })
             .AddPolicy("SameCourse", policy =>
             {
                 policy.RequireRole("Student");

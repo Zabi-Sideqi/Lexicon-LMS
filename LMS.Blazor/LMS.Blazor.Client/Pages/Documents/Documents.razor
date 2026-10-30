@@ -5,8 +5,10 @@
 @using LMS.Shared.DTOs.DocumentDtos
 @using LMS.Shared.DTOs.ModuleDtos
 @inject IApiProxyClient Proxy
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-@attribute [Authorize]
+@attribute [Authorize(Policy = "StudentOrTeacher")]
 
 <PageTitle>Dokument</PageTitle>
 
@@ -15,48 +17,52 @@
 <AuthorizeView>
     <Authorized Context="authContext">
         <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
-            <div class="mb-3">
-                <label class="form-label">Kurs</label>
-                <InputSelect @bind-Value="uploadModel.CourseId"
-                             @bind-Value:after="OnCourseSelected"
-                             class="form-select">
-                    @if (courses.Count > 1)
-                    {
-                        <option value="">Välj kurs</option>
-                    }
-                    @foreach (var c in courses)
-                    {
-                        <option value="@c.Id">@c.Name</option>
-                    }
-                </InputSelect>
-            </div>
-
-            @if (uploadModel.CourseId is > 0)
+            @if (authContext.User.IsInRole("Teacher"))
             {
                 <div class="mb-3">
-                    <label>Modul (valfri)</label>
-                    <InputSelect @bind-Value="uploadModel.ModuleId" @bind-Value:after="OnModuleChanged">
-                        <option value="">— Ingen modul —</option>
-                        @foreach (var m in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                    <label class="form-label">Kurs</label>
+                    <InputSelect @bind-Value="uploadModel.CourseId"
+                                 @bind-Value:after="OnCourseSelected"
+                                 class="form-select">
+                        @if (courses.Count > 1)
                         {
-                            <option value="@m.Id">@m.Name</option>
+                            <option value="">Välj kurs</option>
+                        }
+                        @foreach (var course in courses)
+                        {
+                            <option value="@course.Id">@course.Name</option>
                         }
                     </InputSelect>
                 </div>
-            }
 
-            @if (uploadModel.ModuleId is > 0)
-            {
-                <div class="mb-3">
-                    <label>Aktivitet (valfri)</label>
-                    <InputSelect @bind-Value="uploadModel.ActivityId">
-                        <option value="">— Ingen aktivitet —</option>
-                        @foreach (var a in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
-                        {
-                            <option value="@a.Id">@a.Name (@a.Type)</option>
-                        }
-                    </InputSelect>
-                </div>
+                @if (uploadModel.CourseId is > 0)
+                {
+                    <div class="mb-3">
+                        <label>Modul (valfri)</label>
+                        <InputSelect @bind-Value="uploadModel.ModuleId"
+                                     @bind-Value:after="OnModuleChanged">
+                            <option value="">— Ingen modul —</option>
+                            @foreach (var module in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                            {
+                                <option value="@module.Id">@module.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                }
+
+                @if (uploadModel.ModuleId is > 0)
+                {
+                    <div class="mb-3">
+                        <label>Aktivitet (valfri)</label>
+                        <InputSelect @bind-Value="uploadModel.ActivityId">
+                            <option value="">— Ingen aktivitet —</option>
+                            @foreach (var activity in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
+                            {
+                                <option value="@activity.Id">@activity.Name (@activity.Type)</option>
+                            }
+                        </InputSelect>
+                    </div>
+                }
             }
 
             <div class="mb-3">
@@ -141,6 +147,39 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        if (authState.User.IsInRole("Student"))
+        {
+            documents = new();
+
+            var myCourse = await Proxy.GetAsync<StudentCourseDto>("courses/my");
+
+            if (myCourse is not null)
+            {
+                courses =
+                [
+                    new CourseDto(
+                myCourse.Id,
+                myCourse.Name,
+                myCourse.Description,
+                myCourse.StartDate,
+                myCourse.EndDate)
+                ];
+
+                uploadModel.CourseId = myCourse.Id;
+
+                modules = await Proxy.GetAsync<List<ModuleDto>>(
+                    $"modules/course/{myCourse.Id}") ?? new();
+
+                activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
+
+                await LoadDocuments(myCourse.Id);
+            }
+
+            return;
+        }
+
         // Försök hämta alla kurser först (Teacher)
         try
         {
