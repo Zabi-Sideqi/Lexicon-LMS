@@ -34,7 +34,7 @@
     {
         <section class="module-edit-card">
             <div class="module-edit-card-heading">
-                <h2>Module details</h2>
+                <h2>Module Details</h2>
                 <p>Update the information below and save your changes.</p>
             </div>
 
@@ -47,7 +47,7 @@
                         <span class="module-edit-error-icon"
                               aria-hidden="true">!</span>
                         <div>
-                            <strong>Unable to save module</strong>
+                            <strong>Unable to Save Module</strong>
                             <p>@errorMessage</p>
                         </div>
                     </div>
@@ -73,7 +73,7 @@
 
                 <div class="module-edit-date-grid">
                     <div class="module-edit-field">
-                        <label for="module-edit-start-date">Start date</label>
+                        <label for="module-edit-start-date">Start Date</label>
                         <InputDate id="module-edit-start-date"
                                    @bind-Value="model.StartDate"
                                    class="module-edit-input" />
@@ -81,7 +81,7 @@
                     </div>
 
                     <div class="module-edit-field">
-                        <label for="module-edit-end-date">End date</label>
+                        <label for="module-edit-end-date">End Date</label>
                         <InputDate id="module-edit-end-date"
                                    @bind-Value="model.EndDate"
                                    class="module-edit-input" />
@@ -97,7 +97,7 @@
 
                     <button type="submit" class="module-edit-submit">
                         <span aria-hidden="true">✓</span>
-                        Save changes
+                        Save Changes
                     </button>
                 </div>
             </EditForm>
@@ -118,7 +118,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var module = await Proxy.GetAsync<ModuleDto>($"modules/{Id}");
+        var module = await Proxy.SendAsync<ModuleDto>(HttpMethod.Get, $"modules/{Id}");
 
         if (module is null)
         {
@@ -144,7 +144,7 @@
 
         if (model.EndDate < model.StartDate)
         {
-            errorMessage = "End date cannot be before start date.";
+            errorMessage = "End date cannot be before the start date.";
             return;
         }
 
@@ -157,9 +157,27 @@
 
             Navigation.NavigateTo($"/courses/{model.CourseId}/modules");
         }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Your session has expired. Please log in again.";
+        }
+        catch (HttpRequestException ex)
+        {
+            var message = ex.Message;
+            if (message.Contains("overlap", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("överlap", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "The module dates overlap with another module. Choose a different date range.";
+            else if (message.Contains("course", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("kurs", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("date", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("datum", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "Make sure the module dates fall within the course schedule and try again.";
+            else
+                errorMessage = "The server could not save the module. Check the details and try again.";
+        }
         catch (Exception)
         {
-            errorMessage = "The module could not be saved. The server rejected it, for example because the dates overlap another module or fall outside the course dates.";
+            errorMessage = "An unexpected error occurred while saving the module.";
         }
     }
 }
