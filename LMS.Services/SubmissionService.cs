@@ -2,6 +2,7 @@
 using Domain.Models.Entities;
 using LMS.Services.Helpers;
 using LMS.Shared.DTOs.AssignmentDtos;
+using LMS.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
 
@@ -98,7 +99,8 @@ public class SubmissionService : ISubmissionService
     }
 
     public async Task<IEnumerable<TeacherSubmissionDto>> GetSubmissionsForTeacherAsync(
-        string teacherId)
+        string teacherId,
+        TeacherSubmissionFilterDto? filter = null)
     {
         var teacher = await _userManager.FindByIdAsync(teacherId);
 
@@ -109,37 +111,125 @@ public class SubmissionService : ISubmissionService
                 "Only teachers can view course submissions.");
         }
 
-        // US02: teachers can view submissions from all courses.
-        // The Teacher role is validated above; do not limit by course assignment.
-        var courses = await _uow.CourseRepository.GetAllAsync();
+// US02: All teachers can view submissions from all courses.
+// US13: Allow filtering submissions by course.
+var courses = await _uow.CourseRepository.GetAllAsync();
+
+if (filter?.CourseId is int courseId)
+{
+    courses = courses
+        .Where(course => course.Id == courseId)
+        .ToList();
+}
 
         if (!courses.Any())
             return [];
 
-        var submissions = new List<Submission>();
+        var now = SchoolTime.FromUtc(DateTime.UtcNow);
+        var result = new List<TeacherSubmissionDto>();
 
         foreach (var course in courses)
         {
+            var courseWithStudents = await _uow.CourseRepository
+                .GetCourseWithStudentsAsync(course.Id);
+
+            if (courseWithStudents is null)
+                continue;
+
+            var assignments = await _uow.ActivityRepository
+                .GetAssignmentsByCourseIdAsync(course.Id);
+
             var courseSubmissions = await _uow.SubmissionRepository
                 .GetByCourseIdAsync(course.Id);
 
-            submissions.AddRange(courseSubmissions);
+            var latestSubmissionByStudentAndActivity = courseSubmissions
+                .GroupBy(submission => (submission.StudentId, submission.ActivityId))
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .OrderByDescending(submission => submission.SubmittedAt)
+                        .First());
+
+            foreach (var assignment in assignments)
+            {
+                foreach (var student in courseWithStudents.Students)
+                {
+                    latestSubmissionByStudentAndActivity.TryGetValue(
+                        (student.Id, assignment.Id),
+                        out var submission);
+
+                    DateTime? submittedAt = submission is null
+                        ? null
+                        : SchoolTime.FromUtc(submission.SubmittedAt);
+
+                    result.Add(new TeacherSubmissionDto(
+                        submission?.Id,
+                        assignment.Id,
+                        assignment.Name,
+                        student.Id,
+                        student.UserName ?? student.Email ?? "Okänd student",
+                        submission?.FileName,
+                        submittedAt,
+                        assignment.EndTime,
+                        SubmissionStatusCalculator.Calculate(
+                            assignment.EndTime,
+                            submittedAt,
+                            now),
+                        submission?.Feedbacks.Any() ?? false));
+                }
+            }
         }
 
-        return submissions
-            .DistinctBy(submission => submission.Id)
-            .Select(submission => new TeacherSubmissionDto(
-                submission.Id,
-                submission.ActivityId,
-                submission.Activity.Name,
-                submission.StudentId,
-                submission.Student.UserName
-                    ?? submission.Student.Email
-                    ?? "Unknown student",
-                submission.FileName,
-                SchoolTime.FromUtc(submission.SubmittedAt),
-                submission.Feedbacks.Any()))
-            .ToList();
+        IEnumerable<TeacherSubmissionDto> filtered = result;
+
+        if (filter?.ActivityId is int activityId)
+        {
+            filtered = filtered.Where(
+                submission => submission.ActivityId == activityId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter?.StudentSearch))
+        {
+            filtered = filtered.Where(submission =>
+                submission.StudentName.Contains(
+                    filter.StudentSearch,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filter?.Status is SubmissionStatus statusFilter)
+        {
+            filtered = filtered.Where(
+                submission => submission.Status == statusFilter);
+        }
+
+        return filtered.ToList();
+    }
+
+    public async Task<(Stream Stream, string FileName, string ContentType)>
+    DownloadSubmissionAsync(string teacherId, int submissionId)
+    {
+        var teacher = await _userManager.FindByIdAsync(teacherId);
+
+        if (teacher is null ||
+            !await _userManager.IsInRoleAsync(teacher, "Teacher"))
+        {
+            throw new UnauthorizedAccessException(
+                "Only teachers can download submissions.");
+        }
+
+        var submission = await _uow.SubmissionRepository
+            .GetByIdAsync(submissionId);
+
+        if (submission is null)
+        {
+            throw new KeyNotFoundException(
+                $"Submission with id {submissionId} was not found.");
+        }
+
+        var stream = await _fileStorage.OpenReadAsync(
+            submission.StoredFileName);
+
+        return (stream, submission.FileName, submission.ContentType);
     }
 
     public async Task<StudentAssignmentDto> SubmitAsync(
