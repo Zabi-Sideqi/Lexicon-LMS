@@ -102,7 +102,9 @@ public class DashboardService : IDashboardService
             throw new UnauthorizedAccessException("Only teachers can view their dashboard.");
 
         var now = SchoolTime.FromUtc(DateTime.UtcNow);
-        var courses = (await _uow.CourseRepository.GetByTeacherIdAsync(teacherId))
+        // US02: all teachers can view all courses. Keep the Teacher role
+        // check above; do not restrict dashboard data to assigned courses.
+        var courses = (await _uow.CourseRepository.GetAllAsync())
             .OrderBy(course => course.StartDate)
             .ToList();
 
