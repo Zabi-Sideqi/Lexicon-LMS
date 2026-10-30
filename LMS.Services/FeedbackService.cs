@@ -84,20 +84,6 @@ public class FeedbackService : IFeedbackService
                 "Only a teacher can create feedback.");
         }
 
-        // Kontrollera att läraren är tilldelad kursen.
-        var courseId = submission.Activity.Module.CourseId;
-
-        var course = await _uow.CourseRepository
-            .GetByIdAsync(courseId);
-
-        if (course is null ||
-            !course.Teachers.Any(
-                assignedTeacher => assignedTeacher.Id == teacherId))
-        {
-            throw new UnauthorizedAccessException(
-                "You are not assigned to teach this course.");
-        }
-
         if (dto is null || string.IsNullOrWhiteSpace(dto.Text))
         {
             throw new ArgumentException(
