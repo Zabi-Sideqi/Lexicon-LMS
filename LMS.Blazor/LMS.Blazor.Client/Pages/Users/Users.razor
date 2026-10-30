@@ -28,16 +28,16 @@
                        Placeholder="Sök användarnamn eller e-post..." />
         </div>
 
-        @if (pagedUsers is null)
-        {
-            <div class="p-4 text-center">
-                <span>Laddar användare...</span>
-            </div>
-        }
-        else if (!string.IsNullOrWhiteSpace(errorMessage))
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
             <div class="alert alert-danger m-4">
                 @errorMessage
+            </div>
+        }
+        else if (pagedUsers is null)
+        {
+            <div class="p-4 text-center">
+                <span>Laddar användare...</span>
             </div>
         }
         else if (pagedUsers.TotalCount == 0)

@@ -497,16 +497,6 @@
     private int _pageNumber = 1;
     private int _pageSize = 10;
 
-    private int TotalPages =>
-        submissions.Count == 0
-            ? 1
-            : (int)Math.Ceiling(submissions.Count / (double)_pageSize);
-
-    private IEnumerable<TeacherSubmissionDto> PagedSubmissions =>
-        submissions
-            .Skip((_pageNumber - 1) * _pageSize)
-            .Take(_pageSize);
-
     private List<CourseDto> courses = [];
 
     private int? selectedCourseId;
@@ -519,6 +509,16 @@
         submissions
             .Where(s => s.SubmissionId is not null && !s.HasFeedback)
             .OrderBy(s => s.SubmittedAt);
+
+    private int TotalPages =>
+        PendingSubmissions.Count() == 0
+            ? 1
+            : (int)Math.Ceiling(PendingSubmissions.Count() / (double)_pageSize);
+
+    private IEnumerable<TeacherSubmissionDto> PagedSubmissions =>
+        PendingSubmissions
+            .Skip((_pageNumber - 1) * _pageSize)
+            .Take(_pageSize);
 
     protected override async Task OnInitializedAsync()
     {
