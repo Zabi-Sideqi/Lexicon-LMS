@@ -5,6 +5,7 @@
 @using LMS.Shared.DTOs.ActivityDtos
 @using LMS.Shared.DTOs.ModuleDtos
 @using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.CommonDtos
 @attribute [Authorize]
 @inject IApiProxyClient ApiProxyClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -27,6 +28,25 @@
         </AuthorizeView>
     </header>
 
+    <section class="mb-3 d-flex gap-2 align-items-end">
+        <div class="flex-grow-1">
+            <SearchBar Placeholder="Sök aktivitet..."
+                       OnSearch="OnSearchChangedAsync" />
+        </div>
+
+        <div>
+            <label for="sortOrder" class="form-label">Sortera</label>
+            <select id="sortOrder"
+                    class="form-select"
+                    @bind="_sortOrder"
+                    @bind:after="OnSortChangedAsync">
+                <option value="start">Starttid (stigande)</option>
+                <option value="start_desc">Starttid (fallande)</option>
+                <option value="name">Namn (A–Ö)</option>
+            </select>
+        </div>
+    </section>
+
     @if (!string.IsNullOrWhiteSpace(_errorMessage))
     {
         <div class="schedule-alert schedule-alert-error" role="alert">@_errorMessage</div>
@@ -40,7 +60,7 @@
     {
         <div class="schedule-empty"><span class="schedule-spinner"></span> Hämtar schemat...</div>
     }
-    else if (_activities.Count == 0)
+    else if (!_pagedActivities.Items.Any())
     {
         <section class="schedule-empty">
             <div class="schedule-empty-icon">▦</div>
@@ -56,7 +76,7 @@
     else
     {
         <section class="schedule-list" aria-label="Aktiviteter sorterade efter starttid">
-            @foreach (var activity in _activities.OrderBy(x => x.StartTime))
+            @foreach (var activity in _pagedActivities.Items)
             {
                 <article class="schedule-item" @key="activity.Id">
                     <div class="schedule-date-column">
@@ -89,6 +109,10 @@
                 </article>
             }
         </section>
+
+        <Pager PageNumber="_pagedActivities.PageNumber"
+               TotalPages="_pagedActivities.TotalPages"
+               OnPageChange="OnPageChangedAsync" />
     }
 
     @if (_pendingDelete is not null)
@@ -191,7 +215,11 @@
 </div>
 
 @code {
-    private List<ActivityDto> _activities = [];
+    private PagedList<ActivityDto> _pagedActivities = new([], 1, 10, 0, 1);
+    private int _pageNumber = 1;
+    private int _pageSize = 10;
+    private string? _searchTerm;
+    private string _sortOrder = "start";
     private List<ModuleDto> _modules = [];
     private ActivityFormModel _form = new();
     private int? _editingId;
@@ -216,14 +244,26 @@
 
         try
         {
-            // Hämta aktiviteter för den inloggade användaren.
-            var activities = await ApiProxyClient.SendAsync<List<ActivityDto>>(
-                HttpMethod.Get,
-                "Activities");
+            // Hämta paginerade aktiviteter.
+            var query = new List<string>
+            {
+                $"pageNumber={_pageNumber}",
+                $"pageSize={_pageSize}",
+                $"sortOrder={Uri.EscapeDataString(_sortOrder)}"
+            };
 
-            _activities = (activities ?? [])
-                .OrderBy(x => x.StartTime)
-                .ToList();
+            if (!string.IsNullOrWhiteSpace(_searchTerm))
+            {
+                query.Add($"searchTerm={Uri.EscapeDataString(_searchTerm)}");
+            }
+
+            var endpoint = $"Activities/paged?{string.Join("&", query)}";
+
+            var paged = await ApiProxyClient.SendAsync<PagedList<ActivityDto>>(
+                HttpMethod.Get,
+                endpoint);
+
+            _pagedActivities = paged ?? new([], 1, _pageSize, 0, 1);
 
             // Hämta alla moduler endast för lärare.
             var authenticationState =
@@ -252,7 +292,7 @@
                 _modules = [];
 
                 // Hämta information om moduler som elevens aktiviteter tillhör.
-                foreach (var moduleId in _activities
+                foreach (var moduleId in _pagedActivities.Items
                     .Select(x => x.ModuleId)
                     .Distinct())
                 {
@@ -571,5 +611,24 @@
 
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
+    }
+
+        private async Task OnSearchChangedAsync(string searchTerm)
+    {
+        _searchTerm = searchTerm;
+        _pageNumber = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task OnSortChangedAsync()
+    {
+        _pageNumber = 1;
+        await LoadDataAsync();
+    }
+
+    private async Task OnPageChangedAsync(int page)
+    {
+        _pageNumber = page;
+        await LoadDataAsync();
     }
 }

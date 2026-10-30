@@ -111,11 +111,19 @@ public class ActivityRepository : IActivityRepository
             .ToListAsync();
     }
 
-    public async Task<PagedList<Activity>> GetPagedAsync(PageParameters pageParameters)
+    public async Task<PagedList<Activity>> GetPagedAsync(
+    PageParameters pageParameters,
+    int? courseId = null)
     {
         var query = _context.Activities
             .Include(a => a.Module)
             .AsQueryable();
+
+        // Studenter: begränsa till egen kurs INNAN paging.
+        if (courseId is int cid)
+        {
+            query = query.Where(a => a.Module.CourseId == cid);
+        }
 
         if (!string.IsNullOrWhiteSpace(pageParameters.SearchTerm))
         {

@@ -18,5 +18,7 @@ public interface IActivityService
 
     Task DeleteAsync(int id);
 
-    Task<PagedList<ActivityDto>> GetPagedAsync(PageParameters pageParameters);
+    Task<PagedList<ActivityDto>> GetPagedAsync(
+        PageParameters pageParameters,
+        int? courseId = null);
 }

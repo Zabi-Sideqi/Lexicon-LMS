@@ -22,6 +22,8 @@ namespace Domain.Contracts
         Task<IEnumerable<Activity>> GetAssignmentsByCourseIdAsync(
             int courseId, 
             bool trackChanges = false);
-        Task<PagedList<Activity>> GetPagedAsync(PageParameters pageParameters);
+        Task<PagedList<Activity>> GetPagedAsync(
+            PageParameters pageParameters,
+            int? courseId = null);
     }
 }

@@ -208,9 +208,12 @@ public class ActivityService : IActivityService
         }
     }
 
-    public async Task<PagedList<ActivityDto>> GetPagedAsync(PageParameters pageParameters)
+    public async Task<PagedList<ActivityDto>> GetPagedAsync(
+    PageParameters pageParameters,
+    int? courseId = null)
     {
-        var paged = await _uow.ActivityRepository.GetPagedAsync(pageParameters);
+        var paged = await _uow.ActivityRepository
+            .GetPagedAsync(pageParameters, courseId);
 
         return new PagedList<ActivityDto>(
             paged.Items.Select(a => new ActivityDto(

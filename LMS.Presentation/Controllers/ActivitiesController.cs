@@ -139,15 +139,28 @@ public class ActivitiesController(
         return NoContent();
     }
 
-    // Paged lista av aktiviteter (för US15).
     [HttpGet("paged")]
     public async Task<ActionResult<PagedList<ActivityDto>>> GetPaged(
-        [FromQuery] PageParameters pageParameters)
+    [FromQuery] PageParameters pageParameters)
     {
         if (!User.IsInRole("Teacher") && !User.IsInRole("Student"))
             return Forbid();
 
-        var paged = await _serviceManager.ActivityService.GetPagedAsync(pageParameters);
+        int? courseId = null;
+
+        if (User.IsInRole("Student"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user?.CourseId is not int cid)
+                return Forbid();
+
+            courseId = cid;
+        }
+
+        var paged = await _serviceManager.ActivityService
+            .GetPagedAsync(pageParameters, courseId);
+
         return Ok(paged);
     }
 
