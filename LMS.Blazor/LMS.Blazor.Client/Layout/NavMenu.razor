@@ -53,12 +53,16 @@
             </NotAuthorized>
         </AuthorizeView>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="assignments">
-                <span class="nav-icon">▤</span>
-                Uppgifter
-            </NavLink>
-        </div>
+        <AuthorizeView Roles="Student">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="assignments">
+                        <span class="nav-icon">▤</span>
+                        Uppgifter
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="documents">
                 <span class="nav-icon">▧</span>

@@ -9,7 +9,7 @@ namespace LMS.Presentation.Controllers;
 [Route("api/notifications")]
 [ApiController]
 [Produces("application/json")]
-[Authorize(Roles = "Student")]
+[Authorize(Roles = "Student,Teacher")]
 public class NotificationsController(IServiceManager serviceManager)
     : ControllerBase
 {
@@ -18,17 +18,39 @@ public class NotificationsController(IServiceManager serviceManager)
     [HttpGet]
     public async Task<IActionResult> GetMyNotifications()
     {
-        var studentId = User.FindFirstValue(
+        var recipientId = User.FindFirstValue(
             ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(studentId))
+        if (string.IsNullOrWhiteSpace(recipientId))
         {
             return Unauthorized();
         }
 
         var notifications = await _serviceManager.NotificationService
-            .GetByStudentIdAsync(studentId);
+            .GetByRecipientIdAsync(recipientId);
 
         return Ok(notifications);
+    }
+
+    [HttpPatch("{notificationId:int}/read")]
+    public async Task<IActionResult> MarkAsRead(int notificationId)
+    {
+        var recipientId = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(recipientId))
+        {
+            return Unauthorized();
+        }
+
+        var updated = await _serviceManager.NotificationService
+            .MarkAsReadForRecipientAsync(notificationId, recipientId);
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
     }
 }

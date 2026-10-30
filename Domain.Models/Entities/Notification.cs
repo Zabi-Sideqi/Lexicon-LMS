@@ -5,11 +5,20 @@ public class Notification
 {
     public int Id { get; set; }
 
-    public string StudentId { get; set; } = null!;
-    public ApplicationUser Student { get; set; } = null!;
+    // Befintlig koppling till äldre studentnotiser.
+    // Behålls tills vi har migrerat och uppdaterat användningen.
+    public string? StudentId { get; set; }
+    public ApplicationUser? Student { get; set; }
 
-    public int FeedbackId { get; set; }
-    public Feedback Feedback { get; set; } = null!;
+    // Ny generell mottagare: elev eller lärare.
+    public string? RecipientId { get; set; }
+    public ApplicationUser? Recipient { get; set; }
+
+    public int? FeedbackId { get; set; }
+    public Feedback? Feedback { get; set; }
+
+    public int? DocumentId { get; set; }
+    public Document? Document { get; set; }
 
     public string Message { get; set; } = string.Empty;
 
