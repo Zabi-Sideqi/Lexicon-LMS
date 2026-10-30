@@ -15,7 +15,7 @@
         <div>
             <span class="module-create-eyebrow">LEXICON LMS</span>
             <h1>Create Module</h1>
-            <p>Add a new module to your course and set its schedule.</p>
+            <p>Add a module to your course and set its schedule.</p>
         </div>
 
         <div class="module-create-icon" aria-hidden="true">＋</div>
@@ -23,7 +23,7 @@
 
     <div class="module-create-card">
         <div class="module-create-card-heading">
-            <h2>Module details</h2>
+            <h2>Module Details</h2>
             <p>Enter the information for your new module.</p>
         </div>
 
@@ -35,7 +35,7 @@
                 <div class="module-create-error" role="alert">
                     <span class="module-create-error-icon" aria-hidden="true">!</span>
                     <div>
-                        <strong>Unable to create module</strong>
+                        <strong>Unable to Create Module</strong>
                         <p>@errorMessage</p>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
 
             <div class="module-create-date-grid">
                 <div class="module-create-field">
-                    <label for="module-start-date">Start date</label>
+                    <label for="module-start-date">Start Date</label>
                     <InputDate id="module-start-date"
                                @bind-Value="model.StartDate"
                                class="module-create-input" />
@@ -69,7 +69,7 @@
                 </div>
 
                 <div class="module-create-field">
-                    <label for="module-end-date">End date</label>
+                    <label for="module-end-date">End Date</label>
                     <InputDate id="module-end-date"
                                @bind-Value="model.EndDate"
                                class="module-create-input" />
@@ -85,7 +85,7 @@
 
                 <button type="submit" class="module-create-submit">
                     <span aria-hidden="true">＋</span>
-                    Create module
+                    Create Module
                 </button>
             </div>
         </EditForm>
@@ -97,7 +97,7 @@
 </div>
 
 @code {
-    // A module belongs to a course, so the course id comes from the address.
+    // A module belongs to a course, so the course ID comes from the route.
     [Parameter]
     public int CourseId { get; set; }
 
@@ -122,7 +122,7 @@
 
         if (model.EndDate < model.StartDate)
         {
-            errorMessage = "End date cannot be before start date.";
+            errorMessage = "End date cannot be before the start date.";
             return;
         }
 
@@ -135,9 +135,27 @@
 
             Navigation.NavigateTo($"/courses/{CourseId}/modules");
         }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Your session has expired. Please log in again.";
+        }
+        catch (HttpRequestException ex)
+        {
+            var message = ex.Message;
+            if (message.Contains("overlap", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("överlap", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "The module dates overlap with another module. Choose a different date range.";
+            else if (message.Contains("course", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("kurs", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("date", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("datum", StringComparison.OrdinalIgnoreCase))
+                errorMessage = "The module dates must fall within the course start and end dates.";
+            else
+                errorMessage = "The server could not create the module. Check the details and try again.";
+        }
         catch (Exception)
         {
-            errorMessage = "The module could not be saved. The server rejected it, for example because the dates overlap another module or fall outside the course dates.";
+            errorMessage = "An unexpected error occurred while creating the module.";
         }
     }
 }
