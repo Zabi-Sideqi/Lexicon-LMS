@@ -162,8 +162,16 @@ public class DashboardService : IDashboardService
 
             totalSubmissions += courseSubmissions.Count;
 
-            pendingFeedbackCount += courseSubmissions.Count(
-                submission => !submission.Feedbacks.Any());
+            pendingFeedbackCount += courseSubmissions
+                .GroupBy(submission => new
+                {
+                    submission.StudentId,
+                    submission.ActivityId
+                })
+                .Select(group => group
+                    .OrderByDescending(submission => submission.SubmittedAt)
+                    .First())
+                .Count(submission => !submission.Feedbacks.Any());
 
             foreach (var submission in courseSubmissions)
             {

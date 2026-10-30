@@ -95,12 +95,12 @@
             <p>Loading dashboard data...</p>
         </div>
     }
-    else if (errorMessage is not null)
+    else if (errorMessage is not null || initializationError is not null)
     {
         <div class="alert alert-warning" role="alert">
-            @errorMessage
+            @(initializationError ?? errorMessage)
             <button class="btn btn-outline-primary btn-sm ms-2"
-                    @onclick="LoadSubmissionsAsync">
+                    @onclick="LoadDashboardAsync">
                 Try again
             </button>
         </div>
@@ -108,163 +108,195 @@
     else
     {
 
-<div class="stats">
-    <a href="/courses" class="stat-card stat-card-link">
-        <span class="stat-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5z" />
-                <path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20" />
-                <path d="M8 7h8M8 10h8" />
-            </svg>
-        </span>
-        <strong>@(dashboard?.Courses.Count ?? 0)</strong>
-        <span>Courses</span>
-    </a>
+        <div class="stats">
+            <a href="/courses" class="stat-card stat-card-link">
+                <span class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5z" />
+                        <path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20" />
+                        <path d="M8 7h8M8 10h8" />
+                    </svg>
+                </span>
+                <strong>@(dashboard?.Courses.Count ?? 0)</strong>
+                <span>Courses</span>
+            </a>
 
-    <a href="/calendar" class="stat-card stat-card-link">
-        <span class="stat-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="5" width="18" height="16" rx="2" />
-                <path d="M16 3v4M8 3v4M3 10h18" />
-                <path d="m9 15 2 2 4-4" />
-            </svg>
-        </span>
-        <strong>@(dashboard?.Courses.Sum(course => course.UpcomingActivityCount) ?? 0)</strong>
-        <span>Upcoming activities</span>
-    </a>
+            <a href="/calendar" class="stat-card stat-card-link">
+                <span class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2" />
+                        <path d="M16 3v4M8 3v4M3 10h18" />
+                        <path d="m9 15 2 2 4-4" />
+                    </svg>
+                </span>
+                <strong>@(dashboard?.Courses.Sum(course => course.UpcomingActivityCount) ?? 0)</strong>
+                <span>Upcoming activities</span>
+            </a>
 
-    <a href="#pending-feedback" class="stat-card stat-card-link">
-        <span class="stat-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" />
-                <path d="m8.5 12 2.2 2.2 4.8-4.8" />
-            </svg>
-        </span>
-        <strong>@(dashboard?.PendingFeedbackCount ?? 0)</strong>
-        <span>Awaiting feedback</span>
-    </a>
+            <a href="#pending-feedback" class="stat-card stat-card-link">
+                <span class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" />
+                        <path d="m8.5 12 2.2 2.2 4.8-4.8" />
+                    </svg>
+                </span>
+                <strong>@(dashboard?.PendingFeedbackCount ?? 0)</strong>
+                <span>Awaiting feedback</span>
+            </a>
 
-    <a href="#attention-items" class="stat-card stat-card-link">
-        <span class="stat-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0z" />
-                <path d="M12 9v4M12 16.5h.01" />
-            </svg>
-        </span>
-        <strong>
-            @((dashboard?.LateSubmissionCount ?? 0)
-                + (dashboard?.MissingSubmissionCount ?? 0))
-        </strong>
-        <span>Late or missing submissions</span>
-    </a>
-</div>
-
-<div class="activity-card">
-    <div class="section-head">
-        <h2>My Courses</h2>
-    </div>
-
-    <div class="stats">
-        <div class="stat-card">
-            <span class="stat-icon">▣</span>
-            <strong>@submissions.Count(s => s.SubmissionId is not null)</strong>
-            <span>Inlämningar</span>
+            <a href="#attention-items" class="stat-card stat-card-link">
+                <span class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                        <path d="M12 9v4M12 16.5h.01" />
+                    </svg>
+                </span>
+                <strong>
+                    @((dashboard?.LateSubmissionCount ?? 0)
+                        + (dashboard?.MissingSubmissionCount ?? 0))
+                </strong>
+                <span>Late or missing submissions</span>
+            </a>
         </div>
 
-        <div class="stat-card">
-            <span class="stat-icon">✓</span>
-            <strong>@submissions.Count(s => s.SubmissionId is not null && s.HasFeedback)</strong>
-            <span>Har fått feedback</span>
+        <div class="activity-card">
+            <div class="section-head">
+                <h2>My Courses</h2>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-icon">▣</span>
+                    <strong>@submissions.Count(s => s.SubmissionId is not null)</strong>
+                    <span>Inlämningar</span>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">✓</span>
+                    <strong>@submissions.Count(s => s.SubmissionId is not null && s.HasFeedback)</strong>
+                    <span>Har fått feedback</span>
+                </div>
+            </div>
+
+            @if (dashboard?.Courses.Count > 0)
+            {
+                @foreach (var course in dashboard.Courses)
+                {
+                    <div class="activity" @key="course.Id">
+                        <strong>@course.Name</strong>
+                        <span>
+                            @course.StudentCount students
+                            · @course.UpcomingActivityCount upcoming activities
+                        </span>
+                        <span class="course-status-badge @(course.IsActive ? "is-active" : "is-inactive")">
+                            @(course.IsActive ? "Active course" : "Not currently active")
+                        </span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>No courses to display.</p>
+            }
         </div>
-    </div>
 
-    @if (dashboard?.Courses.Count > 0)
-    {
-        @foreach (var course in dashboard.Courses)
-        {
-            <div class="activity" @key="course.Id">
-                <strong>@course.Name</strong>
-                <span>
-                    @course.StudentCount students
-                    · @course.UpcomingActivityCount upcoming activities
-                </span>
-                <span class="badge @(course.IsActive ? "bg-success" : "bg-secondary")">
-                    @(course.IsActive ? "Active course" : "Not currently active")
-                </span>
+        <div class="activity-card" id="upcoming-activities">
+            <div class="section-head">
+                <h2>Upcoming Activities</h2>
             </div>
-        }
-    }
-    else
-    {
-        <p>No courses to display.</p>
-    }
-</div>
 
-
-
-<div class="activity-card" id="attention-items">
-    <div class="section-head">
-        <h2>Needs Attention</h2>
-    </div>
-
-    <div class="stat-card">
-        <span class="stat-icon">♙</span>
-        <strong>
-            @(submissions
-                .Where(s => s.SubmissionId is not null)
-                .Select(s => s.StudentId)
-                .Distinct()
-                .Count())
-        </strong>
-        <span>Studenter med inlämning</span>
-    </div>
-
-    @if (dashboard?.AttentionItems.Count > 0)
-    {
-        @foreach (var item in dashboard.AttentionItems)
-        {
-            <div class="activity"
-                 @key="(item.ActivityId, item.StudentId)">
-                <strong>@item.StudentName – @item.ActivityName</strong>
-
-                <span>
-                    @item.CourseName
-                    · Due: @item.DueAt.ToString("yyyy-MM-dd HH:mm")
-                </span>
-
-                @if (item.Status == "Late submission")
+            @if (dashboard?.UpcomingActivities.Count > 0)
+            {
+                @foreach (var activity in dashboard.UpcomingActivities)
                 {
-                    <span class="badge bg-danger">
-                        Late submission
-                    </span>
-                }
-                else
-                {
-                    <span class="badge bg-warning text-dark">
-                        Missing submission
-                    </span>
-                }
+                    <div class="activity" @key="activity.Id">
+                        <strong>@activity.Name</strong>
 
-                <a class="btn btn-outline-primary btn-sm"
-                   href="@($"/courses/{item.CourseId}/modules")">
-                    Open course modules
-                </a>
+                        <span>
+                            @activity.CourseName · @activity.Type
+                        </span>
+
+                        <span>
+                            Start: @activity.StartTime.ToString("yyyy-MM-dd HH:mm")
+                            · End: @activity.EndTime.ToString("yyyy-MM-dd HH:mm")
+                        </span>
+
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@($"/courses/{activity.CourseId}/modules")">
+                            Open course modules
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>No upcoming activities.</p>
+            }
+        </div>
+
+        <div class="activity-card" id="attention-items">
+            <div class="section-head">
+                <h2>Needs Attention</h2>
             </div>
-        }
-    }
-    else
-    {
-        <p>There are no late or missing submissions to display.</p>
-    }
-</div>
+
+            <div class="stat-card">
+                <span class="stat-icon">♙</span>
+                <strong>
+                    @(submissions
+                        .Where(s => s.SubmissionId is not null)
+                        .Select(s => s.StudentId)
+                        .Distinct()
+                        .Count())
+                </strong>
+                <span>Studenter med inlämning</span>
+            </div>
+
+            @if (dashboard?.AttentionItems.Count > 0)
+            {
+                @foreach (var item in dashboard.AttentionItems)
+                {
+                    <div class="activity"
+                         @key="(item.ActivityId, item.StudentId)">
+                        <strong>@item.StudentName – @item.ActivityName</strong>
+
+                        <span>
+                            @item.CourseName
+                            · Due: @item.DueAt.ToString("yyyy-MM-dd HH:mm")
+                        </span>
+
+                        @if (item.Status == "Late submission")
+                        {
+                            <span class="badge bg-danger">
+                                Late submission
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">
+                                Missing submission
+                            </span>
+                        }
+
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@($"/courses/{item.CourseId}/modules")">
+                            Open course modules
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>There are no late or missing submissions to display.</p>
+            }
+        </div>
 
 
         <div class="activity-card" id="pending-feedback">
@@ -310,24 +342,23 @@
                                             </a>
                                         }
                                     </td>
-                                    
-<td>
-    @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
-</td>
-<td>
-    <span class="@GetStatusCssClass(submission.Status)">
-        @GetStatusText(submission.Status)
-    </span>
-</td>
-<td>
-    @if (submission.SubmissionId is not null)
-    {
-        <button class="btn btn-primary btn-sm"
-                @onclick="() => SelectSubmission(submission)">
-            Give feedback
-        </button>
-    }
-</td>
+                                    <td>
+                                        @(submission.SubmittedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                                    </td>
+                                    <td>
+                                        <span class="@GetStatusCssClass(submission.Status)">
+                                            @GetStatusText(submission.Status)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (submission.SubmissionId is not null)
+                                        {
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => SelectSubmission(submission)">
+                                                Give feedback
+                                            </button>
+                                        }
+                                    </td>
 
                                 </tr>
                             }
@@ -376,12 +407,8 @@
                     </div>
                 }
 
-                @if (!string.IsNullOrWhiteSpace(feedbackSuccess))
-                {
-                    <div class="alert alert-success" role="status">
-                        @feedbackSuccess
-                    </div>
-                }
+
+
 
                 <button class="btn btn-primary"
                         disabled="@sendingFeedback"
@@ -397,6 +424,13 @@
             </div>
         }
 
+        @if (!string.IsNullOrWhiteSpace(feedbackSuccess))
+        {
+            <div class="alert alert-success" role="status">
+                @feedbackSuccess
+            </div>
+        }
+
         <div class="activity-card">
             <h2>Recent Submissions</h2>
 
@@ -404,7 +438,8 @@
             {
                 @foreach (var submission in dashboard.RecentSubmissions)
                 {
-                    var age = DateTime.Now - submission.SubmittedAt;
+                    var age = DateTime.UtcNow - submission.SubmittedAt.ToUniversalTime();
+
                     var recentlySubmitted =
                         age >= TimeSpan.Zero &&
                         age <= TimeSpan.FromHours(24);
@@ -427,14 +462,12 @@
                         }
 
 
-<span>
-    @(submission.SubmittedAt?.ToLocalTime()
-        .ToString("yyyy-MM-dd HH:mm") ?? "-")
-    · @(submission.HasFeedback
-        ? "Feedback lämnad"
-        : "Feedback behövs")
-</span>
-
+                        <span>
+                            @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
+                            · @(submission.HasFeedback
+                                                                ? "Feedback provided"
+                                                                : "Feedback required")
+                        </span>
                     </div>
                 }
             }
@@ -451,92 +484,143 @@
     private TeacherDashboardDto? dashboard;
     private bool loading = true;
     private string? errorMessage;
+    private string? initializationError;
 
     private TeacherSubmissionDto? selectedSubmission;
     private string feedbackText = "";
     private string? feedbackError;
     private string? feedbackSuccess;
     private bool sendingFeedback;
-      
-private string selectedStatus = string.Empty;
 
-private List<CourseDto> courses = [];
+    private string selectedStatus = string.Empty;
 
-private int? selectedCourseId;
+    private List<CourseDto> courses = [];
 
-private List<ActivityDto> activities = [];
+    private int? selectedCourseId;
 
-private int? selectedActivityId;
+    private List<ActivityDto> activities = [];
+
+    private int? selectedActivityId;
 
 
 
-private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
-    submissions
-        .Where(s => s.SubmissionId is not null && !s.HasFeedback)
-        .OrderBy(s => s.SubmittedAt);
+    private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
+        submissions
+            .Where(s => s.SubmissionId is not null && !s.HasFeedback)
+            .OrderBy(s => s.SubmittedAt);
 
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            courses = await Proxy.SendAsync<List<CourseDto>>(
-                HttpMethod.Get,
-                "courses") ?? [];
-
-            activities = await Proxy.SendAsync<List<ActivityDto>>(
-                HttpMethod.Get,
-                "Activities") ?? [];
-        }
-        catch (UnauthorizedAccessException)
-        {
-            errorMessage = "Din session har gått ut. Logga in igen.";
-        }
-        catch (HttpRequestException)
-        {
-            errorMessage = "Kunde inte hämta kurserna. Kontrollera att API:t är igång och försök igen.";
-        }
-
-        await LoadSubmissionsAsync();
+        await LoadDashboardAsync();
     }
+    private async Task LoadDashboardAsync()
+{
+    loading = true;
+    errorMessage = null;
+    initializationError = null;
 
-    
+    try
+    {
+        courses = await Proxy.SendAsync<List<CourseDto>>(
+            HttpMethod.Get,
+            "courses") ?? [];
+
+        activities = await Proxy.SendAsync<List<ActivityDto>>(
+            HttpMethod.Get,
+            "Activities") ?? [];
+
+        dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
+            HttpMethod.Get,
+            "dashboard/teacher");
+
+        var endpoint = "submissions/teacher";
+        var queryParameters = new List<string>();
+
+        if (selectedCourseId is int courseId)
+        {
+            queryParameters.Add($"CourseId={courseId}");
+        }
+
+        if (selectedActivityId is int activityId)
+        {
+            queryParameters.Add($"ActivityId={activityId}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedStatus))
+        {
+            queryParameters.Add(
+                $"Status={Uri.EscapeDataString(selectedStatus)}");
+        }
+
+        if (queryParameters.Count > 0)
+        {
+            endpoint += $"?{string.Join("&", queryParameters)}";
+        }
+
+        var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
+            HttpMethod.Get,
+            endpoint);
+
+        submissions = result?.ToList() ?? [];
+    }
+    catch (UnauthorizedAccessException)
+    {
+        errorMessage = "Your session has expired. Please log in again.";
+    }
+    catch (HttpRequestException)
+    {
+        errorMessage =
+            "Could not load dashboard data. Check that the API is running and try again.";
+    }
+    catch (Exception)
+    {
+        errorMessage =
+            "An unexpected error occurred while loading the dashboard.";
+    }
+    finally
+    {
+        loading = false;
+    }
+}
+
     private async Task LoadSubmissionsAsync()
     {
         loading = true;
         errorMessage = null;
 
+
         try
         {
-            
-dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
-    HttpMethod.Get,
-    "dashboard/teacher");
 
-var endpoint = "submissions/teacher";
+            dashboard = await Proxy.SendAsync<TeacherDashboardDto>(
+                HttpMethod.Get,
+                "dashboard/teacher");
 
-var queryParameters = new List<string>();
+            var endpoint = "submissions/teacher";
 
-if (selectedCourseId is int courseId)
-{
-    queryParameters.Add($"CourseId={courseId}");
-}
+            var queryParameters = new List<string>();
 
-if (selectedActivityId is int activityId)
-{
-    queryParameters.Add($"ActivityId={activityId}");
-}
+            if (selectedCourseId is int courseId)
+            {
+                queryParameters.Add($"CourseId={courseId}");
+            }
 
-if (!string.IsNullOrWhiteSpace(selectedStatus))
-{
-    queryParameters.Add(
-        $"Status={Uri.EscapeDataString(selectedStatus)}");
-}
+            if (selectedActivityId is int activityId)
+            {
+                queryParameters.Add($"ActivityId={activityId}");
+            }
 
-if (queryParameters.Count > 0)
-{
-    endpoint += $"?{string.Join("&", queryParameters)}";
-}
+            if (!string.IsNullOrWhiteSpace(selectedStatus))
+            {
+                queryParameters.Add(
+                    $"Status={Uri.EscapeDataString(selectedStatus)}");
+            }
+
+            if (queryParameters.Count > 0)
+            {
+                endpoint += $"?{string.Join("&", queryParameters)}";
+            }
 
 
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
@@ -626,12 +710,9 @@ if (queryParameters.Count > 0)
             feedbackSuccess = "Feedback has been sent to the student.";
             feedbackText = "";
 
-            var submittedId = selectedSubmission.SubmissionId;
+            selectedSubmission = null;
 
             await LoadSubmissionsAsync();
-
-            selectedSubmission = submissions.FirstOrDefault(
-                s => s.SubmissionId == submittedId);
         }
         catch (UnauthorizedAccessException)
         {
@@ -678,17 +759,17 @@ if (queryParameters.Count > 0)
     {
         return status switch
         {
-            SubmissionStatus.Submitted => "Inlämnad",
-            SubmissionStatus.SubmittedLate => "Inlämnad sent",
-            SubmissionStatus.Late => "Försenad",
-            SubmissionStatus.NotSubmitted => "Ej inlämnad",
-            _ => "Okänd status"
+            SubmissionStatus.Submitted => "Submitted",
+            SubmissionStatus.SubmittedLate => "Submitted late",
+            SubmissionStatus.Late => "Late",
+            SubmissionStatus.NotSubmitted => "Not submitted",
+            _ => "Unknown status"
         };
     }
 
     private async Task ApplyFilterAsync()
     {
-        await LoadSubmissionsAsync();
+        await LoadDashboardAsync();
     }
 
     private async Task ResetFilterAsync()
@@ -696,6 +777,7 @@ if (queryParameters.Count > 0)
         selectedStatus = string.Empty;
         selectedCourseId = null;
         selectedActivityId = null;
-        await LoadSubmissionsAsync();
+
+        await LoadDashboardAsync();
     }
 }

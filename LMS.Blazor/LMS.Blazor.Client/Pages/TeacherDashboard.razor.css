@@ -525,3 +525,28 @@
         font-size: 16px;
     }
 }
+/* Course status badges */
+.course-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 11px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+    .course-status-badge.is-active {
+        background: #e8f5ed;
+        border-color: #b7dfc5;
+        color: #176b3a;
+    }
+
+    .course-status-badge.is-inactive {
+        background: #f1f1f3;
+        border-color: #d8d8de;
+        color: #50505a;
+    }
