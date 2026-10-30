@@ -262,10 +262,37 @@ public class SubmissionService : ISubmissionService
             SubmittedAt = DateTime.UtcNow // set by the system, never by the client
         };
 
+
         _uow.SubmissionRepository.Create(submission);
         await _uow.SaveChangesAsync();
 
-        // A late submission gets the status "SubmittedLate" from the status calculation.
+        // US14: Notify the teachers assigned to the course.
+        var student = await _userManager.FindByIdAsync(userId);
+
+        if (student?.CourseId is int courseId)
+        {
+            var course = await _uow.CourseRepository
+                .GetByIdAsync(courseId);
+
+            if (course is not null)
+            {
+                foreach (var teacher in course.Teachers)
+                {
+                    _uow.NotificationRepository.Create(new Notification
+                    {
+                        RecipientId = teacher.Id,
+                        Message = $"Studenten {student.UserName ?? student.Email ?? userId} har lämnat in uppgiften: {assignment.Name}.",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false
+                    });
+                }
+
+                await _uow.SaveChangesAsync();
+            }
+        }
+
+        // Return the updated assignment information.
         return (await GetMyAssignmentAsync(userId, assignmentId))!;
+
     }
 }

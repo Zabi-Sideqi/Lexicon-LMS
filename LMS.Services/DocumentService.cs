@@ -114,11 +114,64 @@ public class DocumentService : IDocumentService
             ActivityId = activityId
         };
 
+
         _uow.DocumentRepository.Create(document);
         await _uow.SaveChangesAsync();
 
+        // US14: Notify students when a teacher uploads course material.
+        if (await _userManager.IsInRoleAsync(user, "Teacher"))
+        {
+            int? notificationCourseId = courseId;
+
+            if (moduleId.HasValue)
+            {
+                var notificationModule = await _uow.ModuleRepository
+                    .GetByIdAsync(moduleId.Value);
+
+                notificationCourseId = notificationModule?.CourseId;
+            }
+            else if (activityId.HasValue)
+            {
+                var notificationActivity = await _uow.ActivityRepository
+                    .GetByIdAsync(activityId.Value);
+
+                if (notificationActivity is not null)
+                {
+                    var notificationModule = await _uow.ModuleRepository
+                        .GetByIdAsync(notificationActivity.ModuleId);
+
+                    notificationCourseId = notificationModule?.CourseId;
+                }
+            }
+
+            if (notificationCourseId.HasValue)
+            {
+                var course = await _uow.CourseRepository
+                    .GetCourseWithStudentsAsync(notificationCourseId.Value);
+
+                if (course is not null)
+                {
+                    foreach (var student in course.Students)
+                    {
+                        _uow.NotificationRepository.Create(new Notification
+                        {
+                            StudentId = student.Id,
+                            RecipientId = student.Id,
+                            DocumentId = document.Id,
+                            Message = $"Nytt kursmaterial har publicerats: {document.FileName}",
+                            CreatedAt = DateTime.UtcNow,
+                            IsRead = false
+                        });
+                    }
+
+                    await _uow.SaveChangesAsync();
+                }
+            }
+        }
+
         var created = await _uow.DocumentRepository.GetByIdAsync(document.Id);
         return MapToDto(created ?? document);
+
     }
 
     public async Task<(Stream Stream, string FileName, string ContentType)> DownloadAsync(

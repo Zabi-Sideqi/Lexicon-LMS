@@ -1,5 +1,10 @@
 @using Microsoft.AspNetCore.Components.Authorization
+@using LMS.Blazor.Client.Services.ApiProxy
+@using LMS.Shared.DTOs.NotificationDtos
+@using System.Threading
+@inject IApiProxyClient ApiProxyClient
 @inherits LayoutComponentBase
+@implements IDisposable
 
 <div class="app-shell @(isDarkMode ? "dark-mode" : "")">
 
@@ -18,9 +23,53 @@
 
         <div class="top-right">
 
-            <button class="icon-btn" type="button" aria-label="Notiser">
+            <button class="icon-btn notification-btn"
+                    type="button"
+                    aria-label="@($"Notiser, {UnreadNotificationCount} olästa")"
+                    title="Notiser"
+                    @onclick="ToggleNotifications">
                 🔔
+                @if (UnreadNotificationCount > 0)
+                {
+                    <span class="notification-badge">
+                        @(UnreadNotificationCount > 99 ? "99+" : UnreadNotificationCount)
+                    </span>
+                }
             </button>
+            @if (showNotifications)
+            {
+                <div class="notification-panel">
+                    <h3>Notiser</h3>
+
+                    @if (notifications.Count == 0)
+                    {
+                        <p>Du har inga notiser.</p>
+                    }
+                    else
+                    {
+                        @foreach (var notification in notifications)
+                        {
+                            <div class="notification-item">
+                                <p>@notification.Message</p>
+                                <small>@notification.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small>
+
+                                @if (!notification.IsRead)
+                                {
+                                    <button type="button"
+                                            class="mark-as-read-btn"
+                                            @onclick="() => MarkAsReadAsync(notification.Id)">
+                                        Markera som läst
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="read-status">Läst</span>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            }
 
             <div class="user-chip">
                 ♙
@@ -71,6 +120,9 @@
 @code {
     private bool isSidebarOpen;
     private bool isDarkMode;
+    private List<NotificationDto> notifications = [];
+    private int UnreadNotificationCount =>
+        notifications.Count(notification => !notification.IsRead);
 
     private void ToggleSidebar()
     {
@@ -80,5 +132,103 @@
     private void ToggleDarkMode()
     {
         isDarkMode = !isDarkMode;
+    }
+
+    private bool notificationsLoaded;
+    private PeriodicTimer? notificationTimer;
+    private CancellationTokenSource? notificationCts;
+    private bool showNotifications;
+    private void ToggleNotifications()
+    {
+        showNotifications = !showNotifications;
+    }
+
+    private async Task LoadNotificationsAsync()
+    {
+        try
+        {
+            var result = await ApiProxyClient.GetAsync<List<NotificationDto>>(
+                "notifications");
+
+            notifications = result ?? [];
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Sessionen är inte längre giltig.
+        }
+        catch (HttpRequestException)
+        {
+            // API-anropet misslyckades.
+        }
+    }
+
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || notificationsLoaded)
+            return;
+
+        notificationsLoaded = true;
+
+        await LoadNotificationsAsync();
+
+        notificationCts = new CancellationTokenSource();
+        notificationTimer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+
+        _ = PollNotificationsAsync(notificationCts.Token);
+    }
+
+
+   
+    
+    private async Task MarkAsReadAsync(int notificationId)
+    {
+        try
+        {
+            await ApiProxyClient.PatchAsync<object>(
+                $"notifications/{notificationId}/read");
+
+            var notification = notifications
+                .FirstOrDefault(n => n.Id == notificationId);
+
+            if (notification is not null)
+            {
+                var index = notifications.IndexOf(notification);
+                notifications[index] = notification with { IsRead = true };
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Sessionen är inte längre giltig.
+        }
+        catch (HttpRequestException)
+        {
+            // API-anropet misslyckades.
+        }
+    }
+
+    private async Task PollNotificationsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (notificationTimer is not null &&
+                   await notificationTimer.WaitForNextTickAsync(cancellationToken))
+            {
+                await LoadNotificationsAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Polling stoppades när komponenten avslutas.
+        }
+    }
+    public void Dispose()
+    {
+        notificationCts?.Cancel();
+        notificationTimer?.Dispose();
+        notificationCts?.Dispose();
     }
 }
