@@ -100,14 +100,17 @@ public class FeedbackService : IFeedbackService
 
         _uow.FeedbackRepository.Create(feedback);
         await _uow.SaveChangesAsync();
+
         var notification = new Notification
         {
             StudentId = submission.StudentId,
+            RecipientId = submission.StudentId,
             FeedbackId = feedback.Id,
             Message = "Du har fått ny feedback på din inlämning.",
             CreatedAt = DateTime.UtcNow,
             IsRead = false
         };
+
 
         _uow.NotificationRepository.Create(notification);
         await _uow.SaveChangesAsync();
