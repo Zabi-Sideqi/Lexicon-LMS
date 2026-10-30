@@ -17,52 +17,49 @@
 <AuthorizeView>
     <Authorized Context="authContext">
         <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
-            @if (authContext.User.IsInRole("Teacher"))
+            <div class="mb-3">
+                <label class="form-label">Kurs</label>
+                <InputSelect @bind-Value="uploadModel.CourseId"
+                             @bind-Value:after="OnCourseSelected"
+                             class="form-select">
+                    @if (courses.Count > 1)
+                    {
+                        <option value="">Välj kurs</option>
+                    }
+                    @foreach (var course in courses)
+                    {
+                        <option value="@course.Id">@course.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            @if (uploadModel.CourseId is > 0)
             {
                 <div class="mb-3">
-                    <label class="form-label">Kurs</label>
-                    <InputSelect @bind-Value="uploadModel.CourseId"
-                                 @bind-Value:after="OnCourseSelected"
-                                 class="form-select">
-                        @if (courses.Count > 1)
+                    <label>Modul (valfri)</label>
+                    <InputSelect @bind-Value="uploadModel.ModuleId"
+                                 @bind-Value:after="OnModuleChanged">
+                        <option value="">— Ingen modul —</option>
+                        @foreach (var module in modules.Where(m => m.CourseId == uploadModel.CourseId))
                         {
-                            <option value="">Välj kurs</option>
-                        }
-                        @foreach (var course in courses)
-                        {
-                            <option value="@course.Id">@course.Name</option>
+                            <option value="@module.Id">@module.Name</option>
                         }
                     </InputSelect>
                 </div>
+            }
 
-                @if (uploadModel.CourseId is > 0)
-                {
-                    <div class="mb-3">
-                        <label>Modul (valfri)</label>
-                        <InputSelect @bind-Value="uploadModel.ModuleId"
-                                     @bind-Value:after="OnModuleChanged">
-                            <option value="">— Ingen modul —</option>
-                            @foreach (var module in modules.Where(m => m.CourseId == uploadModel.CourseId))
-                            {
-                                <option value="@module.Id">@module.Name</option>
-                            }
-                        </InputSelect>
-                    </div>
-                }
-
-                @if (uploadModel.ModuleId is > 0)
-                {
-                    <div class="mb-3">
-                        <label>Aktivitet (valfri)</label>
-                        <InputSelect @bind-Value="uploadModel.ActivityId">
-                            <option value="">— Ingen aktivitet —</option>
-                            @foreach (var activity in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
-                            {
-                                <option value="@activity.Id">@activity.Name (@activity.Type)</option>
-                            }
-                        </InputSelect>
-                    </div>
-                }
+            @if (authContext.User.IsInRole("Teacher") && uploadModel.ModuleId is > 0)
+            {
+                <div class="mb-3">
+                    <label>Aktivitet (valfri)</label>
+                    <InputSelect @bind-Value="uploadModel.ActivityId">
+                        <option value="">— Ingen aktivitet —</option>
+                        @foreach (var activity in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
+                        {
+                            <option value="@activity.Id">@activity.Name (@activity.Type)</option>
+                        }
+                    </InputSelect>
+                </div>
             }
 
             <div class="mb-3">
