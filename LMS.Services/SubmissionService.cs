@@ -111,14 +111,16 @@ public class SubmissionService : ISubmissionService
                 "Only teachers can view course submissions.");
         }
 
-        var courses = await _uow.CourseRepository.GetAllAsync();
+// US02: All teachers can view submissions from all courses.
+// US13: Allow filtering submissions by course.
+var courses = await _uow.CourseRepository.GetAllAsync();
 
-        if (filter?.CourseId is int courseId)
-        {
-            courses = courses
-                .Where(course => course.Id == courseId)
-                .ToList();
-        }
+if (filter?.CourseId is int courseId)
+{
+    courses = courses
+        .Where(course => course.Id == courseId)
+        .ToList();
+}
 
         if (!courses.Any())
             return [];

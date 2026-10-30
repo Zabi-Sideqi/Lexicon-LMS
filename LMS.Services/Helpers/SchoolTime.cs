@@ -1,4 +1,4 @@
-﻿namespace LMS.Services;
+﻿namespace LMS.Services.Helpers;
 
 // Activity times (such as an assignment deadline) are saved exactly as the teacher typed them,
 // which is the school's local time. Timestamps made by the system (SubmittedAt) are saved in UTC.

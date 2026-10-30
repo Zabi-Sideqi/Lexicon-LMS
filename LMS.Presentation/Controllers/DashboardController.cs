@@ -1,4 +1,5 @@
-﻿using LMS.Shared.DTOs.DashboardDtos;
+﻿
+using LMS.Shared.DTOs.DashboardDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
@@ -33,6 +34,32 @@ public class DashboardController(IServiceManager serviceManager) : ControllerBas
         catch (ArgumentException exception)
         {
             return BadRequest(new { message = exception.Message });
+        }
+    }
+
+    [HttpGet("teacher")]
+    [Authorize(Roles = "Teacher")]
+    public async Task<ActionResult<TeacherDashboardDto>> GetTeacherDashboard()
+    {
+        var teacherId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(teacherId))
+            return Unauthorized();
+
+        try
+        {
+            var dashboard = await _serviceManager.DashboardService
+                .GetTeacherDashboardAsync(teacherId);
+
+            return Ok(dashboard);
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
         }
     }
 }
