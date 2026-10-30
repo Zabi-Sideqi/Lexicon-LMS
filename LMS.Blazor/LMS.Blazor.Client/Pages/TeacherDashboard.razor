@@ -222,7 +222,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @(submission.SubmittedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")
+                                        @submission.SubmittedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
                                     </td>
                                     <td>
                                         <span class="badge bg-warning text-dark">
@@ -230,13 +230,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        @if (submission.SubmissionId is not null)
-                                        {
-                                            <button class="btn btn-primary btn-sm"
-                                                    @onclick="() => SelectSubmission(submission)">
+                                        <button class="btn btn-primary btn-sm"
+                                                @onclick="() => SelectSubmission(submission)">
                                             Give feedback
-                                            </button>
-                                        }
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -366,7 +363,7 @@
 
     private IEnumerable<TeacherSubmissionDto> PendingSubmissions =>
         submissions
-            .Where(s => s.SubmissionId is not null && !s.HasFeedback)
+            .Where(s => !s.HasFeedback)
             .OrderBy(s => s.SubmittedAt);
 
     protected override async Task OnInitializedAsync()
@@ -387,7 +384,7 @@
 
             var result = await Proxy.SendAsync<IEnumerable<TeacherSubmissionDto>>(
                 HttpMethod.Get,
-                "submissions/teacher");
+                "teacher/submissions");
 
             submissions = result?.ToList() ?? [];
         }
