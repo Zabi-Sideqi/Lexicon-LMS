@@ -526,7 +526,7 @@
         {
             await ApiProxyClient.SendAsync<object>(HttpMethod.Delete, $"Activities/{activity.Id}");
             _pendingDelete = null;
-            _successMessage = $"Aktiviteten '{activity.Name}' har tagits bort.";
+            _successMessage = $"Activity '{activity.Name}' was deleted successfully.";
             await LoadDataAsync();
         }
         catch (Exception ex)
