@@ -34,6 +34,7 @@ public class DocumentService : IDocumentService
         string uploadedById)
     {
         await FileValidator.ValidateAsync(fileStream, fileName, fileSize);
+        contentType = FileValidator.GetVerifiedContentType(fileName);
 
         if ((courseId.HasValue ? 1 : 0) + (moduleId.HasValue ? 1 : 0) + (activityId.HasValue ? 1 : 0) != 1)
             throw new ArgumentException(
