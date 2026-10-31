@@ -8,7 +8,7 @@ namespace LMS.Presentation.Controllers;
 
 [Route("api/submissions")]
 [ApiController]
-[Authorize(Roles = "Teacher")]
+[Authorize(Policy = "Teacher")]
 public class SubmissionController : ControllerBase
 {
     private readonly IServiceManager _serviceManager;

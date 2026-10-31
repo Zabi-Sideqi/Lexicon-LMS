@@ -9,7 +9,7 @@ namespace LMS.Presentation.Controllers;
 [Route("api/notifications")]
 [ApiController]
 [Produces("application/json")]
-[Authorize(Roles = "Student,Teacher")]
+[Authorize(Policy = "StudentOrTeacher")]
 public class NotificationsController(IServiceManager serviceManager)
     : ControllerBase
 {

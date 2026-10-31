@@ -9,7 +9,13 @@ internal class Program
     {
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-        builder.Services.AddAuthorizationCore();
+        builder.Services.AddAuthorizationCore(options =>
+        {
+            options.AddPolicy("StudentOrTeacher", policy =>
+            {
+                policy.RequireRole("Student", "Teacher");
+            });
+        });
         builder.Services.AddCascadingAuthenticationState();
         builder.Services.AddAuthenticationStateDeserialization();
         builder.Services.AddScoped(_ => new HttpClient

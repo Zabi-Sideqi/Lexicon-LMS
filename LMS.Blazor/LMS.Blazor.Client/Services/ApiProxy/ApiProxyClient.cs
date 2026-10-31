@@ -1,10 +1,15 @@
+using Microsoft.AspNetCore.Components;
 using System.Net;
 using System.Net.Http.Json;
 
 namespace LMS.Blazor.Client.Services.ApiProxy;
 
-public sealed class ApiProxyClient(HttpClient httpClient) : IApiProxyClient
+    public sealed class ApiProxyClient(
+    HttpClient httpClient,
+    NavigationManager navigationManager) : IApiProxyClient
 {
+    private readonly NavigationManager _navigationManager = navigationManager;
+
     public async Task<TResponse?> SendAsync<TResponse>(
         HttpMethod method,
         string endpoint,
@@ -25,7 +30,7 @@ public sealed class ApiProxyClient(HttpClient httpClient) : IApiProxyClient
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
 
-        EnsureAuthenticated(response);
+        HandleAuthorizationFailure(response);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -53,7 +58,7 @@ public sealed class ApiProxyClient(HttpClient httpClient) : IApiProxyClient
             AntiforgeryProtocol.TokenEndpoint,
             cancellationToken);
 
-        EnsureAuthenticated(response);
+        HandleAuthorizationFailure(response);
         response.EnsureSuccessStatusCode();
 
         var token = await response.Content
@@ -65,10 +70,26 @@ public sealed class ApiProxyClient(HttpClient httpClient) : IApiProxyClient
                 "The BFF returned an invalid antiforgery token response.");
     }
 
-    private static void EnsureAuthenticated(HttpResponseMessage response)
+    private void HandleAuthorizationFailure(HttpResponseMessage response)
     {
         if (response.StatusCode == HttpStatusCode.Unauthorized)
-            throw new UnauthorizedAccessException("The Blazor session is no longer valid.");
+        {
+            var returnUrl = Uri.EscapeDataString(_navigationManager.Uri);
+
+            _navigationManager.NavigateTo(
+                $"Account/Login?returnUrl={returnUrl}",
+                forceLoad: true);
+
+            throw new UnauthorizedAccessException(
+                "The Blazor session is no longer valid.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            _navigationManager.NavigateTo(
+                "Account/AccessDenied",
+                forceLoad: true);
+        }
     }
 
     private static bool RequiresAntiforgery(HttpMethod method) =>

@@ -8,7 +8,7 @@ namespace LMS.Presentation.Controllers;
 
 [Route("api/users")]
 [ApiController]
-[Authorize(Roles = "Teacher")]
+[Authorize(Policy = "Teacher")]
 public class UserController : ControllerBase
 {
     private readonly IServiceManager _serviceManager;

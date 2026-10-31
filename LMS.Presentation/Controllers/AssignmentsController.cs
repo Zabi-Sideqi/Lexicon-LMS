@@ -12,7 +12,7 @@ namespace LMS.Presentation.Controllers;
 [Route("api/assignments")]
 [ApiController]
 [Produces("application/json")]
-[Authorize(Roles = "Student")]
+[Authorize(Policy = "Student")]
 public class AssignmentsController(IServiceManager serviceManager) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;

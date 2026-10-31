@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
+using LMS.API.Authorization;
+using Microsoft.AspNetCore.Authorization;
 namespace LMS.API.Extensions;
 
 public static class AuthExtensions
@@ -56,11 +57,37 @@ public static class AuthExtensions
     }
     public static void ConfigurePolicys(this IServiceCollection services)
     {
+
+        services.AddScoped<IAuthorizationHandler, SameCourseAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, OwnSubmissionAuthorizationHandler>();
+
         services.AddAuthorizationBuilder()
-          .AddPolicy("Default", policy =>
-          {
-              policy.RequireAuthenticatedUser();
-          });
+            .AddPolicy("Default", policy =>
+            {
+                policy.RequireAuthenticatedUser();
+            })
+            .AddPolicy("Student", policy =>
+            {
+                policy.RequireRole("Student");
+            })
+            .AddPolicy("Teacher", policy =>
+            {
+                policy.RequireRole("Teacher");
+            })
+            .AddPolicy("StudentOrTeacher", policy =>
+            {
+                policy.RequireRole("Student", "Teacher");
+            })
+            .AddPolicy("SameCourse", policy =>
+            {
+                policy.RequireRole("Student");
+                policy.AddRequirements(new SameCourseRequirement());
+            })
+            .AddPolicy("OwnSubmission", policy =>
+            {
+                policy.RequireRole("Student");
+                policy.AddRequirements(new OwnSubmissionRequirement());
+            });
     }
 
 

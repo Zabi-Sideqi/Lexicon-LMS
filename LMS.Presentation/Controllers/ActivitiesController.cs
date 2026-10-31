@@ -15,10 +15,12 @@ namespace LMS.Presentation.Controllers;
 [Authorize]
 public class ActivitiesController(
     IServiceManager serviceManager,
-    UserManager<ApplicationUser> userManager) : ControllerBase
+    UserManager<ApplicationUser> userManager,
+    IAuthorizationService authorizationService) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IAuthorizationService _authorizationService = authorizationService;
 
     // Lärare kan se alla aktiviteter.
     // Studenter kan bara se aktiviteter från sin egen kurs.
@@ -90,13 +92,13 @@ public class ActivitiesController(
         // Studenter får endast läsa aktiviteter från sin egen kurs.
         if (User.IsInRole("Student"))
         {
-            var user = await _userManager.GetUserAsync(User);
+            var authorizationResult = await _authorizationService.AuthorizeAsync(
+                User,
+                module.CourseId,
+                "SameCourse");
 
-            if (user?.CourseId is not int courseId ||
-                module.CourseId != courseId)
-            {
+            if (!authorizationResult.Succeeded)
                 return Forbid();
-            }
         }
 
         var activities =
@@ -106,7 +108,7 @@ public class ActivitiesController(
     }
 
     // Skapar en aktivitet. Endast lärare får göra detta.
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Policy = "Teacher")]
     [HttpPost]
     public async Task<ActionResult<ActivityDto>> Create(
         [FromBody] ActivityCreateDto dto)
@@ -120,7 +122,7 @@ public class ActivitiesController(
     }
 
     // Uppdaterar en aktivitet. Endast lärare får göra detta.
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Policy = "Teacher")]
     [HttpPut("{id:int}")]
     public async Task<ActionResult> Update(
         int id,
@@ -131,7 +133,7 @@ public class ActivitiesController(
     }
 
     // Tar bort en aktivitet. Endast lärare får göra detta.
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Policy = "Teacher")]
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
     {
@@ -166,6 +168,7 @@ public class ActivitiesController(
 
     private async Task<bool> CanReadModuleAsync(int moduleId)
     {
+
         // Lärare får läsa aktiviteter från alla moduler.
         if (User.IsInRole("Teacher"))
             return true;
@@ -174,14 +177,16 @@ public class ActivitiesController(
         if (!User.IsInRole("Student"))
             return false;
 
-        var user = await _userManager.GetUserAsync(User);
+        var module = await _serviceManager.ModuleService.GetByIdAsync(moduleId);
 
-        if (user?.CourseId is not int courseId)
+        if (module is null)
             return false;
 
-        var module = await _serviceManager.ModuleService
-            .GetByIdAsync(moduleId);
+        var result = await _authorizationService.AuthorizeAsync(
+            User,
+            module.CourseId,
+            "SameCourse");
 
-        return module is not null && module.CourseId == courseId;
+        return result.Succeeded;
     }
 }
