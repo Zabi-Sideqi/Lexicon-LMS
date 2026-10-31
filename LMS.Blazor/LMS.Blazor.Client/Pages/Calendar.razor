@@ -10,42 +10,45 @@
 @inject IApiProxyClient ApiProxyClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<PageTitle>Schema</PageTitle>
+<PageTitle>Calendar</PageTitle>
 
 <div class="schedule-page">
     <header class="schedule-header">
         <div>
             <p class="schedule-eyebrow">LEXICON LMS</p>
-            <h1>Schema</h1>
-            <p class="schedule-subtitle">Se kommande lektioner, övningar och inlämningar i datumordning.</p>
+            <h1>Calendar</h1>
+            <p class="schedule-subtitle">View upcoming lessons, exercises and assignments in chronological order.</p>
         </div>
         <AuthorizeView Roles="Teacher">
             <Authorized>
-                <button class="schedule-primary-button" type="button" @onclick="StartCreate" >
-                    + Ny aktivitet
+                <button class="schedule-primary-button" type="button" @onclick="StartCreate">
+                    + New activity
                 </button>
             </Authorized>
         </AuthorizeView>
     </header>
 
-    <section class="mb-3 d-flex gap-2 align-items-end">
-        <div class="flex-grow-1">
-            <SearchBar Placeholder="Sök aktivitet..."
+
+    <section class="schedule-toolbar">
+        <div class="schedule-search">
+            <label class="form-label" for="activitySearch">Search</label>
+            <SearchBar Placeholder="Search activities..."
                        OnSearch="OnSearchChangedAsync" />
         </div>
 
-        <div>
-            <label for="sortOrder" class="form-label">Sortera</label>
+        <div class="schedule-sort">
+            <label for="sortOrder" class="form-label">Sort by</label>
             <select id="sortOrder"
                     class="form-select"
                     @bind="_sortOrder"
                     @bind:after="OnSortChangedAsync">
-                <option value="start">Starttid (stigande)</option>
-                <option value="start_desc">Starttid (fallande)</option>
-                <option value="name">Namn (A–Ö)</option>
+                <option value="start">Start time (ascending)</option>
+                <option value="start_desc">Start time (descending)</option>
+                <option value="name">Name (A–Z)</option>
             </select>
         </div>
     </section>
+
 
     @if (!string.IsNullOrWhiteSpace(_errorMessage))
     {
@@ -58,17 +61,17 @@
 
     @if (_isLoading)
     {
-        <div class="schedule-empty"><span class="schedule-spinner"></span> Hämtar schemat...</div>
+        <div class="schedule-empty"><span class="schedule-spinner"></span> Loading calendar...</div>
     }
     else if (!_pagedActivities.Items.Any())
     {
         <section class="schedule-empty">
             <div class="schedule-empty-icon">▦</div>
-            <h2>Inga aktiviteter ännu</h2>
-            <p>När aktiviteter har skapats visas de här i kronologisk ordning.</p>
+            <h2>No activities yet</h2>
+            <p>Activities will appear here in chronological order once they have been created.</p>
             <AuthorizeView Roles="Teacher">
                 <Authorized>
-                    <button class="schedule-primary-button" type="button" @onclick="StartCreate">Skapa första aktiviteten</button>
+                    <button class="schedule-primary-button" type="button" @onclick="StartCreate">Create your first activity</button>
                 </Authorized>
             </AuthorizeView>
         </section>
@@ -101,8 +104,8 @@
                     <AuthorizeView Roles="Teacher">
                         <Authorized>
                             <div class="schedule-item-actions">
-                                <button class="schedule-secondary-button" type="button" @onclick="() => StartEdit(activity)">Redigera</button>
-                                <button class="schedule-danger-button" type="button" @onclick="() => _pendingDelete = activity">Ta bort</button>
+                                <button class="schedule-secondary-button" type="button" @onclick="() => StartEdit(activity)">Edit</button>
+                                <button class="schedule-danger-button" type="button" @onclick="() => _pendingDelete = activity">Delete</button>
                             </div>
                         </Authorized>
                     </AuthorizeView>
@@ -117,16 +120,39 @@
 
     @if (_pendingDelete is not null)
     {
-        <div class="schedule-form-backdrop">
-            <section class="schedule-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="delete-title">
-                <h2 id="delete-title">Ta bort aktivitet?</h2>
-                <p>Vill du ta bort <strong>@_pendingDelete.Name</strong>? Åtgärden kan inte ångras.</p>
-                <div class="schedule-form-actions">
-                    <button class="schedule-secondary-button" type="button" @onclick="CancelDelete">Avbryt</button>
-                    <button class="schedule-danger-button" type="button" @onclick="ConfirmDeleteAsync" disabled="@_isSaving">@(_isSaving ? "Tar bort..." : "Ja, ta bort")</button>
-                </div>
-            </section>
-        </div>
+        <Modal Title="Delete activity?"
+               Visible="@(_pendingDelete is not null)"
+               ShowFooter="true"
+               OnClose="CancelDelete">
+
+            <ChildContent>
+                @if (_pendingDelete is not null)
+                {
+                    <p>
+                        Are you sure you want to delete
+                        <strong>@_pendingDelete.Name</strong>?
+                        This action cannot be undone.
+                    </p>
+                }
+            </ChildContent>
+
+            <FooterContent>
+                <button class="schedule-secondary-button"
+                        type="button"
+                        @onclick="CancelDelete"
+                        disabled="@_isSaving">
+                    Cancel
+                </button>
+
+                <button class="schedule-danger-button"
+                        type="button"
+                        @onclick="ConfirmDeleteAsync"
+                        disabled="@_isSaving">
+                    @(_isSaving ? "Deleting..." : "Yes, delete")
+                </button>
+            </FooterContent>
+
+        </Modal>
     }
 
     @if (_showForm)
@@ -135,15 +161,15 @@
             <section class="schedule-form-panel" role="dialog" aria-modal="true" aria-labelledby="activity-form-title">
                 <div class="schedule-form-heading">
                     <div>
-                        <p class="schedule-eyebrow">AKTIVITETSHANTERING</p>
-                        <h2 id="activity-form-title">@(_editingId.HasValue ? "Redigera aktivitet" : "Skapa aktivitet")</h2>
+                        <p class="schedule-eyebrow">ACTIVITY MANAGEMENT</p>
+                        <h2 id="activity-form-title">@(_editingId.HasValue ? "Edit activity" : "Create activity")</h2>
                     </div>
-                    <button class="schedule-close-button" type="button" aria-label="Stäng" @onclick="CancelForm">×</button>
+                    <button class="schedule-close-button" type="button" aria-label="Close" @onclick="CancelForm">×</button>
                 </div>
 
                 @if (_modules.Count == 0)
                 {
-                    <p>Det finns inga moduler att välja. Skapa en modul först.</p>
+                    <p>There are no modules to choose from. Create a module first.</p>
                 }
                 else
                 {
@@ -152,13 +178,13 @@
                         <ValidationSummary />
                         <div class="schedule-form-grid">
                             <label class="schedule-field schedule-field-full">
-                                <span>Modul</span>
+                                <span>Module</span>
 
                                 <InputSelect @bind-Value="_form.ModuleId"
                                              @bind-Value:after="OnModuleChanged"
                                              disabled="@(_editingId.HasValue)">
 
-                                    <option value="0">Välj modul</option>
+                                    <option value="0">Select module</option>
                                     @foreach (var module in _modules.OrderBy(x => x.Name))
                                     {
                                         <option value="@module.Id">@module.Name (@module.StartDate.ToString("yyyy-MM-dd") – @module.EndDate.ToString("yyyy-MM-dd"))</option>
@@ -167,7 +193,7 @@
                                 <ValidationMessage For="() => _form.ModuleId" />
                             </label>
                             <label class="schedule-field">
-                                <span>Typ</span>
+                                <span>Type</span>
 
                                 <InputSelect @bind-Value="_form.Type">
                                     <option value="Lecture">Lecture</option>
@@ -179,22 +205,22 @@
 
                             </label>
                             <label class="schedule-field">
-                                <span>Namn</span>
+                                <span>Name</span>
                                 <InputText @bind-Value="_form.Name" maxlength="150" />
                                 <ValidationMessage For="() => _form.Name" />
                             </label>
                             <label class="schedule-field">
-                                <span>Starttid</span>
+                                <span>Start time</span>
                                 <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="_form.StartTime" />
                                 <ValidationMessage For="() => _form.StartTime" />
                             </label>
                             <label class="schedule-field">
-                                <span>Sluttid</span>
+                                <span>End time</span>
                                 <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="_form.EndTime" />
                                 <ValidationMessage For="() => _form.EndTime" />
                             </label>
                             <label class="schedule-field schedule-field-full">
-                                <span>Beskrivning</span>
+                                <span>Description</span>
                                 <InputTextArea @bind-Value="_form.Description" rows="3" maxlength="2000" />
                                 <ValidationMessage For="() => _form.Description" />
                             </label>
@@ -204,8 +230,8 @@
                             <div class="schedule-alert schedule-alert-error" role="alert">@_formError</div>
                         }
                         <div class="schedule-form-actions">
-                            <button class="schedule-secondary-button" type="button" @onclick="CancelForm">Avbryt</button>
-                            <button class="schedule-primary-button" type="submit" disabled="@_isSaving">@(_isSaving ? "Sparar..." : "Spara aktivitet")</button>
+                            <button class="schedule-secondary-button" type="button" @onclick="CancelForm">Cancel</button>
+                            <button class="schedule-primary-button" type="submit" disabled="@_isSaving">@(_isSaving ? "Saving..." : "Save activity")</button>
                         </div>
                     </EditForm>
                 }
@@ -284,7 +310,7 @@
                 {
                     _modules = [];
                     _errorMessage =
-                        "Aktiviteterna kunde hämtas, men modullistan kunde inte laddas.";
+                        "Activities were loaded, but the module list could not be loaded.";
                 }
             }
             else
@@ -402,13 +428,13 @@
         if (_form.ModuleId <= 0 ||
             !_modules.Any(x => x.Id == _form.ModuleId))
         {
-            _formError = "Välj en giltig modul.";
+            _formError = "Select a valid module.";
             return;
         }
 
         if (_form.StartTime >= _form.EndTime)
         {
-            _formError = "Starttiden måste vara före sluttiden.";
+            _formError = "The start time must be before the end time.";
             return;
         }
 
@@ -432,7 +458,7 @@
                     $"Activities/{_editingId.Value}",
                     JsonContent.Create(dto));
 
-                _successMessage = "Aktiviteten har uppdaterats.";
+                _successMessage = "The activity has been updated.";
             }
             else
             {
@@ -451,7 +477,7 @@
                     "Activities",
                     JsonContent.Create(dto));
 
-                _successMessage = "Aktiviteten har skapats.";
+                _successMessage = "The activity has been created.";
             }
 
             _showForm = false;
@@ -465,7 +491,7 @@
                 // Sparningen lyckades redan.
                 // Behåll framgångsmeddelandet.
                 _errorMessage =
-                    "Aktiviteten sparades, men kalendern kunde inte uppdateras. Ladda om sidan.";
+                    "The activity was saved, but the calendar could not be refreshed. Reload the page.";
             }
         }
         catch (Exception ex)
@@ -479,7 +505,13 @@
     }
 
 
-    private void CancelDelete() => _pendingDelete = null;
+    private void CancelDelete()
+    {
+        if (_isSaving)
+            return;
+
+        _pendingDelete = null;
+    }
 
     private async Task ConfirmDeleteAsync()
     {
@@ -538,14 +570,14 @@
     {
         if (ex is UnauthorizedAccessException)
         {
-            return "Din session har gått ut. Logga in igen.";
+            return "Your session has expired. Please log in again.";
         }
 
         var message = ex.Message;
 
         if (string.IsNullOrWhiteSpace(message))
         {
-            return "Ett fel uppstod. Försök igen.";
+            return "An error occurred. Please try again.";
         }
 
         try
@@ -572,7 +604,7 @@
             message.Contains("överlap",
                 StringComparison.OrdinalIgnoreCase))
         {
-            return "Aktiviteten överlappar en annan aktivitet i modulen. Välj en annan tid.";
+            return "This activity overlaps with another activity in the module. Choose a different time.";
         }
 
         if (message.Contains("module dates",
@@ -580,40 +612,40 @@
             message.Contains("within the module",
                 StringComparison.OrdinalIgnoreCase))
         {
-            return "Aktiviteten måste ligga inom modulens datum och tider.";
+            return "The activity must be scheduled within the module dates and times.";
         }
 
         if (ex is HttpRequestException)
         {
-            return "Begäran kunde inte genomföras. Kontrollera uppgifterna och försök igen.";
+            return "The request could not be completed. Check the details and try again.";
         }
 
-        return "Ett fel uppstod. Försök igen.";
+        return "An error occurred. Please try again.";
     }
 
 
 
     private sealed class ActivityFormModel
     {
-        [Range(1, int.MaxValue, ErrorMessage = "Välj en modul.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Select a module.")]
         public int ModuleId { get; set; }
 
-        [Required(ErrorMessage = "Välj aktivitetstyp.")]
+        [Required(ErrorMessage = "Select an activity type.")]
         public string Type { get; set; } = "Lecture";
 
-        [Required(ErrorMessage = "Ange ett namn.")]
-        [StringLength(150, ErrorMessage = "Namnet får vara högst 150 tecken.")]
+        [Required(ErrorMessage = "Enter a name.")]
+        [StringLength(150, ErrorMessage = "The name cannot exceed 150 characters.")]
         public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Ange en beskrivning.")]
-        [StringLength(2000, ErrorMessage = "Beskrivningen får vara högst 2000 tecken.")]
+        [Required(ErrorMessage = "Enter a description.")]
+        [StringLength(2000, ErrorMessage = "The description cannot exceed 2000 characters.")]
         public string Description { get; set; } = string.Empty;
 
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime EndTime { get; set; } = DateTime.Now.AddHours(1);
     }
 
-        private async Task OnSearchChangedAsync(string searchTerm)
+    private async Task OnSearchChangedAsync(string searchTerm)
     {
         _searchTerm = searchTerm;
         _pageNumber = 1;

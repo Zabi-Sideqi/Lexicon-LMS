@@ -1,0 +1,72 @@
+/* CSS for Toast component */
+.lms-toast {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.lms-toast-success {
+    color: #166534;
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.lms-toast-error {
+    color: #991b1b;
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.lms-toast-warning {
+    color: #92400e;
+    background-color: #fffbeb;
+    border-color: #fde68a;
+}
+
+.lms-toast-info {
+    color: #1e40af;
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.lms-toast-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+    .lms-toast-content strong {
+        font-weight: 600;
+    }
+
+    .lms-toast-content span {
+        overflow-wrap: anywhere;
+    }
+
+.lms-toast-close {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+    .lms-toast-close:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 3px;
+    }
+
+@media (max-width: 480px) {
+    .lms-toast {
+        padding: 12px;
+    }
+}

@@ -5,20 +5,20 @@
 @attribute [Authorize(Roles = "Student")]
 @inject IApiProxyClient Proxy
 
-<PageTitle>Min översikt</PageTitle>
+<PageTitle>My Dashboard</PageTitle>
 
 <div class="dashboard">
     <div class="page-head">
         <div>
-            <h1>Min översikt</h1>
-            <p>Dina aktiviteter, uppgifter och dokument.</p>
+            <h1>My Dashboard</h1>
+            <p>Your activities, assignments, and documents.</p>
         </div>
         <span class="role-badge">Student</span>
     </div>
 
     @if (loading)
     {
-        <div class="activity-card"><p>Hämtar dashboard...</p></div>
+        <div class="activity-card"><p>Loading dashboard...</p></div>
     }
     else if (errorMessage is not null)
     {
@@ -29,7 +29,7 @@
         @if (dashboard.Course is null)
         {
             <div class="alert alert-info" role="alert">
-                Du är inte inskriven i någon kurs. Kontakta din lärare.
+                You are not enrolled in any course. Please contact your teacher.
             </div>
         }
         else
@@ -38,22 +38,22 @@
                 <div class="stat-card">
                     <span class="stat-icon">▤</span>
                     <strong>@dashboard.UpcomingActivities.Count()</strong>
-                    <span>Kommande aktiviteter</span>
+                    <span>Upcoming Activities</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-icon">⌛</span>
                     <strong>@dashboard.PendingAssignments.Count()</strong>
-                    <span>Att göra</span>
+                    <span>Pending Assignments</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-icon">▧</span>
                     <strong>@dashboard.RecentDocuments.Count()</strong>
-                    <span>Dokument</span>
+                    <span>Documents</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-icon">◉</span>
                     <strong>@dashboard.UnreadNotifications.Count()</strong>
-                    <span>Notiser</span>
+                    <span>Notifications</span>
                 </div>
             </div>
 
@@ -68,7 +68,7 @@
             @if (dashboard.UpcomingActivities.Any())
             {
                 <div class="activity-card">
-                    <h2>Kommande aktiviteter</h2>
+                    <h2>Upcoming Activities</h2>
                     @foreach (var a in dashboard.UpcomingActivities)
                     {
                         <div class="activity">
@@ -85,7 +85,7 @@
             @if (dashboard.PendingAssignments.Any())
             {
                 <div class="activity-card">
-                    <h2>Att göra</h2>
+                    <h2>Pending Assignments</h2>
                     @foreach (var a in dashboard.PendingAssignments)
                     {
                         <div class="activity">
@@ -99,7 +99,7 @@
             @if (dashboard.RecentDocuments.Any())
             {
                 <div class="activity-card">
-                    <h2>Senaste dokument</h2>
+                    <h2>Recent Documents</h2>
                     @foreach (var d in dashboard.RecentDocuments)
                     {
                         <div class="activity">
@@ -113,7 +113,7 @@
             @if (dashboard.RecentFeedback.Any())
             {
                 <div class="activity-card">
-                    <h2>Senaste feedback</h2>
+                    <h2>Recent Feedback</h2>
                     @foreach (var f in dashboard.RecentFeedback)
                     {
                         <div class="activity">
@@ -130,7 +130,7 @@
             @if (dashboard.UnreadNotifications.Any())
             {
                 <div class="activity-card">
-                    <h2>Notiser</h2>
+                    <h2>Notifications</h2>
                     @foreach (var n in dashboard.UnreadNotifications)
                     {
                         <div class="activity">
@@ -157,7 +157,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = "Kunde inte ladda dashboard.";
+            errorMessage = "Could not load the dashboard.";
             Console.WriteLine(ex.Message);
         }
         finally

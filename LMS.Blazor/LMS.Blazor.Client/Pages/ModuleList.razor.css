@@ -1,10 +1,11 @@
 /* CSS for ModuleList component */
-
 .module-list-page {
+    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 8px 0 40px;
+    padding: 8px 16px 40px;
     color: #27272a;
+    box-sizing: border-box;
 }
 
 .module-list-header {
@@ -132,10 +133,12 @@
 .module-list-table-wrapper {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .module-list-table {
     width: 100%;
+    min-width: 720px;
     margin: 0;
     border-collapse: collapse;
     text-align: left;
@@ -288,22 +291,37 @@
 }
 
 @media (max-width: 700px) {
+    .module-list-page {
+        padding: 8px 16px 28px;
+    }
+
     .module-list-header {
         align-items: flex-start;
         flex-direction: column;
+        gap: 12px;
     }
 
     .module-list-toolbar {
-        align-items: flex-start;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .module-list-create-button {
+        width: 100%;
     }
 
     .module-list-section-header {
-        padding: 18px 20px;
+        padding: 18px 16px;
     }
 
     .module-list-table th,
     .module-list-table td {
         padding: 13px 14px;
+    }
+
+    .module-list-state {
+        padding: 24px 16px;
     }
 }
 

@@ -1,0 +1,66 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+
+@if (Visible)
+{
+    <div class="lms-modal-backdrop"
+         @onclick="HandleBackdropClick">
+
+        <div class="lms-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="lms-modal-title"
+             tabindex="-1"
+             @onkeydown="HandleKeyDown"
+             @onclick:stopPropagation="true">
+
+            <div class="lms-modal-header">
+                <h2 id="lms-modal-title">@Title</h2>
+
+                <button type="button"
+                        class="lms-modal-close"
+                        aria-label="Close dialog"
+                        @onclick="Close">
+                    &times;
+                </button>
+            </div>
+
+            <div class="lms-modal-body">
+                @ChildContent
+            </div>
+
+            @if (ShowFooter)
+            {
+                <div class="lms-modal-footer">
+                    @FooterContent
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Dialog";
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool ShowFooter { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        await Close();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Close();
+        }
+    }
+}

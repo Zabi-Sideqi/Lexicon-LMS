@@ -1,0 +1,21 @@
+﻿
+<div class="lms-loading @(Centered ? "lms-loading-centered" : "")"
+     role="status"
+     aria-live="polite">
+
+    <span class="spinner-border text-primary"
+          aria-hidden="true">
+    </span>
+
+    <span class="lms-loading-message">
+        @Message
+    </span>
+</div>
+
+@code {
+    [Parameter]
+    public string Message { get; set; } = "Loading...";
+
+    [Parameter]
+    public bool Centered { get; set; } = false;
+}

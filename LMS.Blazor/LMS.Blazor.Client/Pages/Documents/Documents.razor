@@ -1,4 +1,5 @@
-﻿@page "/documents"
+﻿
+@page "/documents"
 @using LMS.Blazor.Client.Services.ApiProxy
 @using LMS.Shared.DTOs.ActivityDtos
 @using LMS.Shared.DTOs.CourseDtos
@@ -8,21 +9,21 @@
 
 @attribute [Authorize]
 
-<PageTitle>Dokument</PageTitle>
+<PageTitle>Documents</PageTitle>
 
-<h1>Dokument</h1>
+<h1>Documents</h1>
 
 <AuthorizeView>
     <Authorized Context="authContext">
         <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
             <div class="mb-3">
-                <label class="form-label">Kurs</label>
+                <label class="form-label">Course</label>
                 <InputSelect @bind-Value="uploadModel.CourseId"
                              @bind-Value:after="OnCourseSelected"
                              class="form-select">
                     @if (courses.Count > 1)
                     {
-                        <option value="">Välj kurs</option>
+                        <option value="">Select a course</option>
                     }
                     @foreach (var c in courses)
                     {
@@ -34,9 +35,9 @@
             @if (uploadModel.CourseId is > 0)
             {
                 <div class="mb-3">
-                    <label>Modul (valfri)</label>
+                    <label>Module (optional)</label>
                     <InputSelect @bind-Value="uploadModel.ModuleId" @bind-Value:after="OnModuleChanged">
-                        <option value="">— Ingen modul —</option>
+                        <option value="">— No module —</option>
                         @foreach (var m in modules.Where(m => m.CourseId == uploadModel.CourseId))
                         {
                             <option value="@m.Id">@m.Name</option>
@@ -48,9 +49,9 @@
             @if (uploadModel.ModuleId is > 0)
             {
                 <div class="mb-3">
-                    <label>Aktivitet (valfri)</label>
+                    <label>Activity (optional)</label>
                     <InputSelect @bind-Value="uploadModel.ActivityId">
-                        <option value="">— Ingen aktivitet —</option>
+                        <option value="">— No activity —</option>
                         @foreach (var a in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
                         {
                             <option value="@a.Id">@a.Name (@a.Type)</option>
@@ -60,19 +61,19 @@
             }
 
             <div class="mb-3">
-                <label class="form-label">Fil (.pdf eller .docx, max 10MB)</label>
+                <label class="form-label">File (.pdf or .docx, max 10 MB)</label>
                 <InputFile OnChange="HandleFileSelected" class="form-control" />
                 @if (selectedFile is not null)
                 {
                     <p class="text-muted mt-1">
-                        Vald: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+                        Selected: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
                     </p>
                 }
             </div>
 
             <button type="submit" class="btn btn-primary"
                     disabled="@(selectedFile is null || isUploading || uploadModel.CourseId is null or 0)">
-                @(isUploading ? "Laddar upp..." : "Ladda upp")
+                @(isUploading ? "Uploading..." : "Upload")
             </button>
         </EditForm>
 
@@ -85,7 +86,7 @@
     </Authorized>
 </AuthorizeView>
 
-<h2 class="mt-4">Alla dokument</h2>
+<h2 class="mt-4">All Documents</h2>
 
 @if (documents is null)
 {
@@ -93,39 +94,42 @@
 }
 else if (!documents.Any())
 {
-    <p>Inga dokument hittades.</p>
+    <p>No documents found.</p>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Filnamn</th>
-                <th>Koppling</th>
-                <th>Typ</th>
-                <th>Storlek</th>
-                <th>Uppladdad</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var doc in documents)
-            {
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
                 <tr>
-                    <td>@doc.FileName</td>
-                    <td>@doc.AttachPath</td>
-                    <td>@doc.ContentType</td>
-                    <td>@(doc.FileSize / 1024) KB</td>
-                    <td>@doc.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>
-                        <a href="/api/proxy/documents/@doc.Id/download" class="btn btn-sm btn-secondary">
-                            Ladda ner
-                        </a>
-                    </td>
+                    <th>File Name</th>
+                    <th>Attachment</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var doc in documents)
+                {
+                    <tr>
+                        <td>@doc.FileName</td>
+                        <td>@doc.AttachPath</td>
+                        <td>@doc.ContentType</td>
+                        <td>@(doc.FileSize / 1024) KB</td>
+                        <td>@doc.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <a href="/api/proxy/documents/@doc.Id/download"
+                               class="btn btn-sm btn-secondary">
+                                Download
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {
@@ -141,7 +145,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Försök hämta alla kurser först (Teacher)
+        // Try to retrieve all courses first (Teacher)
         try
         {
             courses = await Proxy.GetAsync<List<CourseDto>>("courses") ?? new();
@@ -157,20 +161,20 @@ else
         }
         catch
         {
-            // Ignorera - försök med "my" istället
+            // Ignore and try "my" instead
         }
 
-        // Fallback: hämta egen kurs (Student)
+        // Fallback: retrieve the user's own course (Student)
         try
         {
             var myCourse = await Proxy.GetAsync<StudentCourseDto>("courses/my");
             if (myCourse is not null)
             {
                 courses = new List<CourseDto>
-            {
-                new(myCourse.Id, myCourse.Name, myCourse.Description,
-                    myCourse.StartDate, myCourse.EndDate)
-            };
+                {
+                    new(myCourse.Id, myCourse.Name, myCourse.Description,
+                        myCourse.StartDate, myCourse.EndDate)
+                };
             }
         }
         catch
@@ -180,7 +184,7 @@ else
 
         documents = new();
 
-        // Om bara en kurs (Student): ladda dokument + moduler + aktiviteter
+        // If there is only one course (Student): load documents, modules and activities
         if (courses.Count == 1 && courses[0].Id > 0)
         {
             var courseId = courses[0].Id;
@@ -212,7 +216,7 @@ else
             var ext = Path.GetExtension(selectedFile.Name).ToLowerInvariant();
             if (ext != ".pdf" && ext != ".docx")
             {
-                uploadMessage = $"Filtypen {ext} är inte tillåten. Tillåtna: .pdf, .docx.";
+                uploadMessage = $"The file type {ext} is not allowed. Allowed types: .pdf, .docx.";
                 uploadError = true;
                 selectedFile = null;
                 return;
@@ -220,7 +224,7 @@ else
 
             if (selectedFile.Size > 10 * 1024 * 1024)
             {
-                uploadMessage = "Filen är för stor. Maxstorlek är 10 MB.";
+                uploadMessage = "The file is too large. Maximum size is 10 MB.";
                 uploadError = true;
                 selectedFile = null;
                 return;
@@ -235,7 +239,7 @@ else
 
         if (uploadModel.CourseId is null or 0)
         {
-            uploadMessage = "Välj en kurs först.";
+            uploadMessage = "Please select a course first.";
             uploadError = true;
             return;
         }
@@ -259,7 +263,7 @@ else
                 new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
 
             content.Add(fileContent, "File", selectedFile.Name);
-            
+
             if (uploadModel.ActivityId is > 0)
             {
                 content.Add(new StringContent(uploadModel.ActivityId.Value.ToString()), "ActivityId");
@@ -274,7 +278,7 @@ else
             }
             else
             {
-                uploadMessage = "Välj kurs, modul eller aktivitet.";
+                uploadMessage = "Please select a course, module or activity.";
                 uploadError = true;
                 return;
             }
@@ -284,7 +288,7 @@ else
                 "documents/upload",
                 content);
 
-            uploadMessage = $"Uppladdat: {created?.FileName}";
+            uploadMessage = $"Uploaded: {created?.FileName}";
             uploadError = false;
             selectedFile = null;
 
@@ -292,7 +296,7 @@ else
         }
         catch (Exception ex)
         {
-            uploadMessage = $"Fel: {ExtractError(ex.Message)}";
+            uploadMessage = $"Error: {ExtractError(ex.Message)}";
             uploadError = true;
         }
         finally
@@ -332,7 +336,7 @@ else
     private static string ExtractError(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
-            return "Ett fel uppstod.";
+            return "An error occurred.";
 
         try
         {

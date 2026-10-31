@@ -1,7 +1,29 @@
+
 /* =========================================================
    LEXICON LMS - NAVIGATION
+   US17 - Responsive and Consistent UI
    ========================================================= */
 
+.lms-nav {
+    padding: 16px 0;
+}
+
+/* Navigation sections */
+.nav-section {
+    margin-bottom: 20px;
+}
+
+.nav-section-title {
+    display: block;
+    padding: 8px 22px;
+    color: #777782;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Navigation items */
 .nav-item {
     margin: 0;
     padding: 0;
@@ -11,8 +33,8 @@
         display: flex;
         align-items: center;
         width: 100%;
-        min-height: 58px;
-        padding: 18px 22px;
+        min-height: 48px;
+        padding: 13px 22px;
         gap: 18px;
         border: none;
         border-bottom: 1px solid #e4e4e8;
@@ -20,37 +42,53 @@
         background: transparent;
         color: #27272a;
         text-decoration: none;
-        font-size: 17px;
+        font-size: 15px;
         line-height: 1.2;
         transition: background-color 0.15s ease, color 0.15s ease;
     }
 
+        /* Hover state */
         .nav-item ::deep .nav-link:hover {
             background: #f8f8fa;
             color: #27272a;
         }
 
+        /* Active page */
         .nav-item ::deep .nav-link.active {
             background: #ecebff;
             color: #4b46d9;
             font-weight: 700;
         }
 
+        /* Keyboard accessibility */
+        .nav-item ::deep .nav-link:focus-visible {
+            outline: 3px solid #7772ef;
+            outline-offset: -3px;
+        }
+
+/* Navigation icons */
 .nav-icon {
-    width: 24px;
-    min-width: 24px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 24px;
+    min-width: 24px;
     font-size: 22px;
     text-align: center;
 }
 
+/* =========================================================
+   RESPONSIVE NAVIGATION
+   ========================================================= */
+
 @media (max-width: 760px) {
+    .nav-section-title {
+        padding-left: 18px;
+    }
 
     .nav-item ::deep .nav-link {
-        min-height: 54px;
-        padding: 16px 18px;
-        font-size: 16px;
+        min-height: 48px;
+        padding: 12px 18px;
+        font-size: 15px;
     }
 }

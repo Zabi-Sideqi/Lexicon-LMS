@@ -1,22 +1,25 @@
 ﻿@page "/courses"
 @attribute [Authorize(Roles = "Teacher")]
+
 @using LMS.Blazor.Client.Services.ApiProxy
 @using LMS.Shared.DTOs.CommonDtos
 @using LMS.Shared.DTOs.CourseDtos
+
 @inject IApiProxyClient Proxy
 
-<PageTitle>Kurser</PageTitle>
+<PageTitle>Courses</PageTitle>
 
 <div class="course-page">
     <div class="course-page-header">
         <div>
             <span class="course-eyebrow">LEXICON LMS</span>
-            <h1>Kurser</h1>
-            <p>Hantera dina kurser och utbildningsmoduler.</p>
+            <h1>Courses</h1>
+            <p>Manage your courses and learning modules.</p>
         </div>
+
         <a href="/courses/create" class="btn btn-primary course-create-button">
             <span aria-hidden="true">+</span>
-            Skapa kurs
+            Create course
         </a>
     </div>
 
@@ -30,38 +33,38 @@
     {
         <div class="course-state">
             <span class="course-loading-indicator"></span>
-            <p>Hämtar kurser...</p>
+            <p>Loading courses...</p>
         </div>
     }
     else if (pagedCourses.TotalCount == 0 && string.IsNullOrWhiteSpace(pageParameters.SearchTerm))
     {
         <div class="course-state">
             <div class="course-empty-icon" aria-hidden="true">▤</div>
-            <h2>Inga kurser hittades</h2>
-            <p>Skapa en kurs för att komma igång.</p>
-            <a href="/courses/create" class="btn btn-primary">Skapa kurs</a>
+            <h2>No courses found</h2>
+            <p>Create a course to get started.</p>
+            <a href="/courses/create" class="btn btn-primary">Create course</a>
         </div>
     }
     else
     {
         <div class="course-summary">
             <div>
-                <span class="course-summary-label">Totalt antal kurser</span>
+                <span class="course-summary-label">Total number of courses</span>
                 <strong>@pagedCourses.TotalCount</strong>
             </div>
             <span class="course-summary-icon" aria-hidden="true">▤</span>
         </div>
 
-        <SearchBar OnSearch="HandleSearch" Placeholder="Sök kurs..." />
+        <SearchBar OnSearch="HandleSearch" Placeholder="Search courses..." />
 
         <section class="course-table-card">
             <div class="course-table-heading">
                 <div>
-                    <h2>Dina kurser</h2>
-                    <p>Visa kursdetaljer och hantera moduler.</p>
+                    <h2>Your courses</h2>
+                    <p>View course details and manage modules.</p>
                 </div>
                 <span class="text-muted">
-                    @pagedCourses.TotalCount totalt
+                    @pagedCourses.TotalCount total
                 </span>
             </div>
 
@@ -69,19 +72,20 @@
                 <table class="table course-table">
                     <thead>
                         <tr>
-                            <th scope="col">Kursnamn</th>
-                            <th scope="col">Beskrivning</th>
-                            <th scope="col">Startdatum</th>
-                            <th scope="col">Slutdatum</th>
-                            <th scope="col" class="course-actions-heading">Åtgärder</th>
+                            <th scope="col">Course name</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Start date</th>
+                            <th scope="col">End date</th>
+                            <th scope="col" class="course-actions-heading">Actions</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         @if (!pagedCourses.Items.Any())
                         {
                             <tr>
                                 <td colspan="5" class="text-center text-muted">
-                                    Inga kurser hittades.
+                                    No courses found.
                                 </td>
                             </tr>
                         }
@@ -96,18 +100,21 @@
                                             <strong>@course.Name</strong>
                                         </div>
                                     </td>
+
                                     <td class="course-description">@course.Description</td>
                                     <td>@course.StartDate.ToShortDateString()</td>
                                     <td>@course.EndDate.ToShortDateString()</td>
+
                                     <td>
                                         <div class="course-row-actions">
                                             <a href="/courses/edit/@course.Id"
                                                class="btn btn-sm btn-secondary">
-                                                Redigera
+                                                Edit
                                             </a>
+
                                             <a href="/courses/@course.Id/modules"
                                                class="btn btn-sm btn-outline-primary">
-                                                Moduler
+                                                Modules
                                             </a>
                                         </div>
                                     </td>
@@ -120,8 +127,9 @@
 
             <div class="d-flex justify-content-between align-items-center mt-3">
                 <small class="text-muted">
-                    Sida @pagedCourses.PageNumber av @pagedCourses.TotalPages
+                    Page @pagedCourses.PageNumber of @pagedCourses.TotalPages
                 </small>
+
                 <Pager PageNumber="pagedCourses.PageNumber"
                        TotalPages="pagedCourses.TotalPages"
                        OnPageChange="HandlePageChange" />
@@ -153,15 +161,15 @@
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException ex)
         {
-            errorMessage = $"Det gick inte att hämta kurser: {ex.Message}";
+            errorMessage = $"Unable to load courses: {ex.Message}";
         }
         catch (Exception ex)
         {
-            errorMessage = $"Ett fel uppstod: {ex.Message}";
+            errorMessage = $"An error occurred: {ex.Message}";
         }
     }
 

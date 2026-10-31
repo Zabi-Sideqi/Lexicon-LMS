@@ -1,5 +1,7 @@
+
 /* =========================================================
    LEXICON LMS - MAIN LAYOUT
+   US17 - Responsive layout
    ========================================================= */
 
 .app-shell {
@@ -12,7 +14,6 @@
     --lms-border-strong: #d4d4d8;
     --lms-sidebar: #ffffff;
     --lms-hover: #f3f4f6;
-
     min-height: 100vh;
     background: var(--lms-page-bg);
     color: var(--lms-text);
@@ -35,16 +36,19 @@
     box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
 }
 
-.top-left {
+.top-left,
+.top-right {
     display: flex;
     align-items: center;
+}
+
+.top-left {
     gap: 20px;
 }
 
 .top-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+    position: relative;
+    gap: 16px;
 }
 
 .icon-btn {
@@ -62,9 +66,14 @@
     cursor: pointer;
 }
 
-.icon-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
+    .icon-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .icon-btn:focus-visible {
+        outline: 3px solid #ffffff;
+        outline-offset: 2px;
+    }
 
 .user-chip {
     display: flex;
@@ -79,28 +88,36 @@
     padding: 0;
 }
 
+.hamburger-btn {
+    display: none;
+}
+
 .sidebar {
     position: fixed;
     top: 58px;
     left: 0;
     bottom: 0;
-    width: 332px;
+    width: 280px;
     z-index: 900;
     background: var(--lms-sidebar);
     border-right: 1px solid var(--lms-border);
     overflow-y: auto;
     overflow-x: hidden;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .main {
     min-height: 100vh;
-    margin-left: 332px;
+    margin-left: 280px;
     padding: 88px 36px 50px;
     background: var(--lms-page-bg);
     color: var(--lms-text);
     transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
 
 .dark-mode {
     --lms-page-bg: #111827;
@@ -114,80 +131,28 @@
     --lms-hover: #374151;
 }
 
-.dark-mode ::deep .nav-item .nav-link {
-    color: #e5e7eb;
-    border-bottom-color: #374151;
-}
-
-.dark-mode ::deep .nav-item .nav-link:hover {
-    background: #374151;
-    color: #ffffff;
-}
-
-.dark-mode ::deep .nav-item .nav-link.active {
-    background: #3730a3;
-    color: #ffffff;
-}
-
-@media (max-width: 1000px) {
-    .sidebar {
-        width: 280px;
+    .dark-mode ::deep .nav-item .nav-link {
+        color: var(--lms-text);
+        border-bottom-color: var(--lms-border);
     }
 
-    .main {
-        margin-left: 280px;
-    }
-}
+        .dark-mode ::deep .nav-item .nav-link:hover {
+            background: var(--lms-hover);
+            color: #ffffff;
+        }
 
-.hamburger-btn {
-    display: none;
-}
+        .dark-mode ::deep .nav-item .nav-link.active {
+            background: #3730a3;
+            color: #ffffff;
+        }
 
-@media (max-width: 760px) {
-    .topbar {
-        padding: 0 12px;
+    .dark-mode ::deep .nav-section-title {
+        color: #a5b4fc;
     }
-
-    .top-left,
-    .top-right {
-        gap: 8px;
-    }
-
-    .hamburger-btn {
-        display: inline-flex;
-    }
-
-    .hide-mobile {
-        display: none;
-    }
-
-    .user-chip span {
-        display: none;
-    }
-
-    .sidebar {
-        width: 290px;
-        transform: translateX(-100%);
-        transition: transform 0.2s ease, background-color 0.2s ease;
-    }
-
-    .sidebar.sidebar-open {
-        transform: translateX(0);
-    }
-
-    .main {
-        margin-left: 0;
-        padding: 82px 16px 35px;
-    }
-}
 
 /* =========================================================
    NOTIFICATIONS - US14
    ========================================================= */
-
-.top-right {
-    position: relative;
-}
 
 .notification-btn {
     position: relative;
@@ -217,7 +182,7 @@
     right: 0;
     z-index: 1100;
     width: min(340px, calc(100vw - 24px));
-    max-height: 420px;
+    max-height: min(420px, calc(100vh - 80px));
     overflow-y: auto;
     padding: 16px;
     border: 1px solid var(--lms-border);
@@ -257,3 +222,105 @@
         font-size: 12px;
         font-weight: 700;
     }
+
+.mark-as-read-btn {
+    margin-top: 8px;
+    padding: 5px 9px;
+    border: 1px solid var(--lms-border-strong);
+    border-radius: 6px;
+    background: var(--lms-surface-soft);
+    color: var(--lms-text);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+    .mark-as-read-btn:hover {
+        background: var(--lms-hover);
+    }
+
+/* =========================================================
+   RESPONSIVE NAVIGATION - US17
+   ========================================================= */
+
+.sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .hamburger-btn {
+        display: inline-flex;
+    }
+
+    .sidebar {
+        width: min(300px, 85vw);
+        transform: translateX(-100%);
+    }
+
+        .sidebar.sidebar-open {
+            transform: translateX(0);
+            box-shadow: 4px 0 18px rgba(0, 0, 0, 0.15);
+        }
+
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        top: 58px;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 850;
+        width: 100%;
+        border: none;
+        background: rgba(0, 0, 0, 0.4);
+        cursor: pointer;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 82px 24px 40px;
+    }
+}
+
+@media (max-width: 600px) {
+    .topbar {
+        padding: 0 10px;
+    }
+
+    .top-left,
+    .top-right {
+        gap: 6px;
+    }
+
+    .hide-mobile {
+        display: none;
+    }
+
+    .user-chip span {
+        display: none;
+    }
+
+    .main {
+        padding: 78px 14px 30px;
+    }
+
+    .notification-panel {
+        right: -4px;
+    }
+}
+
+@media (max-width: 360px) {
+    .icon-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 20px;
+    }
+
+    .topbar {
+        padding: 0 6px;
+    }
+
+    .main {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+}

@@ -13,7 +13,9 @@
 
             <button class="icon-btn hamburger-btn"
                     type="button"
-                    aria-label="Öppna meny"
+                    aria-label="Toggle navigation menu"
+                    aria-controls="main-sidebar"
+                    aria-expanded="@isSidebarOpen"
                     @onclick="ToggleSidebar">
                 ☰
             </button>
@@ -25,8 +27,9 @@
 
             <button class="icon-btn notification-btn"
                     type="button"
-                    aria-label="@($"Notiser, {UnreadNotificationCount} olästa")"
-                    title="Notiser"
+                    aria-label="@($"Notifications, {UnreadNotificationCount} unread")"
+                    aria-expanded="@showNotifications"
+                    title="Notifications"
                     @onclick="ToggleNotifications">
                 🔔
                 @if (UnreadNotificationCount > 0)
@@ -36,14 +39,17 @@
                     </span>
                 }
             </button>
+
             @if (showNotifications)
             {
-                <div class="notification-panel">
-                    <h3>Notiser</h3>
+                <div class="notification-panel"
+                     role="region"
+                     aria-label="Notifications">
+                    <h3>Notifications</h3>
 
                     @if (notifications.Count == 0)
                     {
-                        <p>Du har inga notiser.</p>
+                        <p>You have no notifications.</p>
                     }
                     else
                     {
@@ -58,12 +64,12 @@
                                     <button type="button"
                                             class="mark-as-read-btn"
                                             @onclick="() => MarkAsReadAsync(notification.Id)">
-                                        Markera som läst
+                                        Mark as read
                                     </button>
                                 }
                                 else
                                 {
-                                    <span class="read-status">Läst</span>
+                                    <span class="read-status">Read</span>
                                 }
                             </div>
                         }
@@ -76,13 +82,13 @@
 
                 <AuthorizeView Roles="Teacher">
                     <Authorized>
-                        <span>Lärare</span>
+                        <span>Teacher</span>
                     </Authorized>
                 </AuthorizeView>
 
                 <AuthorizeView Roles="Student">
                     <Authorized>
-                        <span>Elev</span>
+                        <span>Student</span>
                     </Authorized>
                 </AuthorizeView>
             </div>
@@ -91,15 +97,19 @@
                 <AntiforgeryToken />
                 <input type="hidden" name="ReturnUrl" value="Account/Login" />
 
-                <button class="icon-btn" type="submit" aria-label="Logga ut" title="Logga ut">
+                <button class="icon-btn"
+                        type="submit"
+                        aria-label="Log out"
+                        title="Log out">
                     ↪
                 </button>
             </form>
 
             <button class="icon-btn"
                     type="button"
-                    aria-label="Byt tema"
-                    title="Byt tema"
+                    aria-label="Toggle dark mode"
+                    aria-pressed="@isDarkMode"
+                    title="Toggle dark mode"
                     @onclick="ToggleDarkMode">
                 @(isDarkMode ? "☀" : "☾")
             </button>
@@ -107,9 +117,19 @@
         </div>
     </header>
 
-    <aside class="sidebar @(isSidebarOpen ? "sidebar-open" : "")">
-        <NavMenu />
+    <aside id="main-sidebar"
+           class="sidebar @(isSidebarOpen ? "sidebar-open" : "")">
+        <NavMenu OnNavigate="CloseSidebar" />
     </aside>
+
+    @if (isSidebarOpen)
+    {
+        <button class="sidebar-backdrop"
+                type="button"
+                aria-label="Close navigation menu"
+                @onclick="CloseSidebar">
+        </button>
+    }
 
     <main class="main">
         @Body
@@ -121,8 +141,14 @@
     private bool isSidebarOpen;
     private bool isDarkMode;
     private List<NotificationDto> notifications = [];
+
     private int UnreadNotificationCount =>
         notifications.Count(notification => !notification.IsRead);
+
+    private bool notificationsLoaded;
+    private PeriodicTimer? notificationTimer;
+    private CancellationTokenSource? notificationCts;
+    private bool showNotifications;
 
     private void ToggleSidebar()
     {
@@ -134,10 +160,11 @@
         isDarkMode = !isDarkMode;
     }
 
-    private bool notificationsLoaded;
-    private PeriodicTimer? notificationTimer;
-    private CancellationTokenSource? notificationCts;
-    private bool showNotifications;
+    private void CloseSidebar()
+    {
+        isSidebarOpen = false;
+    }
+
     private void ToggleNotifications()
     {
         showNotifications = !showNotifications;
@@ -155,15 +182,14 @@
         }
         catch (UnauthorizedAccessException)
         {
-            // Sessionen är inte längre giltig.
+            // The session is no longer valid.
         }
         catch (HttpRequestException)
         {
-            // API-anropet misslyckades.
+            // The API request failed.
         }
     }
 
-    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender || notificationsLoaded)
@@ -179,9 +205,6 @@
         _ = PollNotificationsAsync(notificationCts.Token);
     }
 
-
-   
-    
     private async Task MarkAsReadAsync(int notificationId)
     {
         try
@@ -202,11 +225,11 @@
         }
         catch (UnauthorizedAccessException)
         {
-            // Sessionen är inte längre giltig.
+            // The session is no longer valid.
         }
         catch (HttpRequestException)
         {
-            // API-anropet misslyckades.
+            // The API request failed.
         }
     }
 
@@ -222,9 +245,10 @@
         }
         catch (OperationCanceledException)
         {
-            // Polling stoppades när komponenten avslutas.
+            // Polling stopped when the component was disposed.
         }
     }
+
     public void Dispose()
     {
         notificationCts?.Cancel();

@@ -1,0 +1,46 @@
+/* CSS for EmptyState component */
+
+.lms-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 36px 20px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.lms-empty-state-icon {
+    font-size: 36px;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.lms-empty-state h3 {
+    margin: 0;
+    color: #27272a;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.lms-empty-state p {
+    max-width: 420px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.lms-empty-state-actions {
+    margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+    .lms-empty-state {
+        padding: 28px 14px;
+    }
+
+        .lms-empty-state h3 {
+            font-size: 16px;
+        }
+}

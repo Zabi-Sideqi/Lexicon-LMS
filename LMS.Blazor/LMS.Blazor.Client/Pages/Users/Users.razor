@@ -1,4 +1,5 @@
-﻿@page "/users"
+﻿
+@page "/users"
 
 @using LMS.Shared.DTOs.CommonDtos
 @using LMS.Shared.DTOs.UserDtos
@@ -8,16 +9,17 @@
 
 @attribute [Authorize(Roles = "Teacher")]
 
-<PageTitle>Användare</PageTitle>
+<PageTitle>Users</PageTitle>
 
 <div class="users-page">
 
     <div class="page-header">
         <div>
-            <h1>Användare</h1>
+            <h1>Users</h1>
         </div>
+
         <a class="btn btn-primary" href="/users/create">
-            + Lägg till användare
+            + Add User
         </a>
     </div>
 
@@ -25,7 +27,7 @@
 
         <div class="mb-4">
             <SearchBar OnSearch="HandleSearch"
-                       Placeholder="Sök användarnamn eller e-post..." />
+                       Placeholder="Search username or email..." />
         </div>
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -37,25 +39,26 @@
         else if (pagedUsers is null)
         {
             <div class="p-4 text-center">
-                <span>Laddar användare...</span>
+                <span>Loading users...</span>
             </div>
         }
         else if (pagedUsers.TotalCount == 0)
         {
             <div class="p-4 text-center text-muted">
-                Inga användare hittades.
+                No users found.
             </div>
         }
         else
         {
-            <div class="table-responsive">
+            <!-- Desktop table -->
+            <div class="table-responsive users-desktop-table">
                 <table class="table users-table mb-0">
                     <thead>
                         <tr>
-                            <th>Användarnamn</th>
-                            <th>E-post</th>
-                            <th>Roll</th>
-                            <th>Kurs</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Course</th>
                             <th>Status</th>
                             <th></th>
                         </tr>
@@ -78,17 +81,18 @@
                                 </td>
                                 <td>@(user.CourseId?.ToString() ?? "–")</td>
                                 <td>
-                                    <span class="badge status-active">Aktiv</span>
+                                    <span class="badge status-active">Active</span>
                                 </td>
                                 <td class="text-end">
                                     <a class="btn btn-sm btn-outline-primary"
                                        href="@($"/users/edit/{user.Id}")">
-                                        Redigera
+                                        Edit
                                     </a>
+
                                     <button class="btn btn-sm btn-outline-danger ms-2"
                                             type="button"
                                             @onclick="() => DeleteUser(user)">
-                                        Ta bort
+                                        Delete
                                     </button>
                                 </td>
                             </tr>
@@ -97,11 +101,68 @@
                 </table>
             </div>
 
+            <!-- Mobile user cards -->
+            <div class="users-mobile-cards">
+                @foreach (var user in pagedUsers.Items)
+                {
+                    <div class="user-mobile-card" @key="user.Id">
+
+                        <div class="user-mobile-row">
+                            <span>Username</span>
+                            <strong>@user.UserName</strong>
+                        </div>
+
+                        <div class="user-mobile-row">
+                            <span>Email</span>
+                            <span>@user.Email</span>
+                        </div>
+
+                        <div class="user-mobile-row">
+                            <span>Role</span>
+                            @if (user.Role == "Student")
+                            {
+                                <span class="badge role-student">Student</span>
+                            }
+                            else
+                            {
+                                <span class="badge role-teacher">Teacher</span>
+                            }
+                        </div>
+
+                        <div class="user-mobile-row">
+                            <span>Course</span>
+                            <span>@(user.CourseId?.ToString() ?? "–")</span>
+                        </div>
+
+                        <div class="user-mobile-row">
+                            <span>Status</span>
+                            <span class="badge status-active">Active</span>
+                        </div>
+
+                        <div class="user-mobile-actions">
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="@($"/users/edit/{user.Id}")">
+                                Edit
+                            </a>
+
+                            <button class="btn btn-sm btn-outline-danger"
+                                    type="button"
+                                    @onclick="() => DeleteUser(user)">
+                                Delete
+                            </button>
+                        </div>
+
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
             <div class="d-flex justify-content-between align-items-center p-3 border-top">
                 <small class="text-muted">
-                    Sida @pagedUsers.PageNumber av @pagedUsers.TotalPages
-                    (@pagedUsers.TotalCount totalt)
+                    Page @pagedUsers.PageNumber of @pagedUsers.TotalPages
+                    (@pagedUsers.TotalCount total)
                 </small>
+
                 <Pager PageNumber="pagedUsers.PageNumber"
                        TotalPages="pagedUsers.TotalPages"
                        OnPageChange="HandlePageChange" />
@@ -109,7 +170,6 @@
         }
 
     </div>
-
 </div>
 
 @code {
@@ -144,15 +204,15 @@
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException ex)
         {
-            errorMessage = $"Det gick inte att hämta användare: {ex.Message}";
+            errorMessage = $"Unable to load users: {ex.Message}";
         }
         catch (Exception ex)
         {
-            errorMessage = $"Ett fel uppstod: {ex.Message}";
+            errorMessage = $"An error occurred: {ex.Message}";
         }
     }
 
@@ -173,7 +233,7 @@
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>(
             "confirm",
-            $"Vill du verkligen ta bort användaren {user.UserName}?");
+            $"Are you sure you want to delete the user {user.UserName}?");
 
         if (!confirmed)
             return;
@@ -188,11 +248,11 @@
         }
         catch (UnauthorizedAccessException)
         {
-            errorMessage = "Din session har gått ut. Logga in igen.";
+            errorMessage = "Your session has expired. Please log in again.";
         }
         catch (HttpRequestException ex)
         {
-            errorMessage = $"Det gick inte att ta bort användaren: {ex.Message}";
+            errorMessage = $"Unable to delete user: {ex.Message}";
         }
     }
 }
