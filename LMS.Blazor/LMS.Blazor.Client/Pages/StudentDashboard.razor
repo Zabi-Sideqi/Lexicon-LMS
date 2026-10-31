@@ -2,15 +2,16 @@
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Shared.DTOs.DashboardDtos
 @using LMS.Blazor.Client.Services.ApiProxy
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @attribute [Authorize(Roles = "Student")]
 @inject IApiProxyClient Proxy
 
-<PageTitle>My Dashboard</PageTitle>
+<PageTitle>Welcome, @userName!</PageTitle>
 
 <div class="dashboard">
     <div class="page-head">
         <div>
-            <h1>My Dashboard</h1>
+            <h1>Welcome, @userName!</h1>
             <p>Your activities, assignments, and documents.</p>
         </div>
         <span class="role-badge">Student</span>
@@ -148,12 +149,19 @@
     private StudentDashboardDto? dashboard;
     private bool loading = true;
     private string? errorMessage;
+    private string userName = "Student";
 
     protected override async Task OnInitializedAsync()
     {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        userName = authState.User.Identity?.Name ?? "Student";
+
         try
         {
-            dashboard = await Proxy.GetAsync<StudentDashboardDto>("dashboard/student");
+            dashboard = await Proxy.GetAsync<StudentDashboardDto>(
+                "dashboard/student");
         }
         catch (Exception ex)
         {
