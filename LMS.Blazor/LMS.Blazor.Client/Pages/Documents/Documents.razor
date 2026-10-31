@@ -1,5 +1,6 @@
 ﻿
 @page "/documents"
+@using System.ComponentModel.DataAnnotations
 @using LMS.Blazor.Client.Services.ApiProxy
 @using LMS.Shared.DTOs.ActivityDtos
 @using LMS.Shared.DTOs.CourseDtos
@@ -16,6 +17,8 @@
 <AuthorizeView>
     <Authorized Context="authContext">
         <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger mb-3" />
             <div class="mb-3">
                 <label class="form-label">Course</label>
                 <InputSelect @bind-Value="uploadModel.CourseId"
@@ -30,6 +33,7 @@
                         <option value="@c.Id">@c.Name</option>
                     }
                 </InputSelect>
+                <ValidationMessage For="() => uploadModel.CourseId" class="text-danger" />
             </div>
 
             @if (uploadModel.CourseId is > 0)
@@ -79,7 +83,7 @@
 
         @if (!string.IsNullOrEmpty(uploadMessage))
         {
-            <div class="alert @(uploadError ? "alert-danger" : "alert-success") mt-3">
+            <div class="alert @(uploadError ? "alert-danger" : "alert-success") mt-3" role="@(uploadError ? "alert" : "status")">
                 @uploadMessage
             </div>
         }
@@ -395,6 +399,7 @@ else
 
     private class DocumentUploadModel
     {
+        [Required(ErrorMessage = "Please select a course.")]
         public int? CourseId { get; set; }
         public int? ModuleId { get; set; }
         public int? ActivityId { get; set; }
