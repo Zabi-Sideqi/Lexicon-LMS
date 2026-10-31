@@ -88,6 +88,20 @@
 
 <h2 class="mt-4">All Documents</h2>
 
+@if (documentLoadWarnings.Count > 0)
+{
+    <div class="alert alert-warning mt-3" role="alert">
+        <strong>Some course documents could not be loaded.</strong>
+        <p class="mb-1">The document list may be incomplete. Try refreshing the page.</p>
+        <ul class="mb-0">
+            @foreach (var courseName in documentLoadWarnings)
+            {
+                <li>@courseName</li>
+            }
+        </ul>
+    </div>
+}
+
 @if (documents is null)
 {
     <p><em>Loading...</em></p>
@@ -137,6 +151,7 @@ else
     private List<ModuleDto> modules = new();
     private List<ActivityDto> activities = new();
     private List<DocumentDto>? documents;
+    private readonly List<string> documentLoadWarnings = new();
     private DocumentUploadModel uploadModel = new();
     private IBrowserFile? selectedFile;
     private string? uploadMessage;
@@ -172,6 +187,11 @@ else
                     }
                     catch (Exception ex)
                     {
+                        documentLoadWarnings.Add(
+                            string.IsNullOrWhiteSpace(course.Name)
+                                ? $"Course {course.Id}"
+                                : course.Name);
+
                         Console.WriteLine(
                             $"Could not load documents for course {course.Id}: {ex.Message}");
                     }
