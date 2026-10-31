@@ -1,0 +1,71 @@
+@page "/modules/{ModuleId:int}/activities"
+@using System.Net
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.ActivityDtos
+@using LMS.Shared.DTOs.ModuleDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize]
+@inject IApiProxyClient Proxy
+
+<PageTitle>Module activities</PageTitle>
+<div class="activity-page">
+    <header class="activity-header">
+        <div><span class="activity-eyebrow">LEXICON LMS · TEACHING</span><h1>Module activities</h1>
+        @if (module is not null) { <p>@module.Name · @module.StartDate.ToString("yyyy-MM-dd") – @module.EndDate.ToString("yyyy-MM-dd")</p> }</div>
+        <a class="activity-secondary" href="@BackUrl">Back to modules</a>
+    </header>
+    @if (!string.IsNullOrWhiteSpace(errorMessage)) { <div class="activity-alert error" role="alert">@errorMessage</div> }
+    @if (!string.IsNullOrWhiteSpace(successMessage)) { <div class="activity-alert success" role="status">@successMessage</div> }
+    @if (loading) { <section class="activity-card"><p>Loading activities...</p></section> }
+    else if (module is null) { <section class="activity-card"><h2>Module unavailable</h2></section> }
+    else {
+        <section class="activity-card">
+            <div class="activity-heading"><div><h2>Activities and assignments</h2><p>Assignments created here become visible to students enrolled in this course.</p></div>
+            <AuthorizeView Roles="Teacher"><a class="activity-primary" href="/modules/@ModuleId/activities/create">＋ Create activity</a></AuthorizeView></div>
+            @if (activities.Count == 0) {
+                <div class="activity-empty"><h3>No activities yet</h3><p>Create an assignment or another activity for this module.</p>
+                <AuthorizeView Roles="Teacher"><a class="activity-primary" href="/modules/@ModuleId/activities/create">Create the first activity</a></AuthorizeView></div>
+            } else {
+                <div class="activity-table-wrap"><table class="activity-table">
+                    <thead><tr><th>Activity</th><th>Type</th><th>Description</th><th>Available from</th><th>Deadline / end</th><AuthorizeView Roles="Teacher"><th>Actions</th></AuthorizeView></tr></thead>
+                    <tbody>@foreach (var item in activities.OrderBy(a => a.StartTime)) {
+                        <tr @key="item.Id"><td><strong>@item.Name</strong></td><td><span class="activity-type">@item.Type</span></td><td>@item.Description</td>
+                        <td>@item.StartTime.ToString("yyyy-MM-dd HH:mm")</td><td>@item.EndTime.ToString("yyyy-MM-dd HH:mm")</td>
+                        <AuthorizeView Roles="Teacher"><td><button class="activity-danger" disabled="@deletingIds.Contains(item.Id)" @onclick="() => DeleteAsync(item)">@((deletingIds.Contains(item.Id)) ? "Deleting..." : "Delete")</button></td></AuthorizeView></tr>
+                    }</tbody>
+                </table></div>
+            }
+        </section>
+    }
+</div>
+<style>
+.activity-page{max-width:1200px;margin:0 auto;padding:clamp(1rem,3vw,2rem)}.activity-header,.activity-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}.activity-eyebrow{font-size:.75rem;letter-spacing:.12em;color:#5146e5;font-weight:700}.activity-header h1{margin:.35rem 0;font-size:clamp(1.6rem,3vw,2.2rem)}.activity-header p,.activity-heading p{color:#687386;margin:.25rem 0}.activity-card{margin-top:1.5rem;padding:clamp(1rem,2.5vw,1.75rem);background:var(--bs-body-bg,#fff);border:1px solid #e1e5ec;border-radius:14px;box-shadow:0 4px 14px #1822300d}.activity-card h2{margin:0;font-size:1.25rem}.activity-primary,.activity-secondary,.activity-danger{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:.6rem 1rem;border-radius:8px;text-decoration:none;font-weight:600;border:1px solid transparent;cursor:pointer}.activity-primary{background:#5146e5;color:white}.activity-secondary{border-color:#aab2c0;color:inherit}.activity-danger{background:#fff1f1;border-color:#f2b6b6;color:#a51e1e}.activity-alert{padding:.85rem 1rem;margin-top:1rem;border-radius:8px}.activity-alert.error{background:#fff0f0;color:#9b1c1c}.activity-alert.success{background:#eaf8ef;color:#176b37}.activity-empty{text-align:center;padding:3rem 1rem}.activity-empty p{color:#687386}.activity-table-wrap{overflow-x:auto;margin-top:1.25rem}.activity-table{width:100%;border-collapse:collapse;min-width:760px}.activity-table th,.activity-table td{text-align:left;padding:.85rem .75rem;border-bottom:1px solid #e7eaf0;vertical-align:middle}.activity-table th{font-size:.8rem;color:#596579}.activity-type{display:inline-block;padding:.25rem .55rem;border-radius:999px;background:#eeedff;color:#4b43c5;font-size:.8rem}@media(max-width:640px){.activity-heading{align-items:flex-start}.activity-primary,.activity-secondary{width:100%}.activity-card{padding:1rem}}
+</style>
+@code {
+    [Parameter] public int ModuleId { get; set; }
+    private ModuleDto? module;
+    private List<ActivityDto> activities = [];
+    private readonly HashSet<int> deletingIds = [];
+    private bool loading = true;
+    private string? errorMessage, successMessage;
+    private string BackUrl => module is null ? "/courses" : $"/courses/{module.CourseId}/modules";
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    private async Task LoadAsync() {
+        loading = true; errorMessage = null;
+        try {
+            module = await Proxy.SendAsync<ModuleDto>(HttpMethod.Get, $"modules/{ModuleId}");
+            var result = await Proxy.SendAsync<IEnumerable<ActivityDto>>(HttpMethod.Get, $"activities/module/{ModuleId}");
+            activities = result?.ToList() ?? [];
+        } catch (UnauthorizedAccessException) { errorMessage = "Your session has expired. Please sign in again."; }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden) { errorMessage = "You are not allowed to view this module."; }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound) { errorMessage = "The requested module could not be found."; }
+        catch (HttpRequestException) { errorMessage = "Could not load module activities. Please try again."; }
+        finally { loading = false; }
+    }
+    private async Task DeleteAsync(ActivityDto item) {
+        errorMessage = null; successMessage = null;
+        try { await Proxy.SendAsync<object>(HttpMethod.Delete, $"activities/{item.Id}"); activities.RemoveAll(a => a.Id == item.Id); successMessage = $"'{item.Name}' was deleted."; }
+        catch (Exception) { errorMessage = "The activity could not be deleted. Refresh the page and try again."; }
+    }
+}
