@@ -270,7 +270,7 @@
 
         try
         {
-            // Hämta paginerade aktiviteter.
+            // Load paginated activities.
             var query = new List<string>
             {
                 $"pageNumber={_pageNumber}",
@@ -291,7 +291,7 @@
 
             _pagedActivities = paged ?? new([], 1, _pageSize, 0, 1);
 
-            // Hämta alla moduler endast för lärare.
+            // Load all modules for teachers only.
             var authenticationState =
                 await AuthenticationStateProvider.GetAuthenticationStateAsync();
 
@@ -317,7 +317,7 @@
             {
                 _modules = [];
 
-                // Hämta information om moduler som elevens aktiviteter tillhör.
+                // Load the modules associated with the student's activities.
                 foreach (var moduleId in _pagedActivities.Items
                     .Select(x => x.ModuleId)
                     .Distinct())
@@ -336,8 +336,8 @@
                     }
                     catch (Exception)
                     {
-                        // Kalendern ska fortfarande visas även om
-                        // information om en modul inte kan hämtas.
+                        // Keep the calendar visible even if
+                        // module information cannot be loaded.
                     }
                 }
             }
@@ -488,8 +488,8 @@
             }
             catch
             {
-                // Sparningen lyckades redan.
-                // Behåll framgångsmeddelandet.
+                // The save operation has already succeeded.
+                // Keep the success message.
                 _errorMessage =
                     "The activity was saved, but the calendar could not be refreshed. Reload the page.";
             }
@@ -596,7 +596,7 @@
         }
         catch (System.Text.Json.JsonException)
         {
-            // Svaret är inte JSON.
+            // The response is not JSON.
         }
 
         if (message.Contains("overlap",
