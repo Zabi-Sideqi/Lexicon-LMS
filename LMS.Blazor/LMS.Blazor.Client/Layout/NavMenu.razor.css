@@ -81,7 +81,7 @@
    RESPONSIVE NAVIGATION
    ========================================================= */
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
     .nav-section-title {
         padding-left: 18px;
     }

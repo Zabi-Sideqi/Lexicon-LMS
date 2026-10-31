@@ -113,6 +113,22 @@
         </Authorized>
     </AuthorizeView>
 
+    @* API test – visible for all authenticated users *@
+    <AuthorizeView>
+        <Authorized>
+            <div class="nav-section">
+                <span class="nav-section-title">System</span>
+
+                <div class="nav-item">
+                    <NavLink class="nav-link" href="auth" @onclick="NotifyNavigation">
+                        <span class="nav-icon">⚡</span>
+                        API-test
+                    </NavLink>
+                </div>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+
     <AuthorizeView>
         <NotAuthorized>
             <div class="nav-section">

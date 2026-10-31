@@ -48,8 +48,10 @@ public class DocumentRepository : IDocumentRepository
     {
         var query = _context.Documents
             .Include(d => d.Course)
-            .Include(d => d.Module).ThenInclude(m => m.Course)
-            .Include(d => d.Activity).ThenInclude(a => a.Module).ThenInclude(m => m.Course)
+            .Include(d => d.Module).ThenInclude(m => m!.Course)
+            .Include(d => d.Activity)
+                .ThenInclude(a => a!.Module)
+                .ThenInclude(m => m!.Course)
             .AsQueryable();
 
         if (!trackChanges)

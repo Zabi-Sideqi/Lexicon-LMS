@@ -154,8 +154,29 @@ else
 
             if (courses.Count > 0)
             {
-                // Teacher - OK
-                documents = new();
+                // Teacher: load documents from all available courses.
+                documents = new List<DocumentDto>();
+
+                foreach (var course in courses)
+                {
+                    try
+                    {
+                        var courseDocuments =
+                            await Proxy.GetAsync<List<DocumentDto>>(
+                                $"documents/course/{course.Id}");
+
+                        if (courseDocuments is not null)
+                        {
+                            documents.AddRange(courseDocuments);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(
+                            $"Could not load documents for course {course.Id}: {ex.Message}");
+                    }
+                }
+
                 return;
             }
         }
