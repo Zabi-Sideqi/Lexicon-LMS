@@ -349,4 +349,3 @@ if (filter?.CourseId is int courseId)
             totalPages);
     }
 }
-}
