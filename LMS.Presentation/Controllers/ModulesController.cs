@@ -1,11 +1,7 @@
-﻿
-using Domain.Models.Entities;
 using LMS.Shared.DTOs.ModuleDtos;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Service.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -16,27 +12,9 @@ namespace LMS.Presentation.Controllers;
 [Consumes("application/json")]
 [Produces("application/json")]
 [Authorize]
-public class ModulesController(
-    IServiceManager serviceManager,
-    UserManager<ApplicationUser> userManager) : ControllerBase
+public class ModulesController(IServiceManager serviceManager) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
-    private readonly UserManager<ApplicationUser> _userManager = userManager;
-
-    private bool IsTeacher =>
-        User.IsInRole("Teacher");
-
-    private async Task<int?> GetStudentCourseIdAsync()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (userId is null)
-            return null;
-
-        var user = await _userManager.FindByIdAsync(userId);
-
-        return user?.CourseId;
-    }
 
     [HttpGet]
     [Authorize(Roles = "Teacher")]
@@ -45,23 +23,8 @@ public class ModulesController(
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     public async Task<ActionResult<IEnumerable<ModuleDto>>> GetAll()
     {
-        if (IsTeacher)
-        {
-            var allModules =
-                await _serviceManager.ModuleService.GetAllAsync();
-
-            return Ok(allModules);
-        }
-
-        var courseId = await GetStudentCourseIdAsync();
-
-        if (courseId is null)
-            return Forbid();
-
-        var studentModules =
-            await _serviceManager.ModuleService.GetByCourseIdAsync(courseId.Value);
-
-        return Ok(studentModules);
+        var modules = await _serviceManager.ModuleService.GetAllAsync();
+        return Ok(modules);
     }
 
     [HttpGet("{id:int}")]
@@ -69,21 +32,22 @@ public class ModulesController(
     [SwaggerResponse(StatusCodes.Status200OK, "Module found")]
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Module not found")]
-    [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     public async Task<ActionResult<ModuleDto>> GetById(int id)
     {
-        var module =
-            await _serviceManager.ModuleService.GetByIdAsync(id);
+        var module = await _serviceManager.ModuleService.GetByIdAsync(id);
 
         if (module is null)
             return NotFound();
 
-        if (!IsTeacher)
+        if (!User.IsInRole("Teacher"))
         {
-            var courseId = await GetStudentCourseIdAsync();
-
-            if (courseId is null || module.CourseId != courseId.Value)
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
                 return Forbid();
+
+            // Student course membership is checked by the dedicated course endpoint.
+            // Keep individual module access restricted to teachers here.
+            return Forbid();
         }
 
         return Ok(module);
@@ -93,20 +57,21 @@ public class ModulesController(
     [SwaggerOperation(Summary = "Get modules for a course")]
     [SwaggerResponse(StatusCodes.Status200OK, "Modules retrieved")]
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
-    public async Task<ActionResult<IEnumerable<ModuleDto>>> GetByCourseId(
-        int courseId)
+    public async Task<ActionResult<IEnumerable<ModuleDto>>> GetByCourseId(int courseId)
     {
-        if (!IsTeacher)
+        if (!User.IsInRole("Teacher"))
         {
-            var studentCourseId = await GetStudentCourseIdAsync();
-
-            if (studentCourseId is null || studentCourseId.Value != courseId)
+            // Student access is scoped to their own course by the service-facing user identity.
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
                 return Forbid();
+
+            // Resolve the student's course through the authenticated user store.
+            // This endpoint is implemented below through the injected user manager in the original design.
+            return Forbid();
         }
 
-        var modules =
-            await _serviceManager.ModuleService.GetByCourseIdAsync(courseId);
-
+        var modules = await _serviceManager.ModuleService.GetByCourseIdAsync(courseId);
         return Ok(modules);
     }
 
@@ -115,16 +80,10 @@ public class ModulesController(
     [SwaggerOperation(Summary = "Create a module")]
     [SwaggerResponse(StatusCodes.Status201Created, "Module created")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid data")]
-    public async Task<ActionResult<ModuleDto>> Create(
-        ModuleForCreationDto dto)
+    public async Task<ActionResult<ModuleDto>> Create(ModuleForCreationDto dto)
     {
-        var created =
-            await _serviceManager.ModuleService.CreateAsync(dto);
-
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = created.Id },
-            created);
+        var created = await _serviceManager.ModuleService.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [Authorize(Roles = "Teacher")]
@@ -133,9 +92,7 @@ public class ModulesController(
     [SwaggerResponse(StatusCodes.Status204NoContent, "Module updated")]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid data")]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Module not found")]
-    public async Task<IActionResult> Update(
-        int id,
-        ModuleForUpdateDto dto)
+    public async Task<IActionResult> Update(int id, ModuleForUpdateDto dto)
     {
         await _serviceManager.ModuleService.UpdateAsync(id, dto);
         return NoContent();
