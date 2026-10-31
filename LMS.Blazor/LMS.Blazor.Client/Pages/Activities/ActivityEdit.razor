@@ -1,0 +1,77 @@
+@page "/activities/{Id:int}/edit"
+@using System.Net
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Authorization
+@using LMS.Shared.DTOs.ActivityDtos
+@using LMS.Shared.DTOs.ModuleDtos
+@using LMS.Blazor.Client.Services.ApiProxy
+@attribute [Authorize(Roles = "Teacher")]
+@inject IApiProxyClient Proxy
+@inject NavigationManager Navigation
+
+<PageTitle>Edit activity</PageTitle>
+<div class="activity-form-page">
+    <a class="activity-back" href="@BackUrl">← Back to module activities</a>
+    <section class="activity-form-card">
+        <span class="activity-eyebrow">LEXICON LMS · TEACHING</span><h1>Edit activity</h1>
+        @if (loading) { <p>Loading activity...</p> }
+        else if (activity is null || module is null) { <div class="activity-error" role="alert">@errorMessage</div> }
+        else {
+            <p class="activity-intro">Update <strong>@activity.Name</strong> in <strong>@module.Name</strong>.</p>
+            <EditForm Model="model" OnValidSubmit="SaveAsync"><DataAnnotationsValidator /><ValidationSummary />
+                @if (!string.IsNullOrWhiteSpace(errorMessage)) { <div class="activity-error" role="alert">@errorMessage</div> }
+                <div class="activity-field"><label for="activity-type">Activity type</label>
+                    <InputSelect id="activity-type" @bind-Value="model.Type" class="activity-input">
+                        <option value="Assignment">Assignment</option><option value="Lecture">Lecture</option><option value="ELearning">E-learning</option><option value="Exercise">Exercise</option><option value="Other">Other</option>
+                    </InputSelect></div>
+                <div class="activity-field"><label for="activity-name">Title</label><InputText id="activity-name" @bind-Value="model.Name" class="activity-input" /><ValidationMessage For="() => model.Name" /></div>
+                <div class="activity-field"><label for="activity-description">Instructions / description</label><InputTextArea id="activity-description" @bind-Value="model.Description" class="activity-input activity-textarea" rows="5" /><ValidationMessage For="() => model.Description" /></div>
+                <div class="activity-grid">
+                    <div class="activity-field"><label for="activity-start">Available from</label><InputDate id="activity-start" Type="InputDateType.DateTimeLocal" @bind-Value="model.StartTime" class="activity-input" /></div>
+                    <div class="activity-field"><label for="activity-end">Deadline / end time</label><InputDate id="activity-end" Type="InputDateType.DateTimeLocal" @bind-Value="model.EndTime" class="activity-input" /></div>
+                </div>
+                <div class="activity-note">Activity dates must remain within the module period and cannot overlap another activity.</div>
+                <div class="activity-actions"><a class="activity-cancel" href="@BackUrl">Cancel</a><button class="activity-submit" type="submit" disabled="@saving">@(saving ? "Saving..." : "Save changes")</button></div>
+            </EditForm>
+        }
+    </section>
+</div>
+<style>
+.activity-form-page{max-width:850px;margin:0 auto;padding:clamp(1rem,3vw,2rem)}.activity-back{display:inline-block;margin-bottom:1rem;color:#5146e5;text-decoration:none}.activity-form-card{padding:clamp(1.2rem,3vw,2rem);background:var(--bs-body-bg,#fff);border:1px solid #e1e5ec;border-radius:14px;box-shadow:0 4px 14px #1822300d}.activity-eyebrow{font-size:.75rem;letter-spacing:.12em;color:#5146e5;font-weight:700}.activity-form-card h1{margin:.4rem 0;font-size:clamp(1.6rem,3vw,2.2rem)}.activity-intro{color:#687386;margin-bottom:1.5rem}.activity-field{display:flex;flex-direction:column;gap:.4rem;margin:1rem 0}.activity-field label{font-weight:600}.activity-input{width:100%;min-height:44px;padding:.65rem .75rem;border:1px solid #cbd2dd;border-radius:8px;background:var(--bs-body-bg,#fff);color:inherit}.activity-textarea{min-height:120px;resize:vertical}.activity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.activity-note{padding:.85rem 1rem;background:#f2f4ff;border-radius:8px;color:#414b70;font-size:.9rem}.activity-error{padding:.85rem 1rem;margin:1rem 0;border-radius:8px;background:#fff0f0;color:#9b1c1c}.activity-actions{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem}.activity-cancel,.activity-submit{padding:.7rem 1.1rem;border-radius:8px;font-weight:600;text-decoration:none;border:1px solid #b7bfcc}.activity-cancel{color:inherit}.activity-submit{background:#5146e5;color:white;border-color:#5146e5}@media(max-width:600px){.activity-grid{grid-template-columns:1fr}.activity-actions{flex-direction:column-reverse}.activity-actions>*{text-align:center;width:100%}}
+</style>
+@code {
+    [Parameter] public int Id { get; set; }
+    private ActivityDto? activity;
+    private ModuleDto? module;
+    private ActivityUpdateDto model = new();
+    private bool loading = true, saving;
+    private string? errorMessage;
+    private string BackUrl => module is null ? "/courses" : $"/modules/{module.Id}/activities";
+    protected override async Task OnParametersSetAsync() {
+        try {
+            activity = await Proxy.SendAsync<ActivityDto>(HttpMethod.Get, $"activities/{Id}");
+            if (activity is null) { errorMessage = "Activity not found."; return; }
+            module = await Proxy.SendAsync<ModuleDto>(HttpMethod.Get, $"modules/{activity.ModuleId}");
+            if (module is null) { errorMessage = "Module not found."; return; }
+            model.Type = activity.Type; model.Name = activity.Name; model.Description = activity.Description;
+            model.StartTime = activity.StartTime; model.EndTime = activity.EndTime;
+        } catch (UnauthorizedAccessException) { errorMessage = "Your session has expired. Please sign in again."; }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden) { errorMessage = "Only teachers can edit activities."; }
+        catch (HttpRequestException) { errorMessage = "Could not load this activity."; }
+        finally { loading = false; }
+    }
+    private async Task SaveAsync() {
+        if (module is null) return;
+        errorMessage = null;
+        if (model.StartTime >= model.EndTime) { errorMessage = "The end time must be later than the start time."; return; }
+        if (model.StartTime < module.StartDate.Date || model.EndTime > module.EndDate.Date.AddDays(1)) { errorMessage = "The activity must remain within the module dates."; return; }
+        saving = true;
+        try {
+            await Proxy.SendAsync<object>(HttpMethod.Put, $"activities/{Id}", JsonContent.Create(model));
+            Navigation.NavigateTo(BackUrl);
+        } catch (UnauthorizedAccessException) { errorMessage = "Your session has expired. Please sign in again."; }
+        catch (HttpRequestException ex) { errorMessage = ex.Message; }
+        catch (Exception) { errorMessage = "An unexpected error occurred while saving."; }
+        finally { saving = false; }
+    }
+}
