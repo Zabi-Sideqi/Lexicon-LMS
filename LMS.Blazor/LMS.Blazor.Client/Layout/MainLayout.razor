@@ -47,6 +47,13 @@
                      aria-label="Notifications">
                     <h3>Notifications</h3>
 
+                    @if (!string.IsNullOrWhiteSpace(notificationMessage))
+                    {
+                        <div class="alert @(notificationError ? "alert-danger" : "alert-success") m-2" role="@(notificationError ? "alert" : "status")">
+                            @notificationMessage
+                        </div>
+                    }
+
                     @if (notifications.Count == 0)
                     {
                         <p>You have no notifications.</p>
@@ -149,6 +156,8 @@
     private PeriodicTimer? notificationTimer;
     private CancellationTokenSource? notificationCts;
     private bool showNotifications;
+    private string? notificationMessage;
+    private bool notificationError;
 
     private void ToggleSidebar()
     {
@@ -178,15 +187,21 @@
                 "notifications");
 
             notifications = result ?? [];
+            notificationMessage = null;
+            notificationError = false;
             await InvokeAsync(StateHasChanged);
         }
         catch (UnauthorizedAccessException)
         {
-            // The session is no longer valid.
+            notificationMessage = "Your session has expired. Please log in again.";
+            notificationError = true;
+            await InvokeAsync(StateHasChanged);
         }
         catch (HttpRequestException)
         {
-            // The API request failed.
+            notificationMessage = "Notifications could not be loaded. Please try again.";
+            notificationError = true;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -219,17 +234,23 @@
             {
                 var index = notifications.IndexOf(notification);
                 notifications[index] = notification with { IsRead = true };
+                notificationMessage = "Notification marked as read.";
+                notificationError = false;
 
                 await InvokeAsync(StateHasChanged);
             }
         }
         catch (UnauthorizedAccessException)
         {
-            // The session is no longer valid.
+            notificationMessage = "Your session has expired. Please log in again.";
+            notificationError = true;
+            await InvokeAsync(StateHasChanged);
         }
         catch (HttpRequestException)
         {
-            // The API request failed.
+            notificationMessage = "The notification could not be marked as read. Please try again.";
+            notificationError = true;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
