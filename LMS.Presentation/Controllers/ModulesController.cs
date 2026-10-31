@@ -1,7 +1,11 @@
+﻿
+using Domain.Models.Entities;
 using LMS.Shared.DTOs.ModuleDtos;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Service.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -12,9 +16,27 @@ namespace LMS.Presentation.Controllers;
 [Consumes("application/json")]
 [Produces("application/json")]
 [Authorize]
-public class ModulesController(IServiceManager serviceManager) : ControllerBase
+public class ModulesController(
+    IServiceManager serviceManager,
+    UserManager<ApplicationUser> userManager) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
+
+    private bool IsTeacher =>
+        User.IsInRole("Teacher");
+
+    private async Task<int?> GetStudentCourseIdAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (userId is null)
+            return null;
+
+        var user = await _userManager.FindByIdAsync(userId);
+
+        return user?.CourseId;
+    }
 
     [HttpGet]
     [Authorize(Roles = "Teacher")]
@@ -23,8 +45,8 @@ public class ModulesController(IServiceManager serviceManager) : ControllerBase
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     public async Task<ActionResult<IEnumerable<ModuleDto>>> GetAll()
     {
-        var modules = await _serviceManager.ModuleService.GetAllAsync();
-        return Ok(modules);
+        var allModules = await _serviceManager.ModuleService.GetAllAsync();
+        return Ok(allModules);
     }
 
     [HttpGet("{id:int}")]
@@ -39,15 +61,12 @@ public class ModulesController(IServiceManager serviceManager) : ControllerBase
         if (module is null)
             return NotFound();
 
-        if (!User.IsInRole("Teacher"))
+        if (!IsTeacher)
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrWhiteSpace(userId))
-                return Forbid();
+            var courseId = await GetStudentCourseIdAsync();
 
-            // Student course membership is checked by the dedicated course endpoint.
-            // Keep individual module access restricted to teachers here.
-            return Forbid();
+            if (courseId is null || module.CourseId != courseId.Value)
+                return Forbid();
         }
 
         return Ok(module);
@@ -59,16 +78,12 @@ public class ModulesController(IServiceManager serviceManager) : ControllerBase
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
     public async Task<ActionResult<IEnumerable<ModuleDto>>> GetByCourseId(int courseId)
     {
-        if (!User.IsInRole("Teacher"))
+        if (!IsTeacher)
         {
-            // Student access is scoped to their own course by the service-facing user identity.
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrWhiteSpace(userId))
-                return Forbid();
+            var studentCourseId = await GetStudentCourseIdAsync();
 
-            // Resolve the student's course through the authenticated user store.
-            // This endpoint is implemented below through the injected user manager in the original design.
-            return Forbid();
+            if (studentCourseId is null || studentCourseId.Value != courseId)
+                return Forbid();
         }
 
         var modules = await _serviceManager.ModuleService.GetByCourseIdAsync(courseId);
@@ -83,6 +98,7 @@ public class ModulesController(IServiceManager serviceManager) : ControllerBase
     public async Task<ActionResult<ModuleDto>> Create(ModuleForCreationDto dto)
     {
         var created = await _serviceManager.ModuleService.CreateAsync(dto);
+
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
