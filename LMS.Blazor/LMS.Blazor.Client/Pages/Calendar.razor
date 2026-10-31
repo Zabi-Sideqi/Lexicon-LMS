@@ -78,7 +78,7 @@
     }
     else
     {
-        <section class="schedule-list" aria-label="Aktiviteter sorterade efter starttid">
+        <section class="schedule-list" aria-label="Activities sorted by start time">
             @foreach (var activity in _pagedActivities.Items)
             {
                 <article class="schedule-item" @key="activity.Id">
