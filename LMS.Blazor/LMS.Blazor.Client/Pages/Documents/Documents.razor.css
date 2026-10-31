@@ -1,0 +1,66 @@
+/* CSS for Documents component */
+
+/* Documents page */
+
+.documents-page {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Upload form */
+.documents-upload {
+    max-width: 100%;
+}
+
+    .documents-upload .form-control,
+    .documents-upload .form-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+/* Responsive document table */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+    .table-responsive table {
+        min-width: 650px;
+        margin-bottom: 0;
+    }
+
+    .table-responsive th,
+    .table-responsive td {
+        vertical-align: middle;
+        overflow-wrap: anywhere;
+    }
+
+    /* File names and paths */
+    .table-responsive td {
+        max-width: 250px;
+    }
+
+    /* Download button */
+    .table-responsive .btn {
+        white-space: nowrap;
+    }
+
+/* Mobile layout */
+@media (max-width: 600px) {
+    .documents-page h1 {
+        font-size: 1.6rem;
+    }
+
+    .documents-page h2 {
+        font-size: 1.25rem;
+    }
+
+    .documents-upload .btn {
+        width: 100%;
+    }
+
+    .table-responsive table {
+        min-width: 650px;
+    }
+}

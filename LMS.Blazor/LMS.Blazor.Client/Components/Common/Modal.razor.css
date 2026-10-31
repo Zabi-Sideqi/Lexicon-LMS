@@ -1,0 +1,81 @@
+/* CSS for Modal component */
+.lms-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.lms-modal {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.lms-modal-header,
+.lms-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+}
+
+.lms-modal-header {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+    .lms-modal-header h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+.lms-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.lms-modal-footer {
+    justify-content: flex-end;
+    border-top: 1px solid #e5e7eb;
+}
+
+.lms-modal-close {
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+    .lms-modal-close:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+    }
+
+@media (max-width: 480px) {
+    .lms-modal-backdrop {
+        padding: 12px;
+    }
+
+    .lms-modal-header,
+    .lms-modal-footer {
+        padding: 14px;
+    }
+
+    .lms-modal-body {
+        padding: 16px;
+    }
+}

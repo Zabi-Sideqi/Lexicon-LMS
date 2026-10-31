@@ -48,6 +48,8 @@ public class AssignmentsController(IServiceManager serviceManager) : ControllerB
     }
 
     [HttpPost("my/{id:int}/submission")]
+    [RequestSizeLimit(11 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 11 * 1024 * 1024)]
     [Consumes("multipart/form-data")]
     [SwaggerOperation(
         Summary = "Hand in a file to an assignment",

@@ -19,6 +19,8 @@ public class DocumentsController(IServiceManager serviceManager) : ControllerBas
     private readonly IServiceManager _serviceManager = serviceManager;
 
     [HttpPost("upload")]
+    [RequestSizeLimit(11 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 11 * 1024 * 1024)]
     [Authorize(Roles = "Teacher,Student")]
     [Consumes("multipart/form-data")]
     [SwaggerOperation(

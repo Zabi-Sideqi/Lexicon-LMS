@@ -550,3 +550,105 @@
         border-color: #d8d8de;
         color: #50505a;
     }
+
+/* =========================================================
+   US17 - Responsive teacher dashboard filters
+   ========================================================= */
+
+/* Filter panel */
+.dashboard > .activity-card.mb-3 > .d-flex {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px !important;
+}
+
+    /* Individual filter fields */
+    .dashboard > .activity-card.mb-3 > .d-flex > div {
+        flex: 1 1 150px;
+        min-width: 0;
+    }
+
+/* Filter labels */
+.dashboard > .activity-card.mb-3 .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Dropdowns */
+.dashboard > .activity-card.mb-3 .form-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    font-size: 14px;
+}
+
+/* Filter buttons */
+.dashboard > .activity-card.mb-3 .btn {
+    min-height: 42px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+    .dashboard > .activity-card.mb-3 > .d-flex {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 14px !important;
+    }
+
+        .dashboard > .activity-card.mb-3 > .d-flex > div {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .dashboard > .activity-card.mb-3 > .d-flex > div:nth-child(3) {
+                grid-column: 1 / -1;
+            }
+
+    .dashboard > .activity-card.mb-3 .btn {
+        width: 100%;
+        min-width: 0;
+        padding: 10px 12px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .dashboard > .activity-card.mb-3 {
+        padding: 16px;
+    }
+
+        .dashboard > .activity-card.mb-3 > .d-flex {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px !important;
+        }
+
+        .dashboard > .activity-card.mb-3 .form-label {
+            font-size: 13px;
+        }
+
+        .dashboard > .activity-card.mb-3 .form-select {
+            font-size: 14px;
+        }
+
+        .dashboard > .activity-card.mb-3 .btn {
+            font-size: 13px;
+            padding: 9px 6px;
+        }
+}
+
+/* Very small mobile screens */
+@media (max-width: 350px) {
+    .dashboard > .activity-card.mb-3 > .d-flex {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+        .dashboard > .activity-card.mb-3 > .d-flex > div:nth-child(3) {
+            grid-column: auto;
+        }
+}

@@ -3,10 +3,12 @@
 /* ModuleEdit - aligned with the Lexicon LMS design system */
 
 .module-edit-page {
+    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 8px 0 40px;
+    padding: 8px 16px 40px;
     color: var(--lms-text, #27272a);
+    box-sizing: border-box;
 }
 
 .module-edit-header {
@@ -99,6 +101,7 @@
 .module-edit-input {
     display: block;
     width: 100%;
+    min-width: 0;
     min-height: 44px;
     padding: 11px 12px;
     border: 1px solid #bbb;
@@ -107,6 +110,7 @@
     background: var(--lms-surface, #fff);
     color: var(--lms-text, #27272a);
     font: inherit;
+    box-sizing: border-box;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 

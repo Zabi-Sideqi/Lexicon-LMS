@@ -1,0 +1,111 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (Visible)
+{
+    <div class="lms-modal-backdrop"
+         @onclick="HandleBackdropClick">
+
+        <div class="lms-modal"
+             @ref="modalElement"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="lms-modal-title"
+             tabindex="-1"
+             @onkeydown="HandleKeyDown"
+             @onclick:stopPropagation="true">
+
+            <div class="lms-modal-header">
+                <h2 id="lms-modal-title">@Title</h2>
+
+                <button type="button"
+                        class="lms-modal-close"
+                        aria-label="Close dialog"
+                        @onclick="Close">
+                    &times;
+                </button>
+            </div>
+
+            <div class="lms-modal-body">
+                @ChildContent
+            </div>
+
+            @if (ShowFooter)
+            {
+                <div class="lms-modal-footer">
+                    @FooterContent
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Dialog";
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool ShowFooter { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private ElementReference modalElement;
+    private IJSObjectReference? module;
+    private bool focusManagementActive;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && !focusManagementActive)
+        {
+            module ??= await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./Components/Common/Modal.razor.js");
+
+            await module.InvokeVoidAsync("showModal", modalElement);
+            focusManagementActive = true;
+        }
+        else if (!Visible && focusManagementActive && module is not null)
+        {
+            await module.InvokeVoidAsync("hideModal");
+            focusManagementActive = false;
+        }
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        await Close();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Close();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try
+            {
+                if (focusManagementActive)
+                {
+                    await module.InvokeVoidAsync("hideModal");
+                }
+
+                await module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // The browser connection has already been closed.
+            }
+        }
+    }
+}

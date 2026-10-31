@@ -9,9 +9,6 @@ namespace LMS.Services;
 
 public class DocumentService : IDocumentService
 {
-    private static readonly string[] AllowedExtensions = [".pdf", ".docx"];
-    private const long MaxFileSize = 10 * 1024 * 1024;
-
     private readonly IUnitOfWork _uow;
     private readonly IFileStorage _fileStorage;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -36,7 +33,8 @@ public class DocumentService : IDocumentService
         int? activityId,
         string uploadedById)
     {
-        ValidateFile(fileName, fileSize);
+        await FileValidator.ValidateAsync(fileStream, fileName, fileSize);
+        contentType = FileValidator.GetVerifiedContentType(fileName);
 
         if ((courseId.HasValue ? 1 : 0) + (moduleId.HasValue ? 1 : 0) + (activityId.HasValue ? 1 : 0) != 1)
             throw new ArgumentException(
@@ -208,22 +206,6 @@ public class DocumentService : IDocumentService
         var documents = await _uow.DocumentRepository.GetByCourseIdAsync(courseId);
 
         return documents.Select(MapToDto);
-    }
-
-    private static void ValidateFile(string fileName, long fileSize)
-    {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-
-        if (!AllowedExtensions.Contains(extension))
-            throw new ArgumentException(
-                $"Filtypen {extension} är inte tillåten. Tillåtna: {string.Join(", ", AllowedExtensions)}.");
-
-        if (fileSize > MaxFileSize)
-            throw new ArgumentException(
-                $"Filen är för stor. Maxstorlek är {MaxFileSize / (1024 * 1024)} MB.");
-
-        if (fileSize == 0)
-            throw new ArgumentException("Filen är tom.");
     }
 
     private async Task EnsureCanAccessAsync(Document document, string userId)

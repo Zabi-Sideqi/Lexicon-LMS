@@ -8,16 +8,17 @@
 @using LMS.Shared.Enums
 @using LMS.Shared.DTOs.CourseDtos
 @using LMS.Shared.DTOs.ActivityDtos
-
+@using LMS.Blazor.Client.Components.Common
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @attribute [Authorize(Roles = "Teacher")]
 @inject IApiProxyClient Proxy
 
-<PageTitle>Teacher Dashboard</PageTitle>
+<PageTitle>Welcome, @userName!</PageTitle>
 
 <div class="dashboard">
     <div class="page-head">
         <div>
-            <h1>Teacher Dashboard</h1>
+            <h1>Welcome, @userName!</h1>
             <p>Overview of courses, activities, submissions, and feedback.</p>
         </div>
         <span class="role-badge">Teacher</span>
@@ -33,28 +34,28 @@
                 <select id="statusFilter"
                         class="form-select"
                         @bind="selectedStatus">
-                    <option value="">Alla statusar</option>
+                    <option value="">All Statuses</option>
                     <option value="@nameof(SubmissionStatus.Submitted)">
-                        Inlämnad
+                        Submitted
                     </option>
                     <option value="@nameof(SubmissionStatus.SubmittedLate)">
-                        Inlämnad sent
+                        Submitted Late
                     </option>
                     <option value="@nameof(SubmissionStatus.Late)">
-                        Försenad
+                        Late
                     </option>
                     <option value="@nameof(SubmissionStatus.NotSubmitted)">
-                        Ej inlämnad
+                        Not Submitted
                     </option>
                 </select>
             </div>
 
             <div>
-                <label for="courseFilter" class="form-label">Kurs</label>
+                <label for="courseFilter" class="form-label">Course</label>
                 <InputSelect id="courseFilter"
                              class="form-select"
                              @bind-Value="selectedCourseId">
-                    <option value="">Alla kurser</option>
+                    <option value="">All Courses</option>
                     @foreach (var course in courses)
                     {
                         <option value="@course.Id">@course.Name</option>
@@ -63,11 +64,11 @@
             </div>
 
             <div>
-                <label for="activityFilter" class="form-label">Uppgift</label>
+                <label for="activityFilter" class="form-label">Assignment</label>
                 <InputSelect id="activityFilter"
                              class="form-select"
                              @bind-Value="selectedActivityId">
-                    <option value="">Alla uppgifter</option>
+                    <option value="">All Assignments</option>
                     @foreach (var activity in activities)
                     {
                         <option value="@activity.Id">@activity.Name</option>
@@ -78,22 +79,20 @@
             <button class="btn btn-primary"
                     type="button"
                     @onclick="ApplyFilterAsync">
-                Filtrera
+                Apply Filters
             </button>
 
             <button class="btn btn-outline-secondary"
                     type="button"
                     @onclick="ResetFilterAsync">
-                Rensa
+                Clear Filters
             </button>
         </div>
     </div>
 
     @if (loading)
     {
-        <div class="activity-card">
-            <p>Loading dashboard data...</p>
-        </div>
+        <Loading Message="Loading dashboard data..." Centered="true" />
     }
     else if (errorMessage is not null || initializationError is not null)
     {
@@ -107,7 +106,6 @@
     }
     else
     {
-
         <div class="stats">
             <a href="/courses" class="stat-card stat-card-link">
                 <span class="stat-icon" aria-hidden="true">
@@ -134,7 +132,7 @@
                     </svg>
                 </span>
                 <strong>@(dashboard?.Courses.Sum(course => course.UpcomingActivityCount) ?? 0)</strong>
-                <span>Upcoming activities</span>
+                <span>Upcoming Activities</span>
             </a>
 
             <a href="#pending-feedback" class="stat-card stat-card-link">
@@ -147,7 +145,7 @@
                     </svg>
                 </span>
                 <strong>@(dashboard?.PendingFeedbackCount ?? 0)</strong>
-                <span>Awaiting feedback</span>
+                <span>Awaiting Feedback</span>
             </a>
 
             <a href="#attention-items" class="stat-card stat-card-link">
@@ -163,7 +161,7 @@
                     @((dashboard?.LateSubmissionCount ?? 0)
                         + (dashboard?.MissingSubmissionCount ?? 0))
                 </strong>
-                <span>Late or missing submissions</span>
+                <span>Late or Missing Submissions</span>
             </a>
         </div>
 
@@ -176,13 +174,13 @@
                 <div class="stat-card">
                     <span class="stat-icon">▣</span>
                     <strong>@submissions.Count(s => s.SubmissionId is not null)</strong>
-                    <span>Inlämningar</span>
+                    <span>Submissions</span>
                 </div>
 
                 <div class="stat-card">
                     <span class="stat-icon">✓</span>
                     <strong>@submissions.Count(s => s.SubmissionId is not null && s.HasFeedback)</strong>
-                    <span>Har fått feedback</span>
+                    <span>Feedback Provided</span>
                 </div>
             </div>
 
@@ -197,14 +195,15 @@
                             · @course.UpcomingActivityCount upcoming activities
                         </span>
                         <span class="course-status-badge @(course.IsActive ? "is-active" : "is-inactive")">
-                            @(course.IsActive ? "Active course" : "Not currently active")
+                            @(course.IsActive ? "Active Course" : "Not Currently Active")
                         </span>
                     </div>
                 }
             }
             else
             {
-                <p>No courses to display.</p>
+                <EmptyState Title="No courses available"
+                            Message="There are no courses to display right now." />
             }
         </div>
 
@@ -231,14 +230,15 @@
 
                         <a class="btn btn-outline-primary btn-sm"
                            href="@($"/courses/{activity.CourseId}/modules")">
-                            Open course modules
+                            Open Course Modules
                         </a>
                     </div>
                 }
             }
             else
             {
-                <p>No upcoming activities.</p>
+                <EmptyState Title="No upcoming activities"
+                            Message="There are no upcoming activities to display right now." />
             }
         </div>
 
@@ -256,7 +256,7 @@
                         .Distinct()
                         .Count())
                 </strong>
-                <span>Studenter med inlämning</span>
+                <span>Students with Submissions</span>
             </div>
 
             @if (dashboard?.AttentionItems.Count > 0)
@@ -275,29 +275,29 @@
                         @if (item.Status == "Late submission")
                         {
                             <span class="badge bg-danger">
-                                Late submission
+                                Late Submission
                             </span>
                         }
                         else
                         {
                             <span class="badge bg-warning text-dark">
-                                Missing submission
+                                Missing Submission
                             </span>
                         }
 
                         <a class="btn btn-outline-primary btn-sm"
                            href="@($"/courses/{item.CourseId}/modules")">
-                            Open course modules
+                            Open Course Modules
                         </a>
                     </div>
                 }
             }
             else
             {
-                <p>There are no late or missing submissions to display.</p>
+                <EmptyState Title="No late or missing submissions"
+                            Message="There are no late or missing submissions to review." />
             }
         </div>
-
 
         <div class="activity-card" id="pending-feedback">
             <div class="section-head">
@@ -306,7 +306,8 @@
 
             @if (!PagedSubmissions.Any())
             {
-                <p>There are no submissions awaiting feedback.</p>
+                <EmptyState Title="No submissions awaiting feedback"
+                            Message="There are no submissions waiting for your feedback." />
             }
             else
             {
@@ -338,7 +339,7 @@
                                             <a href="/api/proxy/submissions/@submissionId/download"
                                                download="@submission.FileName"
                                                class="btn btn-sm btn-secondary mt-1">
-                                                Ladda ner
+                                                Download
                                             </a>
                                         }
                                     </td>
@@ -355,11 +356,10 @@
                                         {
                                             <button class="btn btn-primary btn-sm"
                                                     @onclick="() => SelectSubmission(submission)">
-                                                Give feedback
+                                                Give Feedback
                                             </button>
                                         }
                                     </td>
-
                                 </tr>
                             }
                         </tbody>
@@ -389,7 +389,7 @@
 
                 <div class="mb-3">
                     <label for="feedbackText" class="form-label">
-                        Feedback for the student
+                        Feedback for the Student
                     </label>
 
                     <textarea id="feedbackText"
@@ -425,12 +425,11 @@
             </div>
         }
 
-        @if (!string.IsNullOrWhiteSpace(feedbackSuccess))
-        {
-            <div class="alert alert-success" role="status">
-                @feedbackSuccess
-            </div>
-        }
+        <Toast Title="Feedback sent"
+               Message="@(feedbackSuccess ?? string.Empty)"
+               Type="success"
+               Visible="@(!string.IsNullOrWhiteSpace(feedbackSuccess))"
+               OnClose="DismissFeedbackToast" />
 
         <div class="activity-card">
             <h2>Recent Submissions</h2>
@@ -452,28 +451,29 @@
 
                         @if (submission.IsLate)
                         {
-                            <span class="badge bg-danger ms-2">Late submission</span>
+                            <span class="badge bg-danger ms-2">Late Submission</span>
                         }
 
                         @if (recentlySubmitted)
                         {
                             <span class="badge bg-primary ms-2">
-                                New · last 24 hours
+                                New · Last 24 Hours
                             </span>
                         }
 
                         <span>
                             @submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")
                             · @(submission.HasFeedback
-                                                                                            ? "Feedback provided"
-                                                                                            : "Feedback required")
+                                                            ? "Feedback Provided"
+                                                            : "Feedback Required")
                         </span>
                     </div>
                 }
             }
             else
             {
-                <p>There are no recent submissions to display yet.</p>
+                <EmptyState Title="No recent submissions"
+                            Message="There are no recent submissions to display yet." />
             }
         </div>
     }
@@ -493,7 +493,7 @@
     private bool sendingFeedback;
 
     private string selectedStatus = string.Empty;
-
+    private string userName = "Teacher";
     private int _pageNumber = 1;
     private int _pageSize = 10;
 
@@ -522,6 +522,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState =
+    await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        userName = authState.User.Identity?.Name ?? "Teacher";
         await LoadDashboardAsync();
     }
 
@@ -672,6 +676,10 @@
         feedbackError = null;
         feedbackSuccess = null;
     }
+    private void DismissFeedbackToast()
+    {
+        feedbackSuccess = null;
+    }
 
     private async Task SubmitFeedbackAsync()
     {
@@ -741,6 +749,7 @@
             sendingFeedback = false;
         }
     }
+
     private static string GetStatusCssClass(SubmissionStatus status)
     {
         return status switch

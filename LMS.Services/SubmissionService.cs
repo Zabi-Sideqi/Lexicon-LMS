@@ -241,7 +241,8 @@ if (filter?.CourseId is int courseId)
         string contentType,
         long fileSize)
     {
-        FileValidator.Validate(fileName, fileSize);
+        await FileValidator.ValidateAsync(fileStream, fileName, fileSize);
+        contentType = FileValidator.GetVerifiedContentType(fileName);
 
         // The assignment must be in the student's own course.
         // Anything else gets the same "not found", so nothing about other courses is revealed.
@@ -300,38 +301,51 @@ if (filter?.CourseId is int courseId)
     }
 
     public async Task<PagedList<TeacherSubmissionDto>> GetSubmissionsForTeacherPagedAsync(
-    string teacherId,
-    PageParameters pageParameters,
-    bool? hasFeedback = null)
+        string teacherId,
+        PageParameters pageParameters,
+        bool? hasFeedback = null)
     {
-        var teacher = await _userManager.FindByIdAsync(teacherId);
-        if (teacher is null || !await _userManager.IsInRoleAsync(teacher, "Teacher"))
-            throw new UnauthorizedAccessException("Only teachers can view submissions.");
+        // Build the same complete teacher overview as the non-paged endpoint.
+        // This includes assignments for every student even when no submission exists.
+        var allRows = (await GetSubmissionsForTeacherAsync(teacherId)).AsEnumerable();
 
-        var paged = await _uow.SubmissionRepository.GetPagedAsync(pageParameters, hasFeedback);
+        if (hasFeedback.HasValue)
+            allRows = allRows.Where(row => row.HasFeedback == hasFeedback.Value);
 
-        var now = SchoolTime.FromUtc(DateTime.UtcNow);
-        var dtos = paged.Items.Select(s =>
+        if (!string.IsNullOrWhiteSpace(pageParameters.SearchTerm))
         {
-            var submittedAt = SchoolTime.FromUtc(s.SubmittedAt);
+            var search = pageParameters.SearchTerm.Trim();
+            allRows = allRows.Where(row =>
+                row.StudentName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                row.ActivityName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                (row.FileName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
 
-            return new TeacherSubmissionDto(
-                s.Id,
-                s.ActivityId,
-                s.Activity.Name,
-                s.StudentId,
-                s.Student.UserName ?? "Okänd",
-                s.FileName,
-                submittedAt,
-                s.Activity.EndTime,
-                SubmissionStatusCalculator.Calculate(
-                    s.Activity.EndTime,
-                    submittedAt,
-                    now),
-                s.Feedbacks.Any());
-        }).ToList();
+        allRows = pageParameters.SortOrder switch
+        {
+            "student" => allRows.OrderBy(row => row.StudentName),
+            "student_desc" => allRows.OrderByDescending(row => row.StudentName),
+            "activity" => allRows.OrderBy(row => row.ActivityName),
+            "activity_desc" => allRows.OrderByDescending(row => row.ActivityName),
+            "submitted" => allRows.OrderBy(row => row.SubmittedAt),
+            _ => allRows.OrderByDescending(row => row.SubmittedAt)
+        };
+
+        var rows = allRows.ToList();
+        var totalCount = rows.Count;
+        var pageNumber = Math.Max(1, pageParameters.PageNumber);
+        var pageSize = Math.Clamp(pageParameters.PageSize, 1, 100);
+        var items = rows
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
         return new PagedList<TeacherSubmissionDto>(
-            dtos, paged.PageNumber, paged.PageSize, paged.TotalCount, paged.TotalPages);
+            items,
+            pageNumber,
+            pageSize,
+            totalCount,
+            totalPages);
     }
 }
