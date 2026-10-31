@@ -242,6 +242,7 @@ if (filter?.CourseId is int courseId)
         long fileSize)
     {
         await FileValidator.ValidateAsync(fileStream, fileName, fileSize);
+        contentType = FileValidator.GetVerifiedContentType(fileName);
 
         // The assignment must be in the student's own course.
         // Anything else gets the same "not found", so nothing about other courses is revealed.
