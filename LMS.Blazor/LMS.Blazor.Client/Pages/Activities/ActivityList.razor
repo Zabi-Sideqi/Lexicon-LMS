@@ -32,7 +32,7 @@
                     <tbody>@foreach (var item in activities.OrderBy(a => a.StartTime)) {
                         <tr @key="item.Id"><td><strong>@item.Name</strong></td><td><span class="activity-type">@item.Type</span></td><td>@item.Description</td>
                         <td>@item.StartTime.ToString("yyyy-MM-dd HH:mm")</td><td>@item.EndTime.ToString("yyyy-MM-dd HH:mm")</td>
-                        <AuthorizeView Roles="Teacher"><td><button class="activity-danger" disabled="@deletingIds.Contains(item.Id)" @onclick="() => DeleteAsync(item)">@((deletingIds.Contains(item.Id)) ? "Deleting..." : "Delete")</button></td></AuthorizeView></tr>
+                        <AuthorizeView Roles="Teacher"><td><a class="activity-secondary" href="/activities/@item.Id/edit">Edit</a> <button class="activity-danger" disabled="@deletingIds.Contains(item.Id)" @onclick="() => DeleteAsync(item)">@((deletingIds.Contains(item.Id)) ? "Deleting..." : "Delete")</button></td></AuthorizeView></tr>
                     }</tbody>
                 </table></div>
             }
