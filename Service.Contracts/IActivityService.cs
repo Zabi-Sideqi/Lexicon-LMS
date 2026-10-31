@@ -1,5 +1,6 @@
 ﻿
 using LMS.Shared.DTOs.ActivityDtos;
+using LMS.Shared.DTOs.CommonDtos;
 
 namespace Service.Contracts;
 
@@ -16,4 +17,8 @@ public interface IActivityService
     Task UpdateAsync(int id, ActivityUpdateDto dto);
 
     Task DeleteAsync(int id);
+
+    Task<PagedList<ActivityDto>> GetPagedAsync(
+        PageParameters pageParameters,
+        int? courseId = null);
 }

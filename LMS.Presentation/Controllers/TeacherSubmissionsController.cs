@@ -1,5 +1,6 @@
 ﻿
 using LMS.Shared.DTOs.AssignmentDtos;
+using LMS.Shared.DTOs.CommonDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
@@ -32,6 +33,28 @@ public class TeacherSubmissionsController(
                 .GetSubmissionsForTeacherAsync(teacherId);
 
             return Ok(submissions);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedList<TeacherSubmissionDto>>> GetPaged(
+    [FromQuery] PageParameters pageParameters,
+    [FromQuery] bool? hasFeedback = null)
+    {
+        var teacherId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(teacherId))
+            return Unauthorized();
+
+        try
+        {
+            var paged = await _serviceManager.SubmissionService
+                .GetSubmissionsForTeacherPagedAsync(teacherId, pageParameters, hasFeedback);
+
+            return Ok(paged);
         }
         catch (UnauthorizedAccessException)
         {

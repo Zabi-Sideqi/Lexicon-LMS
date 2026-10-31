@@ -1,111 +1,180 @@
 ﻿@page "/courses"
 @attribute [Authorize(Roles = "Teacher")]
-@using LMS.Shared.DTOs.CourseDtos
 @using LMS.Blazor.Client.Services.ApiProxy
+@using LMS.Shared.DTOs.CommonDtos
+@using LMS.Shared.DTOs.CourseDtos
 @inject IApiProxyClient Proxy
 
-<PageTitle>Courses</PageTitle>
+<PageTitle>Kurser</PageTitle>
 
 <div class="course-page">
     <div class="course-page-header">
         <div>
             <span class="course-eyebrow">LEXICON LMS</span>
-            <h1>Courses</h1>
-            <p>Manage your courses and learning modules.</p>
+            <h1>Kurser</h1>
+            <p>Hantera dina kurser och utbildningsmoduler.</p>
         </div>
-
         <a href="/courses/create" class="btn btn-primary course-create-button">
             <span aria-hidden="true">+</span>
-            Create Course
+            Skapa kurs
         </a>
     </div>
 
-    @if (courses is null)
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger mb-4">
+            @errorMessage
+        </div>
+    }
+    else if (pagedCourses is null)
     {
         <div class="course-state">
             <span class="course-loading-indicator"></span>
-            <p>Loading courses...</p>
+            <p>Hämtar kurser...</p>
         </div>
     }
-    else if (!courses.Any())
+    else if (pagedCourses.TotalCount == 0 && string.IsNullOrWhiteSpace(pageParameters.SearchTerm))
     {
         <div class="course-state">
             <div class="course-empty-icon" aria-hidden="true">▤</div>
-            <h2>No courses found</h2>
-            <p>Create a course to get started.</p>
-            <a href="/courses/create" class="btn btn-primary">Create Course</a>
+            <h2>Inga kurser hittades</h2>
+            <p>Skapa en kurs för att komma igång.</p>
+            <a href="/courses/create" class="btn btn-primary">Skapa kurs</a>
         </div>
     }
     else
     {
         <div class="course-summary">
             <div>
-                <span class="course-summary-label">Total courses</span>
-                <strong>@courses.Count()</strong>
+                <span class="course-summary-label">Totalt antal kurser</span>
+                <strong>@pagedCourses.TotalCount</strong>
             </div>
             <span class="course-summary-icon" aria-hidden="true">▤</span>
         </div>
 
+        <SearchBar OnSearch="HandleSearch" Placeholder="Sök kurs..." />
+
         <section class="course-table-card">
             <div class="course-table-heading">
                 <div>
-                    <h2>Your courses</h2>
-                    <p>View course details and manage modules.</p>
+                    <h2>Dina kurser</h2>
+                    <p>Visa kursdetaljer och hantera moduler.</p>
                 </div>
+                <span class="text-muted">
+                    @pagedCourses.TotalCount totalt
+                </span>
             </div>
 
             <div class="table-responsive">
                 <table class="table course-table">
                     <thead>
                         <tr>
-                            <th scope="col">Course name</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Start date</th>
-                            <th scope="col">End date</th>
-                            <th scope="col" class="course-actions-heading">Actions</th>
+                            <th scope="col">Kursnamn</th>
+                            <th scope="col">Beskrivning</th>
+                            <th scope="col">Startdatum</th>
+                            <th scope="col">Slutdatum</th>
+                            <th scope="col" class="course-actions-heading">Åtgärder</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var course in courses)
+                        @if (!pagedCourses.Items.Any())
                         {
-                            <tr @key="course.Id">
-                                <td>
-                                    <div class="course-name-cell">
-                                        <span class="course-name-icon" aria-hidden="true">▤</span>
-                                        <strong>@course.Name</strong>
-                                    </div>
-                                </td>
-                                <td class="course-description">
-                                    @course.Description
-                                </td>
-                                <td>@course.StartDate.ToShortDateString()</td>
-                                <td>@course.EndDate.ToShortDateString()</td>
-                                <td>
-                                    <div class="course-row-actions">
-                                        <a href="/courses/edit/@course.Id"
-                                           class="btn btn-sm btn-secondary">
-                                            Edit
-                                        </a>
-                                        <a href="/courses/@course.Id/modules"
-                                           class="btn btn-sm btn-outline-primary">
-                                            Modules
-                                        </a>
-                                    </div>
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    Inga kurser hittades.
                                 </td>
                             </tr>
                         }
+                        else
+                        {
+                            @foreach (var course in pagedCourses.Items)
+                            {
+                                <tr @key="course.Id">
+                                    <td>
+                                        <div class="course-name-cell">
+                                            <span class="course-name-icon" aria-hidden="true">▤</span>
+                                            <strong>@course.Name</strong>
+                                        </div>
+                                    </td>
+                                    <td class="course-description">@course.Description</td>
+                                    <td>@course.StartDate.ToShortDateString()</td>
+                                    <td>@course.EndDate.ToShortDateString()</td>
+                                    <td>
+                                        <div class="course-row-actions">
+                                            <a href="/courses/edit/@course.Id"
+                                               class="btn btn-sm btn-secondary">
+                                                Redigera
+                                            </a>
+                                            <a href="/courses/@course.Id/modules"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Moduler
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
                     </tbody>
                 </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted">
+                    Sida @pagedCourses.PageNumber av @pagedCourses.TotalPages
+                </small>
+                <Pager PageNumber="pagedCourses.PageNumber"
+                       TotalPages="pagedCourses.TotalPages"
+                       OnPageChange="HandlePageChange" />
             </div>
         </section>
     }
 </div>
 
 @code {
-    private IEnumerable<CourseDto>? courses;
+    private PagedList<CourseDto>? pagedCourses;
+    private PageParameters pageParameters = new();
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        courses = await Proxy.GetAsync<IEnumerable<CourseDto>>("courses");
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var url = $"courses/paged?pageNumber={pageParameters.PageNumber}" +
+                      $"&pageSize={pageParameters.PageSize}" +
+                      $"&searchTerm={Uri.EscapeDataString(pageParameters.SearchTerm ?? "")}" +
+                      $"&sortOrder={Uri.EscapeDataString(pageParameters.SortOrder ?? "")}";
+
+            pagedCourses = await Proxy.GetAsync<PagedList<CourseDto>>(url);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "Din session är inte längre giltig. Logga in igen.";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Det gick inte att hämta kurser: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ett fel uppstod: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSearch(string searchTerm)
+    {
+        pageParameters.SearchTerm = searchTerm;
+        pageParameters.PageNumber = 1;
+        await LoadAsync();
+    }
+
+    private async Task HandlePageChange(int pageNumber)
+    {
+        pageParameters.PageNumber = pageNumber;
+        await LoadAsync();
     }
 }

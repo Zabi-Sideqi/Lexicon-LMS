@@ -1,4 +1,3 @@
-
 /* Lexicon LMS – dashboard styling
    Behåller befintliga Razor-klassnamn och funktioner. */
 
@@ -94,11 +93,25 @@
         box-shadow: 0 8px 20px rgba(35, 35, 70, 0.17);
     }
 
+/* Ikoner i statistikpanelerna */
+
 .stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
     color: #fff;
-    font-size: 25px;
     line-height: 1;
 }
+
+    .stat-icon svg {
+        display: block;
+        width: 26px;
+        height: 26px;
+        flex: 0 0 auto;
+    }
 
 .stat-card strong {
     display: block;
@@ -115,6 +128,25 @@
     font-size: 14px;
     line-height: 1.4;
 }
+
+/* Klickbara statistikpaneler */
+
+.stat-card-link {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+    .stat-card-link:hover,
+    .stat-card-link:focus-visible {
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .stat-card-link:focus-visible {
+        outline: 3px solid #222;
+        outline-offset: 3px;
+    }
 
 /* Rubriker och sektioner */
 
@@ -136,7 +168,7 @@
         line-height: 1.4;
     }
 
-/* Kurskort – behåller befintliga klassnamn */
+/* Kurskort */
 
 .course-grid {
     display: grid;
@@ -208,7 +240,7 @@
     font-size: 14px;
 }
 
-/* Knappar – behåller det befintliga klassnamnet */
+/* Knappar */
 
 .btn-primary-demo {
     display: inline-flex;
@@ -493,3 +525,28 @@
         font-size: 16px;
     }
 }
+/* Course status badges */
+.course-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 11px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+    .course-status-badge.is-active {
+        background: #e8f5ed;
+        border-color: #b7dfc5;
+        color: #176b3a;
+    }
+
+    .course-status-badge.is-inactive {
+        background: #f1f1f3;
+        border-color: #d8d8de;
+        color: #50505a;
+    }

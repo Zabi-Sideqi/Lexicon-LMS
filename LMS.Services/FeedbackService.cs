@@ -55,7 +55,7 @@ public class FeedbackService : IFeedbackService
                 feedback.Text,
                 feedback.CreatedAt,
                 feedback.TeacherId,
-                teacher?.UserName ?? "Okänd lärare"));
+                teacher?.UserName ?? "Unknown teacher"));
         }
 
         return result;
@@ -121,6 +121,6 @@ public class FeedbackService : IFeedbackService
             feedback.Text,
             feedback.CreatedAt,
             feedback.TeacherId,
-            teacher.UserName ?? "Okänd lärare");
+            teacher.UserName ?? "Unknown teacher");
     }
 }

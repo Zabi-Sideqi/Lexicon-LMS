@@ -1,5 +1,6 @@
 ﻿using Domain.Contracts;
 using Domain.Models.Entities;
+using LMS.Shared.DTOs.CommonDtos;
 using LMS.Shared.DTOs.CourseDtos;
 using Microsoft.AspNetCore.Identity;
 using Service.Contracts;
@@ -123,5 +124,20 @@ public class CourseService : ICourseService
         return course.Students.Select(s => new CourseParticipantDto(
             s.Id,
             s.UserName ?? "Unknown"));
+    }
+
+    private static CourseDto MapToDto(Course c) =>
+        new(c.Id, c.Name, c.Description, c.StartDate, c.EndDate);
+
+    public async Task<PagedList<CourseDto>> GetPagedAsync(PageParameters pageParameters)
+    {
+        var paged = await _uow.CourseRepository.GetPagedAsync(pageParameters);
+
+        return new PagedList<CourseDto>(
+            paged.Items.Select(MapToDto).ToList(),
+            paged.PageNumber,
+            paged.PageSize,
+            paged.TotalCount,
+            paged.TotalPages);
     }
 }

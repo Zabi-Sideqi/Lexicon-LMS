@@ -1,0 +1,38 @@
+﻿@* Generisk pager *@
+
+<nav aria-label="Pagination">
+    <ul class="pagination">
+        <li class="page-item @(PageNumber <= 1 ? "disabled" : "")">
+            <button class="page-link"
+                    disabled="@(PageNumber <= 1)"
+                    @onclick="() => OnPageChange.InvokeAsync(PageNumber - 1)">
+                «
+            </button>
+        </li>
+
+        @for (var i = 1; i <= TotalPages; i++)
+        {
+            var pageNum = i;
+            <li class="page-item @(pageNum == PageNumber ? "active" : "")">
+                <button class="page-link"
+                        @onclick="() => OnPageChange.InvokeAsync(pageNum)">
+                    @pageNum
+                </button>
+            </li>
+        }
+
+        <li class="page-item @(PageNumber >= TotalPages ? "disabled" : "")">
+            <button class="page-link"
+                    disabled="@(PageNumber >= TotalPages)"
+                    @onclick="() => OnPageChange.InvokeAsync(PageNumber + 1)">
+                »
+            </button>
+        </li>
+    </ul>
+</nav>
+
+@code {
+    [Parameter] public int PageNumber { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public EventCallback<int> OnPageChange { get; set; }
+}

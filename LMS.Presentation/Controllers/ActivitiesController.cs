@@ -1,6 +1,6 @@
-
-using Domain.Models.Entities;
+﻿using Domain.Models.Entities;
 using LMS.Shared.DTOs.ActivityDtos;
+using LMS.Shared.DTOs.CommonDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -22,8 +22,8 @@ public class ActivitiesController(
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IAuthorizationService _authorizationService = authorizationService;
 
-    // L�rare kan se alla aktiviteter.
-    // Studenter kan bara se aktiviteter fr�n sin egen kurs.
+    // Lärare kan se alla aktiviteter.
+    // Studenter kan bara se aktiviteter från sin egen kurs.
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetAll()
     {
@@ -57,7 +57,7 @@ public class ActivitiesController(
         return Ok(filteredActivities);
     }
 
-    // H�mtar en aktivitet endast om anv�ndaren har r�tt kurs�tkomst.
+    // Hämtar en aktivitet endast om användaren har rätt kursåtkomst.
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ActivityDto>> GetById(int id)
     {
@@ -72,13 +72,12 @@ public class ActivitiesController(
         return Forbid();
     }
 
-
-    // H�mtar aktiviteter f�r en modul endast om anv�ndaren har �tkomst.
+    // Hämtar aktiviteter för en modul endast om användaren har åtkomst.
     [HttpGet("module/{moduleId:int}")]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetByModuleId(
         int moduleId)
     {
-        // Endast l�rare och studenter f�r l�sa aktiviteter.
+        // Endast lärare och studenter får läsa aktiviteter.
         if (!User.IsInRole("Teacher") &&
             !User.IsInRole("Student"))
         {
@@ -90,7 +89,7 @@ public class ActivitiesController(
         if (module is null)
             return NotFound();
 
-        // Studenter f�r endast l�sa aktiviteter fr�n sin egen kurs.
+        // Studenter får endast läsa aktiviteter från sin egen kurs.
         if (User.IsInRole("Student"))
         {
             var authorizationResult = await _authorizationService.AuthorizeAsync(
@@ -108,8 +107,7 @@ public class ActivitiesController(
         return Ok(activities.OrderBy(activity => activity.StartTime));
     }
 
-
-    // Skapar en aktivitet. Endast l�rare f�r g�ra detta.
+    // Skapar en aktivitet. Endast lärare får göra detta.
     [Authorize(Policy = "Teacher")]
     [HttpPost]
     public async Task<ActionResult<ActivityDto>> Create(
@@ -123,7 +121,7 @@ public class ActivitiesController(
             created);
     }
 
-    // Uppdaterar en aktivitet. Endast l�rare f�r g�ra detta.
+    // Uppdaterar en aktivitet. Endast lärare får göra detta.
     [Authorize(Policy = "Teacher")]
     [HttpPut("{id:int}")]
     public async Task<ActionResult> Update(
@@ -134,7 +132,7 @@ public class ActivitiesController(
         return NoContent();
     }
 
-    // Tar bort en aktivitet. Endast l�rare f�r g�ra detta.
+    // Tar bort en aktivitet. Endast lärare får göra detta.
     [Authorize(Policy = "Teacher")]
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
@@ -143,12 +141,39 @@ public class ActivitiesController(
         return NoContent();
     }
 
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedList<ActivityDto>>> GetPaged(
+    [FromQuery] PageParameters pageParameters)
+    {
+        if (!User.IsInRole("Teacher") && !User.IsInRole("Student"))
+            return Forbid();
+
+        int? courseId = null;
+
+        if (User.IsInRole("Student"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user?.CourseId is not int cid)
+                return Forbid();
+
+            courseId = cid;
+        }
+
+        var paged = await _serviceManager.ActivityService
+            .GetPagedAsync(pageParameters, courseId);
+
+        return Ok(paged);
+    }
 
     private async Task<bool> CanReadModuleAsync(int moduleId)
     {
+
+        // Lärare får läsa aktiviteter från alla moduler.
         if (User.IsInRole("Teacher"))
             return true;
 
+        // Alla andra roller än Student nekas.
         if (!User.IsInRole("Student"))
             return false;
 
@@ -164,5 +189,4 @@ public class ActivitiesController(
 
         return result.Succeeded;
     }
-
 }

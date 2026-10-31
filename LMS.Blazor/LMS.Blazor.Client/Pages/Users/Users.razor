@@ -1,5 +1,6 @@
 ﻿@page "/users"
 
+@using LMS.Shared.DTOs.CommonDtos
 @using LMS.Shared.DTOs.UserDtos
 @using Microsoft.AspNetCore.Authorization
 @using LMS.Blazor.Client.Services.ApiProxy
@@ -14,9 +15,7 @@
     <div class="page-header">
         <div>
             <h1>Användare</h1>
-
         </div>
-
         <a class="btn btn-primary" href="/users/create">
             + Lägg till användare
         </a>
@@ -24,41 +23,24 @@
 
     <div class="card users-card">
 
-        <div class="searchbar">
-
-            <input class="form-control"
-                   type="search"
-                   @bind="searchText"
-                   placeholder="Sök användarnamn eller e-post..." />
-
-            <select class="form-select"
-                    @bind="selectedRole">
-                <option value="">Alla roller</option>
-                <option value="Student">Student</option>
-                <option value="Teacher">Teacher</option>
-            </select>
-
-            <button class="btn btn-primary"
-                    type="button"
-                    @onclick="ApplyFilter">
-                Sök
-            </button>
-
+        <div class="mb-4">
+            <SearchBar OnSearch="HandleSearch"
+                       Placeholder="Sök användarnamn eller e-post..." />
         </div>
 
-        @if (isLoading)
-        {
-            <div class="p-4 text-center">
-                <span>Laddar användare...</span>
-            </div>
-        }
-        else if (!string.IsNullOrWhiteSpace(errorMessage))
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
             <div class="alert alert-danger m-4">
                 @errorMessage
             </div>
         }
-        else if (filteredUsers.Count == 0)
+        else if (pagedUsers is null)
+        {
+            <div class="p-4 text-center">
+                <span>Laddar användare...</span>
+            </div>
+        }
+        else if (pagedUsers.TotalCount == 0)
         {
             <div class="p-4 text-center text-muted">
                 Inga användare hittades.
@@ -67,9 +49,7 @@
         else
         {
             <div class="table-responsive">
-
                 <table class="table users-table mb-0">
-
                     <thead>
                         <tr>
                             <th>Användarnamn</th>
@@ -80,46 +60,26 @@
                             <th></th>
                         </tr>
                     </thead>
-
                     <tbody>
-
-                        @foreach (var user in filteredUsers)
+                        @foreach (var user in pagedUsers.Items)
                         {
                             <tr>
-
-                                <td>
-                                    <strong>@user.UserName</strong>
-                                </td>
-
-                                <td>
-                                    @user.Email
-                                </td>
-
+                                <td><strong>@user.UserName</strong></td>
+                                <td>@user.Email</td>
                                 <td>
                                     @if (user.Role == "Student")
                                     {
-                                        <span class="badge role-student">
-                                            Student
-                                        </span>
+                                        <span class="badge role-student">Student</span>
                                     }
                                     else
                                     {
-                                        <span class="badge role-teacher">
-                                            Teacher
-                                        </span>
+                                        <span class="badge role-teacher">Teacher</span>
                                     }
                                 </td>
-
+                                <td>@(user.CourseId?.ToString() ?? "–")</td>
                                 <td>
-                                    @(user.CourseId?.ToString() ?? "–")
+                                    <span class="badge status-active">Aktiv</span>
                                 </td>
-
-                                <td>
-                                    <span class="badge status-active">
-                                        Aktiv
-                                    </span>
-                                </td>
-
                                 <td class="text-end">
                                     <a class="btn btn-sm btn-outline-primary"
                                        href="@($"/users/edit/{user.Id}")">
@@ -131,14 +91,20 @@
                                         Ta bort
                                     </button>
                                 </td>
-
                             </tr>
                         }
-
                     </tbody>
-
                 </table>
+            </div>
 
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <small class="text-muted">
+                    Sida @pagedUsers.PageNumber av @pagedUsers.TotalPages
+                    (@pagedUsers.TotalCount totalt)
+                </small>
+                <Pager PageNumber="pagedUsers.PageNumber"
+                       TotalPages="pagedUsers.TotalPages"
+                       OnPageChange="HandlePageChange" />
             </div>
         }
 
@@ -151,33 +117,30 @@
     [Inject]
     private IApiProxyClient ApiProxyClient { get; set; } = default!;
 
-    private List<UserResponseDto> users = new();
-    private List<UserResponseDto> filteredUsers = new();
-
-    private string searchText = string.Empty;
-    private string selectedRole = string.Empty;
-
-    private bool isLoading;
-    private string? errorMessage;
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
+
+    private PagedList<UserResponseDto>? pagedUsers;
+    private PageParameters pageParameters = new();
+    private string? errorMessage;
+
     protected override async Task OnInitializedAsync()
     {
-        await LoadUsers();
+        await LoadAsync();
     }
 
-    private async Task LoadUsers()
+    private async Task LoadAsync()
     {
-        isLoading = true;
         errorMessage = null;
 
         try
         {
-            var result = await ApiProxyClient.GetAsync<UserResponseDto[]>("users");
+            var url = $"users/paged?pageNumber={pageParameters.PageNumber}" +
+                      $"&pageSize={pageParameters.PageSize}" +
+                      $"&searchTerm={Uri.EscapeDataString(pageParameters.SearchTerm ?? "")}" +
+                      $"&sortOrder={Uri.EscapeDataString(pageParameters.SortOrder ?? "")}";
 
-            users = result?.ToList() ?? new List<UserResponseDto>();
-
-            ApplyFilter();
+            pagedUsers = await ApiProxyClient.GetAsync<PagedList<UserResponseDto>>(url);
         }
         catch (UnauthorizedAccessException)
         {
@@ -191,44 +154,26 @@
         {
             errorMessage = $"Ett fel uppstod: {ex.Message}";
         }
-        finally
-        {
-            isLoading = false;
-        }
     }
 
-    private void ApplyFilter()
+    private async Task HandleSearch(string searchTerm)
     {
-        IEnumerable<UserResponseDto> result = users;
-
-        if (!string.IsNullOrWhiteSpace(searchText))
-        {
-            result = result.Where(user =>
-                user.UserName.Contains(
-                    searchText,
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                user.Email.Contains(
-                    searchText,
-                    StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (!string.IsNullOrWhiteSpace(selectedRole))
-        {
-            result = result.Where(user =>
-                user.Role.Equals(
-                    selectedRole,
-                    StringComparison.OrdinalIgnoreCase));
-        }
-
-        filteredUsers = result.ToList();
+        pageParameters.SearchTerm = searchTerm;
+        pageParameters.PageNumber = 1;
+        await LoadAsync();
     }
+
+    private async Task HandlePageChange(int pageNumber)
+    {
+        pageParameters.PageNumber = pageNumber;
+        await LoadAsync();
+    }
+
     private async Task DeleteUser(UserResponseDto user)
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>(
             "confirm",
-            $"Vill du verkligen ta bort användaren {user.UserName}?"
-        );
+            $"Vill du verkligen ta bort användaren {user.UserName}?");
 
         if (!confirmed)
             return;
@@ -237,10 +182,9 @@
         {
             await ApiProxyClient.SendAsync<object>(
                 HttpMethod.Delete,
-                $"users/{user.Id}"
-            );
+                $"users/{user.Id}");
 
-            await LoadUsers();
+            await LoadAsync();
         }
         catch (UnauthorizedAccessException)
         {
