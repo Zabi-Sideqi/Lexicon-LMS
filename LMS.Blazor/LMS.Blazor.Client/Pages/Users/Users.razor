@@ -25,6 +25,11 @@
 
     <div class="card users-card">
 
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="alert alert-success m-4" role="status">@successMessage</div>
+        }
+
         <div class="mb-4">
             <SearchBar OnSearch="HandleSearch"
                        Placeholder="Search username or email..." />
@@ -183,6 +188,7 @@
     private PagedList<UserResponseDto>? pagedUsers;
     private PageParameters pageParameters = new();
     private string? errorMessage;
+    private string? successMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -238,6 +244,9 @@
         if (!confirmed)
             return;
 
+        errorMessage = null;
+        successMessage = null;
+
         try
         {
             await ApiProxyClient.SendAsync<object>(
@@ -245,6 +254,7 @@
                 $"users/{user.Id}");
 
             await LoadAsync();
+            successMessage = "User deleted successfully.";
         }
         catch (UnauthorizedAccessException)
         {
@@ -253,6 +263,10 @@
         catch (HttpRequestException ex)
         {
             errorMessage = $"Unable to delete user: {ex.Message}";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred while deleting the user. Please try again.";
         }
     }
 }
