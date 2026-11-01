@@ -263,6 +263,40 @@ public class DocumentService : IDocumentService
             "Du har inte behörighet att komma åt detta dokument.");
     }
 
+    public async Task DeleteAsync(int id, string userId)
+    {
+        var document = await _uow.DocumentRepository
+            .GetByIdAsync(id, trackChanges: true);
+
+        if (document is null)
+            throw new ResourceNotFoundException(
+                $"Document with id {id} not found.");
+
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+            throw new UnauthorizedAccessException("User not found.");
+
+        var isTeacher = await _userManager.IsInRoleAsync(user, "Teacher");
+
+        if (!isTeacher && document.UploadedById != userId)
+            throw new UnauthorizedAccessException(
+                "Du kan bara ta bort dokument som du själv har laddat upp.");
+
+        var notifications = await _uow.NotificationRepository
+            .GetByDocumentIdAsync(id, trackChanges: true);
+
+        if (notifications.Any())
+        {
+            _uow.NotificationRepository.DeleteRange(notifications);
+        }
+
+        await _fileStorage.DeleteAsync(document.StoredFileName);
+
+        _uow.DocumentRepository.Delete(document);
+        await _uow.SaveChangesAsync();
+    }
+
     private static DocumentDto MapToDto(Document document)
     {
         string? attachPath = null;

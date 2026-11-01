@@ -23,5 +23,11 @@ public interface INotificationRepository
         int notificationId,
         string recipientId);
 
+    Task<IEnumerable<Notification>> GetByDocumentIdAsync(
+    int documentId,
+    bool trackChanges = false);
+
+    void DeleteRange(IEnumerable<Notification> notifications);
+
     void Create(Notification notification);
 }

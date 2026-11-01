@@ -17,4 +17,6 @@ public interface IDocumentService
     Task<(Stream Stream, string FileName, string ContentType)> DownloadAsync(int id, string userId);
 
     Task<IEnumerable<DocumentDto>> GetByCourseAsync(int courseId, string userId);
+
+    Task DeleteAsync(int id, string userId);
 }

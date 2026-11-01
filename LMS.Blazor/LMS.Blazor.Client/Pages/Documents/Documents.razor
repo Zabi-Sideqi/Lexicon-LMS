@@ -5,6 +5,8 @@
 @using LMS.Shared.DTOs.DocumentDtos
 @using LMS.Shared.DTOs.ModuleDtos
 @inject IApiProxyClient Proxy
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @attribute [Authorize]
 
@@ -105,6 +107,7 @@ else
                 <th>Typ</th>
                 <th>Storlek</th>
                 <th>Uppladdad</th>
+                <th>Åtgärder</th>
                 <th></th>
             </tr>
         </thead>
@@ -121,6 +124,14 @@ else
                         <a href="/api/proxy/documents/@doc.Id/download" class="btn btn-sm btn-secondary">
                             Ladda ner
                         </a>
+                        @if (isTeacher || doc.UploadedById == currentUserId)
+                        {
+                            <button class="btn btn-sm btn-outline-danger ms-2"
+                                    type="button"
+                                    @onclick="() => DeleteDocument(doc)">
+                                Ta bort
+                            </button>
+                        }
                     </td>
                 </tr>
             }
@@ -138,9 +149,31 @@ else
     private string? uploadMessage;
     private bool uploadError;
     private bool isUploading;
+    private string? currentUserId;
+    private bool isTeacher;
 
-    protected override async Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isTeacher = authState.User.IsInRole("Teacher");
+
+        try
+        {
+            var me = await Proxy.GetAsync<LMS.Shared.DTOs.AuthDtos.AuthenticatedUserDto>("auth/me");
+            currentUserId = me?.Claims
+                .FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                currentUserId = me?.Claims
+                    .FirstOrDefault(c => c.Type == "sub" || c.Type == "nameid")?.Value;
+            }
+        }
+        catch
+        {
+            currentUserId = null;
+        }
+
         // Försök hämta alla kurser först (Teacher)
         try
         {
@@ -150,7 +183,6 @@ else
 
             if (courses.Count > 0)
             {
-                // Teacher - OK
                 documents = new();
                 return;
             }
@@ -167,10 +199,10 @@ else
             if (myCourse is not null)
             {
                 courses = new List<CourseDto>
-            {
-                new(myCourse.Id, myCourse.Name, myCourse.Description,
-                    myCourse.StartDate, myCourse.EndDate)
-            };
+                {
+                    new(myCourse.Id, myCourse.Name, myCourse.Description,
+                        myCourse.StartDate, myCourse.EndDate)
+                };
             }
         }
         catch
@@ -326,6 +358,39 @@ else
         {
             documents = new();
             Console.WriteLine($"Load error: {ex.Message}");
+        }
+    }
+
+        private async Task DeleteDocument(DocumentDto document)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>(
+            "confirm",
+            $"Vill du verkligen ta bort dokumentet {document.FileName}?");
+
+        if (!confirmed)
+            return;
+
+        try
+        {
+            await Proxy.SendAsync<object>(
+                HttpMethod.Delete,
+                $"documents/{document.Id}");
+
+            uploadMessage = $"Dokumentet '{document.FileName}' har tagits bort.";
+            uploadError = false;
+
+            if (uploadModel.CourseId is > 0)
+                await LoadDocuments(uploadModel.CourseId.Value);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            uploadMessage = "Du har inte behörighet att ta bort detta dokument.";
+            uploadError = true;
+        }
+        catch (Exception ex)
+        {
+            uploadMessage = $"Fel vid borttagning: {ExtractError(ex.Message)}";
+            uploadError = true;
         }
     }
 

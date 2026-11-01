@@ -77,4 +77,21 @@ public class DocumentsController(IServiceManager serviceManager) : ControllerBas
 
         return Ok(documents);
     }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Teacher,Student")]
+    [SwaggerOperation(
+    Summary = "Delete a document",
+    Description = "Deletes a document. Teachers can delete any document, students only their own uploads.")]
+    [SwaggerResponse(StatusCodes.Status204NoContent, "Document deleted")]
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Document not found")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        await _serviceManager.DocumentService.DeleteAsync(id, userId);
+
+        return NoContent();
+    }
 }

@@ -92,4 +92,24 @@ public class NotificationRepository : INotificationRepository
         return true;
     }
 
+    public async Task<IEnumerable<Notification>> GetByDocumentIdAsync(
+    int documentId,
+    bool trackChanges = false)
+    {
+        IQueryable<Notification> query = _context.Notifications
+            .Where(notification => notification.DocumentId == documentId);
+
+        if (!trackChanges)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.ToListAsync();
+    }
+
+    public void DeleteRange(IEnumerable<Notification> notifications)
+    {
+        _context.Notifications.RemoveRange(notifications);
+    }
+
 }
