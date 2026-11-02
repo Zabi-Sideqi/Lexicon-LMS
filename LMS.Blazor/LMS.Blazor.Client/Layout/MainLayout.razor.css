@@ -252,12 +252,14 @@
     }
 
     .sidebar {
+        display: none;
         width: min(300px, 85vw);
         transform: translateX(-100%);
         visibility: hidden;
     }
 
         .sidebar.sidebar-open {
+            display: block;
             transform: translateX(0);
             visibility: visible;
             box-shadow: 4px 0 18px rgba(0, 0, 0, 0.15);
