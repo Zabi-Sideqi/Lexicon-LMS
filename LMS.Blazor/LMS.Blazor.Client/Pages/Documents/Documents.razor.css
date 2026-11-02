@@ -1,7 +1,6 @@
 /* CSS for Documents component */
 
 /* Documents page */
-
 .documents-page {
     width: 100%;
     min-width: 0;
@@ -9,14 +8,34 @@
 
 /* Upload form */
 .documents-upload {
+    width: 100%;
     max-width: 100%;
+    min-width: 0;
 }
 
-    .documents-upload .form-control,
-    .documents-upload .form-select {
-        width: 100%;
-        min-width: 0;
-    }
+.documents-upload .form-control,
+.documents-upload .form-select {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/*
+ * Keep native select text readable in both desktop and mobile browsers.
+ * Some desktop browser/theme combinations inherit a light option text
+ * color, making the unselected options appear blank on a white menu.
+ */
+.documents-upload .course-select {
+    color: #27272a;
+    background-color: #fff;
+}
+
+.documents-upload .course-select option {
+    color: #27272a;
+    background-color: #fff;
+}
 
 /* Responsive document table */
 .table-responsive {
@@ -25,26 +44,26 @@
     -webkit-overflow-scrolling: touch;
 }
 
-    .table-responsive table {
-        min-width: 650px;
-        margin-bottom: 0;
-    }
+.table-responsive table {
+    min-width: 650px;
+    margin-bottom: 0;
+}
 
-    .table-responsive th,
-    .table-responsive td {
-        vertical-align: middle;
-        overflow-wrap: anywhere;
-    }
+.table-responsive th,
+.table-responsive td {
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
 
-    /* File names and paths */
-    .table-responsive td {
-        max-width: 250px;
-    }
+/* File names and paths */
+.table-responsive td {
+    max-width: 250px;
+}
 
-    /* Download button */
-    .table-responsive .btn {
-        white-space: nowrap;
-    }
+/* Download button */
+.table-responsive .btn {
+    white-space: nowrap;
+}
 
 /* Mobile layout */
 @media (max-width: 600px) {
