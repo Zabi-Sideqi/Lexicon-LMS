@@ -158,6 +158,17 @@ public class ActivityService : IActivityService
                 $"Module with id {activity.ModuleId} not found.");
         }
 
+        // Preserve student submissions and feedback: an activity with
+        // submissions must not be deleted.
+        var courseSubmissions = await _uow.SubmissionRepository
+            .GetByCourseIdAsync(module.CourseId);
+
+        if (courseSubmissions.Any(submission => submission.ActivityId == id))
+        {
+            throw new InvalidOperationException(
+                "This activity has student submissions and cannot be deleted. Student submissions and feedback have been preserved.");
+        }
+
         // Preserve documents attached to this activity by moving their
         // association to the parent module before deleting the activity.
         var courseDocuments = await _uow.DocumentRepository
