@@ -1,4 +1,5 @@
 ﻿using Domain.Models.Entities;
+using Domain.Contracts;
 using LMS.Shared.DTOs.ActivityDtos;
 using LMS.Shared.DTOs.CommonDtos;
 using Microsoft.AspNetCore.Authorization;
@@ -15,10 +16,12 @@ namespace LMS.Presentation.Controllers;
 [Authorize]
 public class ActivitiesController(
     IServiceManager serviceManager,
-    UserManager<ApplicationUser> userManager) : ControllerBase
+    UserManager<ApplicationUser> userManager,
+    IUnitOfWork unitOfWork) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     // Lärare kan se alla aktiviteter.
     // Studenter kan bara se aktiviteter från sin egen kurs.
@@ -135,6 +138,27 @@ public class ActivitiesController(
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
     {
+        var activity = await _serviceManager.ActivityService.GetByIdAsync(id);
+        if (activity is null)
+            return NotFound();
+
+        var module = await _serviceManager.ModuleService
+            .GetByIdAsync(activity.ModuleId);
+        if (module is null)
+            return NotFound();
+
+        // Do not cascade-delete student submissions or their feedback.
+        var courseSubmissions = await _unitOfWork.SubmissionRepository
+            .GetByCourseIdAsync(module.CourseId);
+
+        if (courseSubmissions.Any(submission => submission.ActivityId == id))
+        {
+            return Conflict(new
+            {
+                message = "This activity has student submissions and cannot be deleted. Preserve the submissions before deleting the activity."
+            });
+        }
+
         await _serviceManager.ActivityService.DeleteAsync(id);
         return NoContent();
     }
