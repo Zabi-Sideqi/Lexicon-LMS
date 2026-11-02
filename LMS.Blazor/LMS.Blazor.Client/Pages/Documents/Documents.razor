@@ -34,7 +34,7 @@
                 <ValidationMessage For="() => uploadModel.CourseId" class="text-danger" />
             </div>
 
-            @if (uploadModel.CourseId is > 0)
+            @if (uploadModel.CourseId is > 0 && modules.Any(m => m.CourseId == uploadModel.CourseId))
             {
                 <div class="mb-3">
                     <label class="form-label" for="document-module-select">Module (optional)</label>
@@ -51,7 +51,7 @@
                 </div>
             }
 
-            @if (uploadModel.ModuleId is > 0)
+            @if (uploadModel.ModuleId is > 0 && activities.Any(a => a.ModuleId == uploadModel.ModuleId))
             {
                 <div class="mb-3">
                     <label class="form-label" for="document-activity-select">Activity (optional)</label>
