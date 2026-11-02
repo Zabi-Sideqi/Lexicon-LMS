@@ -12,12 +12,15 @@ namespace LMS.Presentation.Controllers;
 [ApiController]
 [Produces("application/json")]
 [Authorize]
-public class FeedbackController(IServiceManager serviceManager) : ControllerBase
+public class FeedbackController(
+    IServiceManager serviceManager,
+    IAuthorizationService authorizationService) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
+    private readonly IAuthorizationService _authorizationService = authorizationService;
 
     [HttpGet("submission/{submissionId:int}")]
-    [Authorize(Roles = "Student")]
+    [Authorize(Policy = "Student")]
     public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetBySubmission(
         int submissionId)
     {
@@ -25,6 +28,14 @@ public class FeedbackController(IServiceManager serviceManager) : ControllerBase
 
         if (string.IsNullOrWhiteSpace(studentId))
             return Unauthorized();
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(
+            User,
+            submissionId,
+            "OwnSubmission");
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
 
         try
         {
@@ -44,7 +55,7 @@ public class FeedbackController(IServiceManager serviceManager) : ControllerBase
     }
 
     [HttpPost("submission/{submissionId:int}")]
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Policy = "Teacher")]
     public async Task<ActionResult<FeedbackDto>> Create(
         int submissionId,
         [FromBody] FeedbackForCreationDto dto)

@@ -6,8 +6,10 @@
 @using LMS.Shared.DTOs.DocumentDtos
 @using LMS.Shared.DTOs.ModuleDtos
 @inject IApiProxyClient Proxy
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-@attribute [Authorize]
+@attribute [Authorize(Policy = "StudentOrTeacher")]
 
 <PageTitle>Documents</PageTitle>
 
@@ -99,7 +101,7 @@
                 </div>
             }
 
-            @if (uploadModel.ModuleId is > 0 && activities.Any(a => a.ModuleId == uploadModel.ModuleId))
+            @if (authContext.User.IsInRole("Teacher") && uploadModel.ModuleId is > 0 && activities.Any(a => a.ModuleId == uploadModel.ModuleId))
             {
                 <div class="mb-3">
                     <label class="form-label" for="document-activity-select">Activity (optional)</label>
@@ -182,15 +184,22 @@
     </div>
 }
 
+@if (!string.IsNullOrWhiteSpace(documentLoadError))
+{
+    <div class="alert alert-danger mt-3" role="alert">
+        @documentLoadError
+    </div>
+}
+
 @if (documents is null)
 {
     <p><em>Loading...</em></p>
 }
-else if (!documents.Any())
+else if (!documents.Any() && string.IsNullOrWhiteSpace(documentLoadError))
 {
     <p>No documents found.</p>
 }
-else
+else if (string.IsNullOrWhiteSpace(documentLoadError))
 {
     <div class="documents-table-scroll"
          role="region"
@@ -249,6 +258,7 @@ else
     private string? uploadMessage;
     private bool uploadError;
     private bool isUploading;
+    private string? documentLoadError;
     private bool isCourseDropdownOpen;
     private bool isModuleDropdownOpen;
     private bool isActivityDropdownOpen;
@@ -316,90 +326,108 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Try to retrieve all courses first (Teacher)
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        if (authState.User.IsInRole("Student"))
+        {
+            documents = new();
+            StudentCourseDto? myCourse;
+
+            try
+            {
+                myCourse = await Proxy.GetAsync<StudentCourseDto>("courses/my");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                documentLoadError = "Your session has expired. Please sign in again.";
+                return;
+            }
+            catch (HttpRequestException ex)
+            {
+                documentLoadError = "Could not load your course. Please try again.";
+                Console.WriteLine(ex.Message);
+                return;
+            }
+
+            if (myCourse is null)
+            {
+                documentLoadError = "You are not enrolled in a course.";
+                return;
+            }
+
+            courses =
+            [
+                new CourseDto(myCourse.Id, myCourse.Name, myCourse.Description,
+                    myCourse.StartDate, myCourse.EndDate)
+            ];
+            uploadModel.CourseId = myCourse.Id;
+
+            try
+            {
+                modules = await Proxy.GetAsync<List<ModuleDto>>(
+                    $"modules/course/{myCourse.Id}") ?? new();
+                activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                documentLoadError = "Your session has expired. Please sign in again.";
+                return;
+            }
+            catch (HttpRequestException ex)
+            {
+                documentLoadError = "Could not load course modules or activities. Please try again.";
+                Console.WriteLine(ex.Message);
+                return;
+            }
+
+            await LoadDocuments(myCourse.Id);
+            return;
+        }
+
+        // Teacher: retrieve the courses, modules, activities and documents
+        // available to the authenticated teacher.
         try
         {
             courses = await Proxy.GetAsync<List<CourseDto>>("courses") ?? new();
             modules = await Proxy.GetAsync<List<ModuleDto>>("modules") ?? new();
             activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
 
-            if (courses.Count > 0)
+            documents = new List<DocumentDto>();
+            foreach (var course in courses)
             {
-                // Teacher: load documents from all available courses.
-                documents = new List<DocumentDto>();
-
-                foreach (var course in courses)
+                try
                 {
-                    try
-                    {
-                        var courseDocuments =
-                            await Proxy.GetAsync<List<DocumentDto>>(
-                                $"documents/course/{course.Id}");
-
-                        if (courseDocuments is not null)
-                        {
-                            documents.AddRange(courseDocuments);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        documentLoadWarnings.Add(
-                            string.IsNullOrWhiteSpace(course.Name)
-                                ? $"Course {course.Id}"
-                                : course.Name);
-
-                        Console.WriteLine(
-                            $"Could not load documents for course {course.Id}: {ex.Message}");
-                    }
+                    var courseDocuments = await Proxy.GetAsync<List<DocumentDto>>(
+                        $"documents/course/{course.Id}");
+                    if (courseDocuments is not null)
+                        documents.AddRange(courseDocuments);
                 }
-
-                return;
-            }
-        }
-        catch
-        {
-            // Ignore and try "my" instead
-        }
-
-        // Fallback: retrieve the user's own course (Student)
-        try
-        {
-            var myCourse = await Proxy.GetAsync<StudentCourseDto>("courses/my");
-            if (myCourse is not null)
-            {
-                courses = new List<CourseDto>
+                catch (UnauthorizedAccessException)
                 {
-                    new(myCourse.Id, myCourse.Name, myCourse.Description,
-                        myCourse.StartDate, myCourse.EndDate)
-                };
+                    documentLoadError = "Your session has expired. Please sign in again.";
+                    return;
+                }
+                catch (HttpRequestException ex)
+                {
+                    documentLoadWarnings.Add(string.IsNullOrWhiteSpace(course.Name)
+                        ? $"Course {course.Id}" : course.Name);
+                    Console.WriteLine($"Could not load documents for course {course.Id}: {ex.Message}");
+                }
             }
+
+            if (courses.Count == 0)
+                documentLoadError = "No courses are available.";
         }
-        catch
+        catch (UnauthorizedAccessException)
         {
-            courses = new();
+            documentLoadError = "Your session has expired. Please sign in again.";
+            documents = new();
         }
-
-        documents = new();
-
-        // If there is only one course (Student): load documents, modules and activities
-        if (courses.Count == 1 && courses[0].Id > 0)
+        catch (HttpRequestException ex)
         {
-            var courseId = courses[0].Id;
-            uploadModel.CourseId = courseId;
-
-            try
-            {
-                modules = await Proxy.GetAsync<List<ModuleDto>>($"modules/course/{courseId}") ?? new();
-            }
-            catch { modules = new(); }
-
-            try
-            {
-                activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
-            }
-            catch { activities = new(); }
-
-            await LoadDocuments(courseId);
+            documentLoadError = "Could not load documents. Please try again.";
+            documents = new();
+            Console.WriteLine(ex.Message);
         }
     }
 
@@ -504,6 +532,7 @@ else
 
     private async Task OnCourseSelected()
     {
+        documentLoadError = null;
         uploadModel.ModuleId = null;
         uploadModel.ActivityId = null;
 
