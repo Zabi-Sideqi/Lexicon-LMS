@@ -165,7 +165,7 @@ public class ActivityService : IActivityService
 
         if (courseSubmissions.Any(submission => submission.ActivityId == id))
         {
-            throw new InvalidOperationException(
+            throw new ConflictException(
                 "This activity has student submissions and cannot be deleted. Student submissions and feedback have been preserved.");
         }
 
