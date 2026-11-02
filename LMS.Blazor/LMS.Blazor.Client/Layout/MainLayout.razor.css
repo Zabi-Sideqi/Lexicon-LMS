@@ -103,7 +103,7 @@
     border-right: 1px solid var(--lms-border);
     overflow-y: auto;
     overflow-x: hidden;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, visibility 0.2s ease;
 }
 
 .main {
@@ -254,10 +254,12 @@
     .sidebar {
         width: min(300px, 85vw);
         transform: translateX(-100%);
+        visibility: hidden;
     }
 
         .sidebar.sidebar-open {
             transform: translateX(0);
+            visibility: visible;
             box-shadow: 4px 0 18px rgba(0, 0, 0, 0.15);
         }
 
