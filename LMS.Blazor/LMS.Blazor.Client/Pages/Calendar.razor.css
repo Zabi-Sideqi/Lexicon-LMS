@@ -516,3 +516,21 @@
         gap: 14px;
     }
 }
+
+.schedule-pagination {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+    padding: 0 18px;
+}
+
+.schedule-pagination nav,
+.schedule-pagination ul {
+    margin-bottom: 0;
+}
+
+@media (max-width: 620px) {
+    .schedule-pagination {
+        padding: 0 8px;
+    }
+}
