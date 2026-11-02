@@ -78,3 +78,33 @@
         min-width: 650px;
     }
 }
+
+/* Keep document form controls readable regardless of the active app theme. */
+.documents-upload {
+    color-scheme: light;
+}
+
+.documents-upload label,
+.documents-upload input,
+.documents-upload select,
+.documents-upload select option,
+.documents-upload .form-control,
+.documents-upload .form-select,
+.documents-upload .validation-message,
+.documents-upload .validation-summary,
+.documents-upload .validation-errors,
+.documents-upload p {
+    color: #27272a !important;
+}
+
+.documents-upload input,
+.documents-upload select,
+.documents-upload .form-control,
+.documents-upload .form-select {
+    background-color: #fff !important;
+    border-color: #ced4da;
+}
+
+.documents-upload select option {
+    background-color: #fff !important;
+}
