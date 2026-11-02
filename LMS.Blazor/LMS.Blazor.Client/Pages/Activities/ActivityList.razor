@@ -64,8 +64,41 @@
         finally { loading = false; }
     }
     private async Task DeleteAsync(ActivityDto item) {
-        errorMessage = null; successMessage = null;
-        try { await Proxy.SendAsync<object>(HttpMethod.Delete, $"activities/{item.Id}"); activities.RemoveAll(a => a.Id == item.Id); successMessage = $"'{item.Name}' was deleted."; }
-        catch (Exception) { errorMessage = "The activity could not be deleted. Refresh the page and try again."; }
+        if (!deletingIds.Add(item.Id))
+            return;
+
+        errorMessage = null;
+        successMessage = null;
+
+        try {
+            await Proxy.SendAsync<object>(
+                HttpMethod.Delete,
+                $"activities/{item.Id}");
+
+            activities.RemoveAll(a => a.Id == item.Id);
+            successMessage = $"'{item.Name}' was deleted.";
+        }
+        catch (UnauthorizedAccessException) {
+            errorMessage = "Your session has expired. Please sign in again.";
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden) {
+            errorMessage = "You do not have permission to delete this activity.";
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound) {
+            activities.RemoveAll(a => a.Id == item.Id);
+            errorMessage = "This activity no longer exists. The list has been updated.";
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict) {
+            errorMessage = "This activity cannot be deleted because it is still linked to other records.";
+        }
+        catch (HttpRequestException) {
+            errorMessage = "The server could not delete this activity. Please try again.";
+        }
+        catch (Exception) {
+            errorMessage = "An unexpected error occurred while deleting the activity.";
+        }
+        finally {
+            deletingIds.Remove(item.Id);
+        }
     }
 }
