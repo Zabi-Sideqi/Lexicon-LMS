@@ -113,9 +113,11 @@
             }
         </section>
 
-        <Pager PageNumber="_pagedActivities.PageNumber"
-               TotalPages="_pagedActivities.TotalPages"
-               OnPageChange="OnPageChangedAsync" />
+        <div class="schedule-pagination">
+            <Pager PageNumber="_pagedActivities.PageNumber"
+                   TotalPages="_pagedActivities.TotalPages"
+                   OnPageChange="OnPageChangedAsync" />
+        </div>
     }
 
     @if (_pendingDelete is not null)
