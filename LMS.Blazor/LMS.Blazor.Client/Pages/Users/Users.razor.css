@@ -1,5 +1,9 @@
+
+/* Users page */
 .users-page {
     max-width: 1200px;
+    width: 100%;
+    min-width: 0;
     margin: 0 auto;
     padding: 1.5rem 0;
 }
@@ -14,54 +18,69 @@
 
     .page-header h1 {
         margin: 0;
-        color: #0f2447;
+        color: var(--lms-text);
         font-size: 2rem;
         font-weight: 700;
     }
 
 .users-card {
-    border: 1px solid #e3e9f2;
+    min-width: 0;
+    border: 1px solid var(--lms-border);
     border-radius: 10px;
     overflow: hidden;
-    background: #ffffff;
+    background: var(--lms-surface);
 }
 
-/* Sökning */
+    /* Search */
+    .users-card > .mb-4 {
+        min-width: 0;
+        padding: 1rem 1rem 0;
+        margin-bottom: 1rem !important;
+    }
 
-.searchbar {
-    display: grid;
-    grid-template-columns: 1fr 200px auto;
-    gap: 0.75rem;
-    padding: 1rem;
-    border-bottom: 1px solid #e3e9f2;
+/* Desktop table */
+.users-desktop-table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
-
-/* Tabell */
 
 .users-table {
+    width: 100%;
+    min-width: 700px;
     margin-bottom: 0;
 }
 
     .users-table th {
-        color: #6b7a90;
+        padding: 1rem;
+        color: var(--lms-text-muted);
         font-size: 0.85rem;
         font-weight: 600;
         white-space: nowrap;
-        padding: 1rem;
     }
 
     .users-table td {
-        vertical-align: middle;
         padding: 1rem;
+        vertical-align: middle;
     }
 
     .users-table tbody tr:hover {
-        background-color: #f8faff;
+        background-color: var(--lms-surface-soft);
     }
 
-    /* Roll-badges */
+    .users-table td strong {
+        overflow-wrap: anywhere;
+    }
 
-    .users-table .badge {
+    .users-table td:nth-child(2) {
+        white-space: nowrap;
+    }
+
+    /* Role and status badges */
+    .users-table .badge,
+    .user-mobile-card .badge {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -75,33 +94,41 @@
         visibility: visible;
     }
 
-    .users-table .role-student {
-        background-color: #e0e9ff;
-        color: #1d4ed8;
-    }
+.role-student {
+    background-color: #e0e9ff;
+    color: #1d4ed8;
+}
 
-    .users-table .role-teacher {
-        background-color: #f3e8ff;
-        color: #7e22ce;
-    }
+.role-teacher {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+}
 
-    /* Status-badge */
+.status-active {
+    background-color: #dcfce7;
+    color: #15803d;
+}
 
-    .users-table .status-active {
-        background-color: #dcfce7;
-        color: #15803d;
-    }
+/* Mobile cards - hidden on desktop */
+.users-mobile-cards {
+    display: none;
+}
 
-/* Responsiv design */
+/* Pagination */
+.users-card > .d-flex {
+    flex-wrap: wrap;
+    gap: 12px;
+}
 
+/* Mobile layout */
 @media (max-width: 768px) {
 
     .users-page {
-        padding: 1rem;
+        padding: 1rem 0;
     }
 
     .page-header {
-        align-items: flex-start;
+        align-items: stretch;
         flex-direction: column;
     }
 
@@ -109,15 +136,102 @@
             width: 100%;
         }
 
-    .searchbar {
-        grid-template-columns: 1fr;
+    .users-card > .mb-4 {
+        padding: 1rem 1rem 0;
     }
 
-        .searchbar .btn {
-            width: 100%;
+    /* Hide desktop table */
+    .users-desktop-table {
+        display: none;
+    }
+
+    /* Show mobile cards */
+    .users-mobile-cards {
+        display: grid;
+        gap: 12px;
+        padding: 0 1rem 1rem;
+    }
+
+    .user-mobile-card {
+        min-width: 0;
+        padding: 1rem;
+        border: 1px solid var(--lms-border);
+        border-radius: 10px;
+        background: var(--lms-surface);
+        box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+    }
+
+    .user-mobile-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid var(--lms-border);
+        min-width: 0;
+    }
+
+        .user-mobile-row:last-of-type {
+            border-bottom: none;
         }
 
-    .users-table {
-        min-width: 700px;
+        .user-mobile-row > span:first-child {
+            flex: 0 0 85px;
+            color: var(--lms-text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .user-mobile-row > strong,
+        .user-mobile-row > span:not(:first-child) {
+            min-width: 0;
+            max-width: 65%;
+            text-align: right;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+    .user-mobile-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 1rem;
+    }
+
+        .user-mobile-actions .btn {
+            flex: 1;
+            min-width: 0;
+        }
+
+    /* Pagination */
+    .users-card > .d-flex {
+        align-items: flex-start !important;
+        flex-direction: column;
     }
 }
+
+/* Very small screens */
+@media (max-width: 360px) {
+
+    .user-mobile-card {
+        padding: 0.75rem;
+    }
+
+    .user-mobile-row {
+        gap: 8px;
+    }
+
+        .user-mobile-row > span:first-child {
+            flex-basis: 70px;
+            font-size: 0.8rem;
+        }
+
+    .user-mobile-actions {
+        flex-direction: column;
+    }
+
+        .user-mobile-actions .btn {
+            width: 100%;
+        }
+}
+
+

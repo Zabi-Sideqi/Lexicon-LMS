@@ -151,6 +151,40 @@ public class ActivityService : IActivityService
                 $"Activity with id {id} not found.");
         }
 
+        var module = await _uow.ModuleRepository.GetByIdAsync(activity.ModuleId);
+        if (module is null)
+        {
+            throw new ResourceNotFoundException(
+                $"Module with id {activity.ModuleId} not found.");
+        }
+
+        // Preserve student submissions and feedback: an activity with
+        // submissions must not be deleted.
+        var courseSubmissions = await _uow.SubmissionRepository
+            .GetByCourseIdAsync(module.CourseId);
+
+        if (courseSubmissions.Any(submission => submission.ActivityId == id))
+        {
+            throw new ConflictException(
+                "This activity has student submissions and cannot be deleted. Student submissions and feedback have been preserved.");
+        }
+
+        // Preserve documents attached to this activity by moving their
+        // association to the parent module before deleting the activity.
+        var courseDocuments = await _uow.DocumentRepository
+            .GetByCourseIdAsync(module.CourseId, trackChanges: true);
+
+        var attachedDocuments = courseDocuments
+            .Where(document => document.ActivityId == id)
+            .ToList();
+
+        foreach (var document in attachedDocuments)
+        {
+            document.ActivityId = null;
+            document.ModuleId = module.Id;
+            document.CourseId = null;
+        }
+
         _uow.ActivityRepository.Delete(activity);
         await _uow.SaveChangesAsync();
     }

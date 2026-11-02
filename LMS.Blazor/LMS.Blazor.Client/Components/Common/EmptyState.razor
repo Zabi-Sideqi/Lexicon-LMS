@@ -1,0 +1,28 @@
+﻿
+<div class="lms-empty-state" role="status">
+    <div class="lms-empty-state-icon" aria-hidden="true">
+        <span class="bi bi-inbox"></span>
+    </div>
+
+    <h3>@Title</h3>
+
+    <p>@Message</p>
+
+    @if (ChildContent is not null)
+    {
+        <div class="lms-empty-state-actions">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "No data available";
+
+    [Parameter]
+    public string Message { get; set; } = "There is nothing to display right now.";
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

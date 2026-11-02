@@ -35,7 +35,11 @@ public static class AuthenticationExtensions
         services
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(ConfigureCookie);
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("StudentOrTeacher", policy =>
+                policy.RequireRole("Student", "Teacher"));
+        });
 
         return services;
     }

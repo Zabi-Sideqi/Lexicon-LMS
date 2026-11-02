@@ -9,9 +9,6 @@ namespace LMS.Services;
 
 public class DocumentService : IDocumentService
 {
-    private static readonly string[] AllowedExtensions = [".pdf", ".docx"];
-    private const long MaxFileSize = 10 * 1024 * 1024;
-
     private readonly IUnitOfWork _uow;
     private readonly IFileStorage _fileStorage;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -36,7 +33,8 @@ public class DocumentService : IDocumentService
         int? activityId,
         string uploadedById)
     {
-        ValidateFile(fileName, fileSize);
+        await FileValidator.ValidateAsync(fileStream, fileName, fileSize);
+        contentType = FileValidator.GetVerifiedContentType(fileName);
 
         if ((courseId.HasValue ? 1 : 0) + (moduleId.HasValue ? 1 : 0) + (activityId.HasValue ? 1 : 0) != 1)
             throw new ArgumentException(
@@ -210,22 +208,6 @@ public class DocumentService : IDocumentService
         return documents.Select(MapToDto);
     }
 
-    private static void ValidateFile(string fileName, long fileSize)
-    {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-
-        if (!AllowedExtensions.Contains(extension))
-            throw new ArgumentException(
-                $"Filtypen {extension} är inte tillåten. Tillåtna: {string.Join(", ", AllowedExtensions)}.");
-
-        if (fileSize > MaxFileSize)
-            throw new ArgumentException(
-                $"Filen är för stor. Maxstorlek är {MaxFileSize / (1024 * 1024)} MB.");
-
-        if (fileSize == 0)
-            throw new ArgumentException("Filen är tom.");
-    }
-
     private async Task EnsureCanAccessAsync(Document document, string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
@@ -307,7 +289,7 @@ public class DocumentService : IDocumentService
             var activityName = document.Activity?.Name;
 
             if (courseName is not null && moduleName is not null && activityName is not null)
-                attachPath = $"Aktivitet: {courseName} / {moduleName} / {activityName}";
+                attachPath = $"Activity: {courseName} / {moduleName} / {activityName}";
         }
         else if (document.ModuleId.HasValue)
         {
@@ -315,12 +297,12 @@ public class DocumentService : IDocumentService
             var moduleName = document.Module?.Name;
 
             if (courseName is not null && moduleName is not null)
-                attachPath = $"Modul: {courseName} / {moduleName}";
+                attachPath = $"Module: {courseName} / {moduleName}";
         }
         else if (document.CourseId.HasValue)
         {
             if (document.Course?.Name is not null)
-                attachPath = $"Kurs: {document.Course.Name}";
+                attachPath = $"Course: {document.Course.Name}";
         }
 
         return new DocumentDto(

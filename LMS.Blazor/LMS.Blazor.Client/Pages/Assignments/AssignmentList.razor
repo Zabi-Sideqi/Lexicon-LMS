@@ -5,14 +5,14 @@
 @attribute [Authorize(Roles = "Student")]
 @inject IApiProxyClient Proxy
 
-<PageTitle>Uppgifter</PageTitle>
+<PageTitle>Assignments</PageTitle>
 
 <div class="assignment-list-page">
     <header class="assignment-list-header">
         <div>
             <span class="assignment-list-eyebrow">LEXICON LMS</span>
-            <h1>Mina uppgifter</h1>
-            <p>Se dina uppgifter, deadlines, inlämningsstatus och feedback från läraren.</p>
+            <h1>My Assignments</h1>
+            <p>View your assignments, deadlines, submission status, and teacher feedback.</p>
         </div>
 
         <div class="assignment-list-icon" aria-hidden="true">▤</div>
@@ -21,7 +21,7 @@
     @if (errorMessage is not null)
     {
         <div class="assignment-list-error" role="alert">
-            <strong>Det gick inte att hämta uppgifterna</strong>
+            <strong>Unable to load assignments</strong>
             <p>@errorMessage</p>
         </div>
     }
@@ -29,15 +29,15 @@
     {
         <div class="assignment-list-state" role="status">
             <span class="assignment-list-spinner" aria-hidden="true"></span>
-            <p>Laddar uppgifter...</p>
+            <p>Loading assignments...</p>
         </div>
     }
     else if (!assignments.Any())
     {
         <div class="assignment-list-empty">
             <div class="assignment-list-empty-icon" aria-hidden="true">✓</div>
-            <h2>Inga uppgifter ännu</h2>
-            <p>Det finns inga uppgifter att visa just nu.</p>
+            <h2>No assignments yet</h2>
+            <p>There are no assignments to display right now.</p>
         </div>
     }
     else
@@ -45,11 +45,11 @@
         <section class="assignment-list-card">
             <div class="assignment-list-card-heading">
                 <div>
-                    <h2>Uppgiftsöversikt</h2>
-                    <p>Här hittar du dina uppgifter och deras aktuella status.</p>
+                    <h2>Assignment Overview</h2>
+                    <p>Here you can find your assignments and their current status.</p>
                 </div>
                 <span class="assignment-list-count">
-                    @assignments.Count() @(assignments.Count() == 1 ? "uppgift" : "uppgifter")
+                    @assignments.Count() @(assignments.Count() == 1 ? "assignment" : "assignments")
                 </span>
             </div>
 
@@ -57,12 +57,12 @@
                 <table class="assignment-list-table">
                     <thead>
                         <tr>
-                            <th>Namn</th>
-                            <th>Beskrivning</th>
+                            <th>Name</th>
+                            <th>Description</th>
                             <th>Deadline</th>
                             <th>Status</th>
                             <th>Feedback</th>
-                            <th><span class="visually-hidden">Åtgärd</span></th>
+                            <th><span class="visually-hidden">Action</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,20 +85,20 @@
                                     @if (assignment.HasFeedback)
                                     {
                                         <span class="assignment-list-feedback available">
-                                            Ja
+                                            Yes
                                         </span>
                                     }
                                     else
                                     {
                                         <span class="assignment-list-feedback">
-                                            Inte ännu
+                                            Not yet
                                         </span>
                                     }
                                 </td>
                                 <td>
                                     <a href="/assignments/@assignment.Id"
                                        class="assignment-list-view">
-                                        Visa <span aria-hidden="true">→</span>
+                                        View <span aria-hidden="true">→</span>
                                     </a>
                                 </td>
                             </tr>
@@ -123,7 +123,7 @@
         }
         catch (HttpRequestException)
         {
-            errorMessage = "Det gick inte att hämta uppgifterna. Försök igen senare.";
+            errorMessage = "Could not load assignments. Please try again later.";
         }
     }
 }

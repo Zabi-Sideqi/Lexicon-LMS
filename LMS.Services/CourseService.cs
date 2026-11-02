@@ -81,6 +81,21 @@ public class CourseService : ICourseService
         if (course is null)
             throw new KeyNotFoundException($"Course with id {id} not found.");
 
+        // Preserve the business rule enforced by ModuleService:
+        // every existing module must remain inside its course period.
+        var modules = await _uow.ModuleRepository.GetByCourseIdAsync(id);
+
+        var invalidModule = modules.FirstOrDefault(module =>
+            module.StartDate < dto.StartDate ||
+            module.EndDate > dto.EndDate);
+
+        if (invalidModule is not null)
+        {
+            throw new ArgumentException(
+                $"Course dates cannot be changed because module '{invalidModule.Name}' " +
+                "would fall outside the new course period. Update or remove the module first.");
+        }
+
         course.Name = dto.Name;
         course.Description = dto.Description;
         course.StartDate = dto.StartDate;

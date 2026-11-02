@@ -1,170 +1,350 @@
-﻿@page "/documents"
+@page "/documents"
+@using System.ComponentModel.DataAnnotations
 @using LMS.Blazor.Client.Services.ApiProxy
 @using LMS.Shared.DTOs.ActivityDtos
 @using LMS.Shared.DTOs.CourseDtos
 @using LMS.Shared.DTOs.DocumentDtos
 @using LMS.Shared.DTOs.ModuleDtos
+@using Microsoft.AspNetCore.Components.Authorization
 @inject IApiProxyClient Proxy
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-@attribute [Authorize]
+@attribute [Authorize(Policy = "StudentOrTeacher")]
 
-<PageTitle>Dokument</PageTitle>
+<PageTitle>Documents</PageTitle>
 
-<h1>Dokument</h1>
+<div class="documents-page">
+    <h1>Documents</h1>
 
-<AuthorizeView>
-    <Authorized Context="authContext">
-        <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
-            <div class="mb-3">
-                <label class="form-label">Kurs</label>
-                <InputSelect @bind-Value="uploadModel.CourseId"
-                             @bind-Value:after="OnCourseSelected"
-                             class="form-select">
-                    @if (courses.Count > 1)
-                    {
-                        <option value="">Välj kurs</option>
-                    }
-                    @foreach (var c in courses)
-                    {
-                        <option value="@c.Id">@c.Name</option>
-                    }
-                </InputSelect>
-            </div>
-
-            @if (uploadModel.CourseId is > 0)
-            {
+    <AuthorizeView>
+        <Authorized Context="authContext">
+            <EditForm Model="uploadModel" OnValidSubmit="HandleUpload" class="documents-upload">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger mb-3" />
                 <div class="mb-3">
-                    <label>Modul (valfri)</label>
-                    <InputSelect @bind-Value="uploadModel.ModuleId" @bind-Value:after="OnModuleChanged">
-                        <option value="">— Ingen modul —</option>
-                        @foreach (var m in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                    <label class="form-label" for="document-course-select">Course</label>
+                    <div class="documents-select">
+                        <button id="document-course-select"
+                                type="button"
+                                class="documents-select-trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@isCourseDropdownOpen"
+                                aria-controls="document-course-options"
+                                @onclick="ToggleCourseDropdown">
+                            <span>@SelectedCourseName</span>
+                            <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                        </button>
+                        @if (isCourseDropdownOpen)
                         {
-                            <option value="@m.Id">@m.Name</option>
+                            <div id="document-course-options" class="documents-select-options" role="listbox" aria-label="Course options">
+                                <button type="button"
+                                        class="documents-select-option @(uploadModel.CourseId is null ? "is-selected" : "")"
+                                        role="option"
+                                        aria-selected="@(uploadModel.CourseId is null)"
+                                        @onclick="() => SelectCourseAsync(null)">
+                                    Select a course
+                                </button>
+                                @foreach (var course in courses)
+                                {
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.CourseId == course.Id ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.CourseId == course.Id)"
+                                            @onclick="() => SelectCourseAsync(course.Id)">
+                                        @(string.IsNullOrWhiteSpace(course.Name) ? $"Course {course.Id}" : course.Name)
+                                    </button>
+                                }
+                            </div>
                         }
-                    </InputSelect>
+                    </div>
+                    <ValidationMessage For="() => uploadModel.CourseId" class="text-danger" />
                 </div>
-            }
 
-            @if (uploadModel.ModuleId is > 0)
-            {
-                <div class="mb-3">
-                    <label>Aktivitet (valfri)</label>
-                    <InputSelect @bind-Value="uploadModel.ActivityId">
-                        <option value="">— Ingen aktivitet —</option>
-                        @foreach (var a in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
-                        {
-                            <option value="@a.Id">@a.Name (@a.Type)</option>
-                        }
-                    </InputSelect>
-                </div>
-            }
-
-            <div class="mb-3">
-                <label class="form-label">Fil (.pdf eller .docx, max 10MB)</label>
-                <InputFile OnChange="HandleFileSelected" class="form-control" />
-                @if (selectedFile is not null)
+                @if (uploadModel.CourseId is > 0 && modules.Any(m => m.CourseId == uploadModel.CourseId))
                 {
-                    <p class="text-muted mt-1">
-                        Vald: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
-                    </p>
-                }
-            </div>
-
-            <button type="submit" class="btn btn-primary"
-                    disabled="@(selectedFile is null || isUploading || uploadModel.CourseId is null or 0)">
-                @(isUploading ? "Laddar upp..." : "Ladda upp")
-            </button>
-        </EditForm>
-
-        @if (!string.IsNullOrEmpty(uploadMessage))
-        {
-            <div class="alert @(uploadError ? "alert-danger" : "alert-success") mt-3">
-                @uploadMessage
-            </div>
-        }
-    </Authorized>
-</AuthorizeView>
-
-<h2 class="mt-4">Alla dokument</h2>
-
-@if (!string.IsNullOrWhiteSpace(documentLoadError))
-{
-    <div class="alert alert-danger" role="alert">
-        @documentLoadError
-    </div>
-}
-
-@if (documents is null)
-{
-    <p><em>Loading...</em></p>
-}
-else if (!documents.Any())
-{
-    <p>Inga dokument hittades.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Filnamn</th>
-                <th>Koppling</th>
-                <th>Typ</th>
-                <th>Storlek</th>
-                <th>Uppladdad</th>
-                <th>Åtgärder</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var doc in documents)
-            {
-                <tr>
-                    <td>@doc.FileName</td>
-                    <td>@doc.AttachPath</td>
-                    <td>@doc.ContentType</td>
-                    <td>@(doc.FileSize / 1024) KB</td>
-                    <td>@doc.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>
-                        <a href="/api/proxy/documents/@doc.Id/download" class="btn btn-sm btn-secondary">
-                            Ladda ner
-                        </a>
-                        @if (isTeacher || doc.UploadedById == currentUserId)
-                        {
-                            <button class="btn btn-sm btn-outline-danger ms-2"
+                    <div class="mb-3">
+                        <label class="form-label" for="document-module-select">Module (optional)</label>
+                        <div class="documents-select">
+                            <button id="document-module-select"
                                     type="button"
-                                    @onclick="() => DeleteDocument(doc)">
-                                Ta bort
+                                    class="documents-select-trigger"
+                                    aria-haspopup="listbox"
+                                    aria-expanded="@isModuleDropdownOpen"
+                                    aria-controls="document-module-options"
+                                    @onclick="ToggleModuleDropdown">
+                                <span>@SelectedModuleName</span>
+                                <span class="documents-select-chevron" aria-hidden="true">▾</span>
                             </button>
-                        }
-                    </td>
-                </tr>
+                            @if (isModuleDropdownOpen)
+                            {
+                                <div id="document-module-options" class="documents-select-options" role="listbox" aria-label="Module options">
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.ModuleId is null ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.ModuleId is null)"
+                                            @onclick="() => SelectModule(null)">
+                                        — No module —
+                                    </button>
+                                    @foreach (var module in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                                    {
+                                        <button type="button"
+                                                class="documents-select-option @(uploadModel.ModuleId == module.Id ? "is-selected" : "")"
+                                                role="option"
+                                                aria-selected="@(uploadModel.ModuleId == module.Id)"
+                                                @onclick="() => SelectModule(module.Id)">
+                                            @module.Name
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (authContext.User.IsInRole("Teacher") && uploadModel.ModuleId is > 0 && activities.Any(a => a.ModuleId == uploadModel.ModuleId))
+                {
+                    <div class="mb-3">
+                        <label class="form-label" for="document-activity-select">Activity (optional)</label>
+                        <div class="documents-select">
+                            <button id="document-activity-select"
+                                    type="button"
+                                    class="documents-select-trigger"
+                                    aria-haspopup="listbox"
+                                    aria-expanded="@isActivityDropdownOpen"
+                                    aria-controls="document-activity-options"
+                                    @onclick="ToggleActivityDropdown">
+                                <span>@SelectedActivityName</span>
+                                <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                            </button>
+                            @if (isActivityDropdownOpen)
+                            {
+                                <div id="document-activity-options" class="documents-select-options" role="listbox" aria-label="Activity options">
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.ActivityId is null ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.ActivityId is null)"
+                                            @onclick="() => SelectActivity(null)">
+                                        — No activity —
+                                    </button>
+                                    @foreach (var activity in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
+                                    {
+                                        <button type="button"
+                                                class="documents-select-option @(uploadModel.ActivityId == activity.Id ? "is-selected" : "")"
+                                                role="option"
+                                                aria-selected="@(uploadModel.ActivityId == activity.Id)"
+                                                @onclick="() => SelectActivity(activity.Id)">
+                                            @activity.Name (@activity.Type)
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">File (.pdf or .docx, max 10 MB)</label>
+                    <InputFile OnChange="HandleFileSelected" class="form-control" />
+                    @if (selectedFile is not null)
+                    {
+                        <p class="text-muted mt-1">
+                            Selected: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+                        </p>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary"
+                        disabled="@(selectedFile is null || isUploading || uploadModel.CourseId is null or 0)">
+                    @(isUploading ? "Uploading..." : "Upload")
+                </button>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(uploadMessage))
+            {
+                <div class="alert @(uploadError ? "alert-danger" : "alert-success") mt-3" role="@(uploadError ? "alert" : "status")">
+                    @uploadMessage
+                </div>
             }
-        </tbody>
-    </table>
-}
+        </Authorized>
+    </AuthorizeView>
+
+    <h2 class="mt-4">All Documents</h2>
+
+    @if (documentLoadWarnings.Count > 0)
+    {
+        <div class="alert alert-warning mt-3" role="alert">
+            <strong>Some course documents could not be loaded.</strong>
+            <p class="mb-1">The document list may be incomplete. Try refreshing the page.</p>
+            <ul class="mb-0">
+                @foreach (var courseName in documentLoadWarnings)
+                {
+                    <li>@courseName</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(documentLoadError))
+    {
+        <div class="alert alert-danger mt-3" role="alert">
+            @documentLoadError
+        </div>
+    }
+
+    @if (documents is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (!documents.Any() && string.IsNullOrWhiteSpace(documentLoadError))
+    {
+        <p>No documents found.</p>
+    }
+    else if (string.IsNullOrWhiteSpace(documentLoadError))
+    {
+        <div class="documents-table-scroll"
+             role="region"
+             aria-label="Documents table"
+             tabindex="0">
+            <table class="table table-hover align-middle documents-table">
+                <colgroup>
+                    <col class="documents-col-file" />
+                    <col class="documents-col-attachment" />
+                    <col class="documents-col-type" />
+                    <col class="documents-col-size" />
+                    <col class="documents-col-uploaded" />
+                    <col class="documents-col-action" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th scope="col">File Name</th>
+                        <th scope="col">Attachment</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">Uploaded</th>
+                        <th scope="col"><span class="visually-hidden">Action</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in documents)
+                    {
+                        <tr @key="doc.Id">
+                            <td class="documents-file-name">@doc.FileName</td>
+                            <td class="documents-attachment">@doc.AttachPath</td>
+                            <td class="documents-content-type">@doc.ContentType</td>
+                            <td class="documents-size">@(doc.FileSize / 1024) KB</td>
+                            <td class="documents-uploaded">@DateTime.SpecifyKind(doc.UploadedAt, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                            <td class="documents-action">
+                                <a href="/api/proxy/documents/@doc.Id/download"
+                                   class="btn btn-sm btn-secondary">
+                                    Download
+                                </a>
+                                @if (isTeacher || doc.UploadedById == currentUserId)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger ms-2"
+                                            type="button"
+                                            @onclick="() => DeleteDocument(doc)">
+                                        Delete
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 
 @code {
     private List<CourseDto> courses = new();
     private List<ModuleDto> modules = new();
     private List<ActivityDto> activities = new();
     private List<DocumentDto>? documents;
+    private readonly List<string> documentLoadWarnings = new();
     private DocumentUploadModel uploadModel = new();
     private IBrowserFile? selectedFile;
     private string? uploadMessage;
     private bool uploadError;
     private bool isUploading;
+
+    // US06 Delete variables
     private string? currentUserId;
     private bool isTeacher;
     private string? documentLoadError;
 
-        protected override async Task OnInitializedAsync()
+    // US17 UI variables
+    private bool isCourseDropdownOpen;
+    private bool isModuleDropdownOpen;
+    private bool isActivityDropdownOpen;
+
+    private string SelectedCourseName =>
+        courses.FirstOrDefault(course => course.Id == uploadModel.CourseId)?.Name
+        ?? "Select a course";
+
+    private string SelectedModuleName =>
+        modules.FirstOrDefault(module => module.Id == uploadModel.ModuleId)?.Name
+        ?? "— No module —";
+
+    private string SelectedActivityName
+    {
+        get
+        {
+            var activity = activities.FirstOrDefault(item => item.Id == uploadModel.ActivityId);
+            return activity is null ? "— No activity —" : $"{activity.Name} ({activity.Type})";
+        }
+    }
+
+    private void ToggleCourseDropdown()
+    {
+        isCourseDropdownOpen = !isCourseDropdownOpen;
+        isModuleDropdownOpen = false;
+        isActivityDropdownOpen = false;
+    }
+
+    private void ToggleModuleDropdown()
+    {
+        isModuleDropdownOpen = !isModuleDropdownOpen;
+        isCourseDropdownOpen = false;
+        isActivityDropdownOpen = false;
+    }
+
+    private void ToggleActivityDropdown()
+    {
+        isActivityDropdownOpen = !isActivityDropdownOpen;
+        isCourseDropdownOpen = false;
+        isModuleDropdownOpen = false;
+    }
+
+    private async Task SelectCourseAsync(int? courseId)
+    {
+        uploadModel.CourseId = courseId;
+        isCourseDropdownOpen = false;
+        isModuleDropdownOpen = false;
+        isActivityDropdownOpen = false;
+        await OnCourseSelected();
+    }
+
+    private void SelectModule(int? moduleId)
+    {
+        uploadModel.ModuleId = moduleId;
+        uploadModel.ActivityId = null;
+        isModuleDropdownOpen = false;
+        isActivityDropdownOpen = false;
+    }
+
+    private void SelectActivity(int? activityId)
+    {
+        uploadModel.ActivityId = activityId;
+        isActivityDropdownOpen = false;
+    }
+
+    protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        isTeacher = authState.User.IsInRole("Teacher");
 
+        // US06: Get current user ID for delete permissions
+        isTeacher = authState.User.IsInRole("Teacher");
         try
         {
             var me = await Proxy.GetAsync<LMS.Shared.DTOs.AuthDtos.AuthenticatedUserDto>("auth/me");
@@ -175,63 +355,107 @@ else
             currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         }
 
-        // Försök hämta alla kurser först (Teacher)
+        // US17: Student specific loading
+        if (authState.User.IsInRole("Student"))
+        {
+            documents = new();
+            StudentCourseDto? myCourse;
+
+            try
+            {
+                myCourse = await Proxy.GetAsync<StudentCourseDto>("courses/my");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                documentLoadError = "Your session has expired. Please sign in again.";
+                return;
+            }
+            catch (HttpRequestException ex)
+            {
+                documentLoadError = "Could not load your course. Please try again.";
+                Console.WriteLine(ex.Message);
+                return;
+            }
+
+            if (myCourse is null)
+            {
+                documentLoadError = "You are not enrolled in a course.";
+                return;
+            }
+
+            courses =
+            [
+                new CourseDto(myCourse.Id, myCourse.Name, myCourse.Description,
+                    myCourse.StartDate, myCourse.EndDate)
+            ];
+            uploadModel.CourseId = myCourse.Id;
+
+            try
+            {
+                modules = await Proxy.GetAsync<List<ModuleDto>>(
+                    $"modules/course/{myCourse.Id}") ?? new();
+                activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                documentLoadError = "Your session has expired. Please sign in again.";
+                return;
+            }
+            catch (HttpRequestException ex)
+            {
+                documentLoadError = "Could not load course modules or activities. Please try again.";
+                Console.WriteLine(ex.Message);
+                return;
+            }
+
+            await LoadDocuments(myCourse.Id);
+            return;
+        }
+
+        // Teacher: retrieve the courses, modules, activities and documents
+        // available to the authenticated teacher.
         try
         {
             courses = await Proxy.GetAsync<List<CourseDto>>("courses") ?? new();
             modules = await Proxy.GetAsync<List<ModuleDto>>("modules") ?? new();
             activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
 
-            if (courses.Count > 0)
+            documents = new List<DocumentDto>();
+            foreach (var course in courses)
             {
-                documents = new();
-                return;
-            }
-        }
-        catch
-        {
-            // Ignorera - försök med "my" istället
-        }
-
-        // Fallback: hämta egen kurs (Student)
-        try
-        {
-            var myCourse = await Proxy.GetAsync<StudentCourseDto>("courses/my");
-            if (myCourse is not null)
-            {
-                courses = new List<CourseDto>
+                try
                 {
-                    new(myCourse.Id, myCourse.Name, myCourse.Description,
-                        myCourse.StartDate, myCourse.EndDate)
-                };
+                    var courseDocuments = await Proxy.GetAsync<List<DocumentDto>>(
+                        $"documents/course/{course.Id}");
+                    if (courseDocuments is not null)
+                        documents.AddRange(courseDocuments);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    documentLoadError = "Your session has expired. Please sign in again.";
+                    return;
+                }
+                catch (HttpRequestException ex)
+                {
+                    documentLoadWarnings.Add(string.IsNullOrWhiteSpace(course.Name)
+                        ? $"Course {course.Id}" : course.Name);
+                    Console.WriteLine($"Could not load documents for course {course.Id}: {ex.Message}");
+                }
             }
+
+            if (courses.Count == 0)
+                documentLoadError = "No courses are available.";
         }
-        catch
+        catch (UnauthorizedAccessException)
         {
-            courses = new();
+            documentLoadError = "Your session has expired. Please sign in again.";
+            documents = new();
         }
-
-        documents = new();
-
-        // Om bara en kurs (Student): ladda dokument + moduler + aktiviteter
-        if (courses.Count == 1 && courses[0].Id > 0)
+        catch (HttpRequestException ex)
         {
-            var courseId = courses[0].Id;
-            uploadModel.CourseId = courseId;
-
-            try
-            {
-                modules = await Proxy.GetAsync<List<ModuleDto>>($"modules/course/{courseId}") ?? new();
-            }
-            catch { modules = new(); }
-
-            try
-            {
-                activities = await Proxy.GetAsync<List<ActivityDto>>("Activities") ?? new();
-            }
-            catch { activities = new(); }
-
-            await LoadDocuments(courseId);
+            documentLoadError = "Could not load documents. Please try again.";
+            documents = new();
+            Console.WriteLine(ex.Message);
         }
     }
 
@@ -245,7 +469,7 @@ else
             var ext = Path.GetExtension(selectedFile.Name).ToLowerInvariant();
             if (ext != ".pdf" && ext != ".docx")
             {
-                uploadMessage = $"Filtypen {ext} är inte tillåten. Tillåtna: .pdf, .docx.";
+                uploadMessage = $"The file type {ext} is not allowed. Allowed types: .pdf, .docx.";
                 uploadError = true;
                 selectedFile = null;
                 return;
@@ -253,7 +477,7 @@ else
 
             if (selectedFile.Size > 10 * 1024 * 1024)
             {
-                uploadMessage = "Filen är för stor. Maxstorlek är 10 MB.";
+                uploadMessage = "The file is too large. Maximum size is 10 MB.";
                 uploadError = true;
                 selectedFile = null;
                 return;
@@ -268,7 +492,7 @@ else
 
         if (uploadModel.CourseId is null or 0)
         {
-            uploadMessage = "Välj en kurs först.";
+            uploadMessage = "Please select a course first.";
             uploadError = true;
             return;
         }
@@ -292,7 +516,7 @@ else
                 new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
 
             content.Add(fileContent, "File", selectedFile.Name);
-            
+
             if (uploadModel.ActivityId is > 0)
             {
                 content.Add(new StringContent(uploadModel.ActivityId.Value.ToString()), "ActivityId");
@@ -307,7 +531,7 @@ else
             }
             else
             {
-                uploadMessage = "Välj kurs, modul eller aktivitet.";
+                uploadMessage = "Please select a course, module or activity.";
                 uploadError = true;
                 return;
             }
@@ -317,7 +541,7 @@ else
                 "documents/upload",
                 content);
 
-            uploadMessage = $"Uppladdat: {created?.FileName}";
+            uploadMessage = $"Uploaded: {created?.FileName}";
             uploadError = false;
             selectedFile = null;
 
@@ -325,7 +549,7 @@ else
         }
         catch (Exception ex)
         {
-            uploadMessage = $"Fel: {ExtractError(ex.Message)}";
+            uploadMessage = $"Error: {ExtractError(ex.Message)}";
             uploadError = true;
         }
         finally
@@ -336,6 +560,7 @@ else
 
     private async Task OnCourseSelected()
     {
+        documentLoadError = null;
         uploadModel.ModuleId = null;
         uploadModel.ActivityId = null;
 
@@ -358,20 +583,21 @@ else
         catch (Exception ex)
         {
             documents = new();
-            documentLoadError = "Kunde inte ladda dokumenten. Försök igen.";
+            documentLoadError = "Could not load documents. Please try again.";
             Console.WriteLine($"Load error: {ex.Message}");
         }
     }
 
+    // US06: Delete document handler
     private async Task DeleteDocument(DocumentDto document)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Vill du verkligen ta bort dokumentet {document.FileName}?");
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the document {document.FileName}?");
         if (!confirmed) return;
 
         try
         {
             await Proxy.SendAsync<object>(HttpMethod.Delete, $"documents/{document.Id}");
-            uploadMessage = $"Dokumentet '{document.FileName}' har tagits bort.";
+            uploadMessage = $"Document '{document.FileName}' has been deleted.";
             uploadError = false;
 
             if (uploadModel.CourseId is > 0)
@@ -379,12 +605,12 @@ else
         }
         catch (UnauthorizedAccessException)
         {
-            uploadMessage = "Du har inte behörighet att ta bort detta dokument.";
+            uploadMessage = "You do not have permission to delete this document.";
             uploadError = true;
         }
         catch (Exception ex)
         {
-            uploadMessage = $"Fel vid borttagning: {ExtractError(ex.Message)}";
+            uploadMessage = $"Error deleting document: {ExtractError(ex.Message)}";
             uploadError = true;
             if (uploadModel.CourseId is > 0) await LoadDocuments(uploadModel.CourseId.Value);
         }
@@ -393,7 +619,7 @@ else
     private static string ExtractError(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
-            return "Ett fel uppstod.";
+            return "An error occurred.";
 
         try
         {
@@ -411,6 +637,8 @@ else
 
     private class DocumentUploadModel
     {
+        [Required(ErrorMessage = "Please select a course.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a valid course.")]
         public int? CourseId { get; set; }
         public int? ModuleId { get; set; }
         public int? ActivityId { get; set; }

@@ -13,13 +13,15 @@ namespace LMS.Presentation.Controllers;
 [ApiController]
 [Consumes("application/json")]
 [Produces("application/json")]
-[Authorize]
+[Authorize(Policy = "StudentOrTeacher")]
 public class DocumentsController(IServiceManager serviceManager) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
 
     [HttpPost("upload")]
-    [Authorize(Roles = "Teacher,Student")]
+    [RequestSizeLimit(11 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 11 * 1024 * 1024)]
+    [Authorize(Policy = "StudentOrTeacher")]
     [Consumes("multipart/form-data")]
     [SwaggerOperation(
         Summary = "Upload a document",

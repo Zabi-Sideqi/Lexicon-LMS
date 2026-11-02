@@ -10,7 +10,7 @@ namespace LMS.Presentation.Controllers;
 
 [Route("api/teacher/submissions")]
 [ApiController]
-[Authorize(Roles = "Teacher")]
+[Authorize(Policy = "Teacher")]
 [Produces("application/json")]
 public class TeacherSubmissionsController(
     IServiceManager serviceManager) : ControllerBase
