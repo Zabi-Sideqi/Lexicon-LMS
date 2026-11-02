@@ -5,8 +5,9 @@
 @using LMS.Shared.DTOs.CourseDtos
 @using LMS.Shared.DTOs.DocumentDtos
 @using LMS.Shared.DTOs.ModuleDtos
-@inject IApiProxyClient Proxy
 @using Microsoft.AspNetCore.Components.Authorization
+@inject IApiProxyClient Proxy
+@inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
 @attribute [Authorize(Policy = "StudentOrTeacher")]
@@ -14,237 +15,245 @@
 <PageTitle>Documents</PageTitle>
 
 <div class="documents-page">
-<h1>Documents</h1>
+    <h1>Documents</h1>
 
-<AuthorizeView>
-    <Authorized Context="authContext">
-        <EditForm Model="uploadModel" OnValidSubmit="HandleUpload" class="documents-upload">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger mb-3" />
-            <div class="mb-3">
-                <label class="form-label" for="document-course-select">Course</label>
-                <div class="documents-select">
-                    <button id="document-course-select"
-                            type="button"
-                            class="documents-select-trigger"
-                            aria-haspopup="listbox"
-                            aria-expanded="@isCourseDropdownOpen"
-                            aria-controls="document-course-options"
-                            @onclick="ToggleCourseDropdown">
-                        <span>@SelectedCourseName</span>
-                        <span class="documents-select-chevron" aria-hidden="true">▾</span>
-                    </button>
-                    @if (isCourseDropdownOpen)
-                    {
-                        <div id="document-course-options" class="documents-select-options" role="listbox" aria-label="Course options">
-                            <button type="button"
-                                    class="documents-select-option @(uploadModel.CourseId is null ? "is-selected" : "")"
-                                    role="option"
-                                    aria-selected="@(uploadModel.CourseId is null)"
-                                    @onclick="() => SelectCourseAsync(null)">
-                                Select a course
-                            </button>
-                            @foreach (var course in courses)
-                            {
+    <AuthorizeView>
+        <Authorized Context="authContext">
+            <EditForm Model="uploadModel" OnValidSubmit="HandleUpload" class="documents-upload">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger mb-3" />
+                <div class="mb-3">
+                    <label class="form-label" for="document-course-select">Course</label>
+                    <div class="documents-select">
+                        <button id="document-course-select"
+                                type="button"
+                                class="documents-select-trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@isCourseDropdownOpen"
+                                aria-controls="document-course-options"
+                                @onclick="ToggleCourseDropdown">
+                            <span>@SelectedCourseName</span>
+                            <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                        </button>
+                        @if (isCourseDropdownOpen)
+                        {
+                            <div id="document-course-options" class="documents-select-options" role="listbox" aria-label="Course options">
                                 <button type="button"
-                                        class="documents-select-option @(uploadModel.CourseId == course.Id ? "is-selected" : "")"
+                                        class="documents-select-option @(uploadModel.CourseId is null ? "is-selected" : "")"
                                         role="option"
-                                        aria-selected="@(uploadModel.CourseId == course.Id)"
-                                        @onclick="() => SelectCourseAsync(course.Id)">
-                                    @(string.IsNullOrWhiteSpace(course.Name) ? $"Course {course.Id}" : course.Name)
+                                        aria-selected="@(uploadModel.CourseId is null)"
+                                        @onclick="() => SelectCourseAsync(null)">
+                                    Select a course
                                 </button>
+                                @foreach (var course in courses)
+                                {
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.CourseId == course.Id ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.CourseId == course.Id)"
+                                            @onclick="() => SelectCourseAsync(course.Id)">
+                                        @(string.IsNullOrWhiteSpace(course.Name) ? $"Course {course.Id}" : course.Name)
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <ValidationMessage For="() => uploadModel.CourseId" class="text-danger" />
+                </div>
+
+                @if (uploadModel.CourseId is > 0 && modules.Any(m => m.CourseId == uploadModel.CourseId))
+                {
+                    <div class="mb-3">
+                        <label class="form-label" for="document-module-select">Module (optional)</label>
+                        <div class="documents-select">
+                            <button id="document-module-select"
+                                    type="button"
+                                    class="documents-select-trigger"
+                                    aria-haspopup="listbox"
+                                    aria-expanded="@isModuleDropdownOpen"
+                                    aria-controls="document-module-options"
+                                    @onclick="ToggleModuleDropdown">
+                                <span>@SelectedModuleName</span>
+                                <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                            </button>
+                            @if (isModuleDropdownOpen)
+                            {
+                                <div id="document-module-options" class="documents-select-options" role="listbox" aria-label="Module options">
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.ModuleId is null ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.ModuleId is null)"
+                                            @onclick="() => SelectModule(null)">
+                                        — No module —
+                                    </button>
+                                    @foreach (var module in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                                    {
+                                        <button type="button"
+                                                class="documents-select-option @(uploadModel.ModuleId == module.Id ? "is-selected" : "")"
+                                                role="option"
+                                                aria-selected="@(uploadModel.ModuleId == module.Id)"
+                                                @onclick="() => SelectModule(module.Id)">
+                                            @module.Name
+                                        </button>
+                                    }
+                                </div>
                             }
                         </div>
+                    </div>
+                }
+
+                @if (authContext.User.IsInRole("Teacher") && uploadModel.ModuleId is > 0 && activities.Any(a => a.ModuleId == uploadModel.ModuleId))
+                {
+                    <div class="mb-3">
+                        <label class="form-label" for="document-activity-select">Activity (optional)</label>
+                        <div class="documents-select">
+                            <button id="document-activity-select"
+                                    type="button"
+                                    class="documents-select-trigger"
+                                    aria-haspopup="listbox"
+                                    aria-expanded="@isActivityDropdownOpen"
+                                    aria-controls="document-activity-options"
+                                    @onclick="ToggleActivityDropdown">
+                                <span>@SelectedActivityName</span>
+                                <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                            </button>
+                            @if (isActivityDropdownOpen)
+                            {
+                                <div id="document-activity-options" class="documents-select-options" role="listbox" aria-label="Activity options">
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.ActivityId is null ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.ActivityId is null)"
+                                            @onclick="() => SelectActivity(null)">
+                                        — No activity —
+                                    </button>
+                                    @foreach (var activity in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
+                                    {
+                                        <button type="button"
+                                                class="documents-select-option @(uploadModel.ActivityId == activity.Id ? "is-selected" : "")"
+                                                role="option"
+                                                aria-selected="@(uploadModel.ActivityId == activity.Id)"
+                                                @onclick="() => SelectActivity(activity.Id)">
+                                            @activity.Name (@activity.Type)
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">File (.pdf or .docx, max 10 MB)</label>
+                    <InputFile OnChange="HandleFileSelected" class="form-control" />
+                    @if (selectedFile is not null)
+                    {
+                        <p class="text-muted mt-1">
+                            Selected: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+                        </p>
                     }
                 </div>
-                <ValidationMessage For="() => uploadModel.CourseId" class="text-danger" />
-            </div>
 
-            @if (uploadModel.CourseId is > 0 && modules.Any(m => m.CourseId == uploadModel.CourseId))
+                <button type="submit" class="btn btn-primary"
+                        disabled="@(selectedFile is null || isUploading || uploadModel.CourseId is null or 0)">
+                    @(isUploading ? "Uploading..." : "Upload")
+                </button>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(uploadMessage))
             {
-                <div class="mb-3">
-                    <label class="form-label" for="document-module-select">Module (optional)</label>
-                    <div class="documents-select">
-                        <button id="document-module-select"
-                                type="button"
-                                class="documents-select-trigger"
-                                aria-haspopup="listbox"
-                                aria-expanded="@isModuleDropdownOpen"
-                                aria-controls="document-module-options"
-                                @onclick="ToggleModuleDropdown">
-                            <span>@SelectedModuleName</span>
-                            <span class="documents-select-chevron" aria-hidden="true">▾</span>
-                        </button>
-                        @if (isModuleDropdownOpen)
-                        {
-                            <div id="document-module-options" class="documents-select-options" role="listbox" aria-label="Module options">
-                                <button type="button"
-                                        class="documents-select-option @(uploadModel.ModuleId is null ? "is-selected" : "")"
-                                        role="option"
-                                        aria-selected="@(uploadModel.ModuleId is null)"
-                                        @onclick="() => SelectModule(null)">
-                                    — No module —
-                                </button>
-                                @foreach (var module in modules.Where(m => m.CourseId == uploadModel.CourseId))
-                                {
-                                    <button type="button"
-                                            class="documents-select-option @(uploadModel.ModuleId == module.Id ? "is-selected" : "")"
-                                            role="option"
-                                            aria-selected="@(uploadModel.ModuleId == module.Id)"
-                                            @onclick="() => SelectModule(module.Id)">
-                                        @module.Name
-                                    </button>
-                                }
-                            </div>
-                        }
-                    </div>
+                <div class="alert @(uploadError ? "alert-danger" : "alert-success") mt-3" role="@(uploadError ? "alert" : "status")">
+                    @uploadMessage
                 </div>
             }
+        </Authorized>
+    </AuthorizeView>
 
-            @if (authContext.User.IsInRole("Teacher") && uploadModel.ModuleId is > 0 && activities.Any(a => a.ModuleId == uploadModel.ModuleId))
-            {
-                <div class="mb-3">
-                    <label class="form-label" for="document-activity-select">Activity (optional)</label>
-                    <div class="documents-select">
-                        <button id="document-activity-select"
-                                type="button"
-                                class="documents-select-trigger"
-                                aria-haspopup="listbox"
-                                aria-expanded="@isActivityDropdownOpen"
-                                aria-controls="document-activity-options"
-                                @onclick="ToggleActivityDropdown">
-                            <span>@SelectedActivityName</span>
-                            <span class="documents-select-chevron" aria-hidden="true">▾</span>
-                        </button>
-                        @if (isActivityDropdownOpen)
-                        {
-                            <div id="document-activity-options" class="documents-select-options" role="listbox" aria-label="Activity options">
-                                <button type="button"
-                                        class="documents-select-option @(uploadModel.ActivityId is null ? "is-selected" : "")"
-                                        role="option"
-                                        aria-selected="@(uploadModel.ActivityId is null)"
-                                        @onclick="() => SelectActivity(null)">
-                                    — No activity —
-                                </button>
-                                @foreach (var activity in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
-                                {
-                                    <button type="button"
-                                            class="documents-select-option @(uploadModel.ActivityId == activity.Id ? "is-selected" : "")"
-                                            role="option"
-                                            aria-selected="@(uploadModel.ActivityId == activity.Id)"
-                                            @onclick="() => SelectActivity(activity.Id)">
-                                        @activity.Name (@activity.Type)
-                                    </button>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
+    <h2 class="mt-4">All Documents</h2>
 
-            <div class="mb-3">
-                <label class="form-label">File (.pdf or .docx, max 10 MB)</label>
-                <InputFile OnChange="HandleFileSelected" class="form-control" />
-                @if (selectedFile is not null)
+    @if (documentLoadWarnings.Count > 0)
+    {
+        <div class="alert alert-warning mt-3" role="alert">
+            <strong>Some course documents could not be loaded.</strong>
+            <p class="mb-1">The document list may be incomplete. Try refreshing the page.</p>
+            <ul class="mb-0">
+                @foreach (var courseName in documentLoadWarnings)
                 {
-                    <p class="text-muted mt-1">
-                        Selected: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
-                    </p>
+                    <li>@courseName</li>
                 }
-            </div>
+            </ul>
+        </div>
+    }
 
-            <button type="submit" class="btn btn-primary"
-                    disabled="@(selectedFile is null || isUploading || uploadModel.CourseId is null or 0)">
-                @(isUploading ? "Uploading..." : "Upload")
-            </button>
-        </EditForm>
+    @if (!string.IsNullOrWhiteSpace(documentLoadError))
+    {
+        <div class="alert alert-danger mt-3" role="alert">
+            @documentLoadError
+        </div>
+    }
 
-        @if (!string.IsNullOrEmpty(uploadMessage))
-        {
-            <div class="alert @(uploadError ? "alert-danger" : "alert-success") mt-3" role="@(uploadError ? "alert" : "status")">
-                @uploadMessage
-            </div>
-        }
-    </Authorized>
-</AuthorizeView>
-
-<h2 class="mt-4">All Documents</h2>
-
-@if (documentLoadWarnings.Count > 0)
-{
-    <div class="alert alert-warning mt-3" role="alert">
-        <strong>Some course documents could not be loaded.</strong>
-        <p class="mb-1">The document list may be incomplete. Try refreshing the page.</p>
-        <ul class="mb-0">
-            @foreach (var courseName in documentLoadWarnings)
-            {
-                <li>@courseName</li>
-            }
-        </ul>
-    </div>
-}
-
-@if (!string.IsNullOrWhiteSpace(documentLoadError))
-{
-    <div class="alert alert-danger mt-3" role="alert">
-        @documentLoadError
-    </div>
-}
-
-@if (documents is null)
-{
-    <p><em>Loading...</em></p>
-}
-else if (!documents.Any() && string.IsNullOrWhiteSpace(documentLoadError))
-{
-    <p>No documents found.</p>
-}
-else if (string.IsNullOrWhiteSpace(documentLoadError))
-{
-    <div class="documents-table-scroll"
-         role="region"
-         aria-label="Documents table"
-         tabindex="0">
-        <table class="table table-hover align-middle documents-table">
-            <colgroup>
-                <col class="documents-col-file" />
-                <col class="documents-col-attachment" />
-                <col class="documents-col-type" />
-                <col class="documents-col-size" />
-                <col class="documents-col-uploaded" />
-                <col class="documents-col-action" />
-            </colgroup>
-            <thead>
-                <tr>
-                    <th scope="col">File Name</th>
-                    <th scope="col">Attachment</th>
-                    <th scope="col">Type</th>
-                    <th scope="col">Size</th>
-                    <th scope="col">Uploaded</th>
-                    <th scope="col"><span class="visually-hidden">Action</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var doc in documents)
-                {
-                    <tr @key="doc.Id">
-                        <td class="documents-file-name">@doc.FileName</td>
-                        <td class="documents-attachment">@doc.AttachPath</td>
-                        <td class="documents-content-type">@doc.ContentType</td>
-                        <td class="documents-size">@(doc.FileSize / 1024) KB</td>
-                        <td class="documents-uploaded">@DateTime.SpecifyKind(doc.UploadedAt, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
-                        <td class="documents-action">
-                            <a href="/api/proxy/documents/@doc.Id/download"
-                               class="btn btn-sm btn-secondary">
-                                Download
-                            </a>
-                        </td>
+    @if (documents is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (!documents.Any() && string.IsNullOrWhiteSpace(documentLoadError))
+    {
+        <p>No documents found.</p>
+    }
+    else if (string.IsNullOrWhiteSpace(documentLoadError))
+    {
+        <div class="documents-table-scroll"
+             role="region"
+             aria-label="Documents table"
+             tabindex="0">
+            <table class="table table-hover align-middle documents-table">
+                <colgroup>
+                    <col class="documents-col-file" />
+                    <col class="documents-col-attachment" />
+                    <col class="documents-col-type" />
+                    <col class="documents-col-size" />
+                    <col class="documents-col-uploaded" />
+                    <col class="documents-col-action" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th scope="col">File Name</th>
+                        <th scope="col">Attachment</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">Uploaded</th>
+                        <th scope="col"><span class="visually-hidden">Action</span></th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+                </thead>
+                <tbody>
+                    @foreach (var doc in documents)
+                    {
+                        <tr @key="doc.Id">
+                            <td class="documents-file-name">@doc.FileName</td>
+                            <td class="documents-attachment">@doc.AttachPath</td>
+                            <td class="documents-content-type">@doc.ContentType</td>
+                            <td class="documents-size">@(doc.FileSize / 1024) KB</td>
+                            <td class="documents-uploaded">@DateTime.SpecifyKind(doc.UploadedAt, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                            <td class="documents-action">
+                                <a href="/api/proxy/documents/@doc.Id/download"
+                                   class="btn btn-sm btn-secondary">
+                                    Download
+                                </a>
+                                @if (isTeacher || doc.UploadedById == currentUserId)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger ms-2"
+                                            type="button"
+                                            @onclick="() => DeleteDocument(doc)">
+                                        Delete
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
 @code {
@@ -258,7 +267,13 @@ else if (string.IsNullOrWhiteSpace(documentLoadError))
     private string? uploadMessage;
     private bool uploadError;
     private bool isUploading;
+
+    // US06 Delete variables
+    private string? currentUserId;
+    private bool isTeacher;
     private string? documentLoadError;
+
+    // US17 UI variables
     private bool isCourseDropdownOpen;
     private bool isModuleDropdownOpen;
     private bool isActivityDropdownOpen;
@@ -328,6 +343,19 @@ else if (string.IsNullOrWhiteSpace(documentLoadError))
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
 
+        // US06: Get current user ID for delete permissions
+        isTeacher = authState.User.IsInRole("Teacher");
+        try
+        {
+            var me = await Proxy.GetAsync<LMS.Shared.DTOs.AuthDtos.AuthenticatedUserDto>("auth/me");
+            currentUserId = me?.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+        catch
+        {
+            currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+
+        // US17: Student specific loading
         if (authState.User.IsInRole("Student"))
         {
             documents = new();
@@ -547,15 +575,44 @@ else if (string.IsNullOrWhiteSpace(documentLoadError))
 
     private async Task LoadDocuments(int courseId)
     {
+        documentLoadError = null;
         try
         {
-            documents = await Proxy.GetAsync<List<DocumentDto>>(
-                $"documents/course/{courseId}") ?? new();
+            documents = await Proxy.GetAsync<List<DocumentDto>>($"documents/course/{courseId}") ?? new();
         }
         catch (Exception ex)
         {
             documents = new();
+            documentLoadError = "Could not load documents. Please try again.";
             Console.WriteLine($"Load error: {ex.Message}");
+        }
+    }
+
+    // US06: Delete document handler
+    private async Task DeleteDocument(DocumentDto document)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the document {document.FileName}?");
+        if (!confirmed) return;
+
+        try
+        {
+            await Proxy.SendAsync<object>(HttpMethod.Delete, $"documents/{document.Id}");
+            uploadMessage = $"Document '{document.FileName}' has been deleted.";
+            uploadError = false;
+
+            // Ta bort dokumentet direkt från listan i UI (både för lärare och student)
+            documents?.RemoveAll(d => d.Id == document.Id);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            uploadMessage = "You do not have permission to delete this document.";
+            uploadError = true;
+        }
+        catch (Exception ex)
+        {
+            uploadMessage = $"Error deleting document: {ExtractError(ex.Message)}";
+            uploadError = true;
+            if (uploadModel.CourseId is > 0) await LoadDocuments(uploadModel.CourseId.Value);
         }
     }
 
