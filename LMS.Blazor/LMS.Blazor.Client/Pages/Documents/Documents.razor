@@ -1,4 +1,4 @@
-﻿
+
 @page "/documents"
 @using System.ComponentModel.DataAnnotations
 @using LMS.Blazor.Client.Services.ApiProxy
@@ -12,25 +12,24 @@
 
 <PageTitle>Documents</PageTitle>
 
+<div class="documents-page">
 <h1>Documents</h1>
 
 <AuthorizeView>
     <Authorized Context="authContext">
-        <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
+        <EditForm Model="uploadModel" OnValidSubmit="HandleUpload" class="documents-upload">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger mb-3" />
             <div class="mb-3">
-                <label class="form-label">Course</label>
-                <InputSelect @bind-Value="uploadModel.CourseId"
+                <label class="form-label" for="document-course-select">Course</label>
+                <InputSelect id="document-course-select"
+                             @bind-Value="uploadModel.CourseId"
                              @bind-Value:after="OnCourseSelected"
-                             class="form-select">
-                    @if (courses.Count > 1)
-                    {
-                        <option value="">Select a course</option>
-                    }
+                             class="form-select course-select">
+                    <option value="">Select a course</option>
                     @foreach (var c in courses)
                     {
-                        <option value="@c.Id">@c.Name</option>
+                        <option value="@c.Id">@(string.IsNullOrWhiteSpace(c.Name) ? $"Course {c.Id}" : c.Name)</option>
                     }
                 </InputSelect>
                 <ValidationMessage For="() => uploadModel.CourseId" class="text-danger" />
@@ -40,7 +39,7 @@
             {
                 <div class="mb-3">
                     <label>Module (optional)</label>
-                    <InputSelect @bind-Value="uploadModel.ModuleId" @bind-Value:after="OnModuleChanged">
+                    <InputSelect @bind-Value="uploadModel.ModuleId" @bind-Value:after="OnModuleChanged" class="form-select">
                         <option value="">— No module —</option>
                         @foreach (var m in modules.Where(m => m.CourseId == uploadModel.CourseId))
                         {
@@ -54,7 +53,7 @@
             {
                 <div class="mb-3">
                     <label>Activity (optional)</label>
-                    <InputSelect @bind-Value="uploadModel.ActivityId">
+                    <InputSelect @bind-Value="uploadModel.ActivityId" class="form-select">
                         <option value="">— No activity —</option>
                         @foreach (var a in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
                         {
@@ -149,6 +148,7 @@ else
         </table>
     </div>
 }
+</div>
 
 @code {
     private List<CourseDto> courses = new();
