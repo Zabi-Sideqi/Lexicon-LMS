@@ -89,6 +89,13 @@
 
 <h2 class="mt-4">Alla dokument</h2>
 
+@if (!string.IsNullOrWhiteSpace(documentLoadError))
+{
+    <div class="alert alert-danger" role="alert">
+        @documentLoadError
+    </div>
+}
+
 @if (documents is null)
 {
     <p><em>Loading...</em></p>
@@ -151,6 +158,7 @@ else
     private bool isUploading;
     private string? currentUserId;
     private bool isTeacher;
+    private string? documentLoadError;
 
         protected override async Task OnInitializedAsync()
     {
@@ -160,18 +168,11 @@ else
         try
         {
             var me = await Proxy.GetAsync<LMS.Shared.DTOs.AuthDtos.AuthenticatedUserDto>("auth/me");
-            currentUserId = me?.Claims
-                .FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            
-            if (string.IsNullOrEmpty(currentUserId))
-            {
-                currentUserId = me?.Claims
-                    .FirstOrDefault(c => c.Type == "sub" || c.Type == "nameid")?.Value;
-            }
+            currentUserId = me?.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         }
         catch
         {
-            currentUserId = null;
+            currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         }
 
         // Försök hämta alla kurser först (Teacher)
@@ -349,33 +350,27 @@ else
 
     private async Task LoadDocuments(int courseId)
     {
+        documentLoadError = null;
         try
         {
-            documents = await Proxy.GetAsync<List<DocumentDto>>(
-                $"documents/course/{courseId}") ?? new();
+            documents = await Proxy.GetAsync<List<DocumentDto>>($"documents/course/{courseId}") ?? new();
         }
         catch (Exception ex)
         {
             documents = new();
+            documentLoadError = "Kunde inte ladda dokumenten. Försök igen.";
             Console.WriteLine($"Load error: {ex.Message}");
         }
     }
 
-        private async Task DeleteDocument(DocumentDto document)
+    private async Task DeleteDocument(DocumentDto document)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>(
-            "confirm",
-            $"Vill du verkligen ta bort dokumentet {document.FileName}?");
-
-        if (!confirmed)
-            return;
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Vill du verkligen ta bort dokumentet {document.FileName}?");
+        if (!confirmed) return;
 
         try
         {
-            await Proxy.SendAsync<object>(
-                HttpMethod.Delete,
-                $"documents/{document.Id}");
-
+            await Proxy.SendAsync<object>(HttpMethod.Delete, $"documents/{document.Id}");
             uploadMessage = $"Dokumentet '{document.FileName}' har tagits bort.";
             uploadError = false;
 
@@ -391,6 +386,7 @@ else
         {
             uploadMessage = $"Fel vid borttagning: {ExtractError(ex.Message)}";
             uploadError = true;
+            if (uploadModel.CourseId is > 0) await LoadDocuments(uploadModel.CourseId.Value);
         }
     }
 

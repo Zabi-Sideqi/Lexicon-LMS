@@ -269,32 +269,31 @@ public class DocumentService : IDocumentService
             .GetByIdAsync(id, trackChanges: true);
 
         if (document is null)
-            throw new ResourceNotFoundException(
-                $"Document with id {id} not found.");
+            return;
 
         var user = await _userManager.FindByIdAsync(userId);
-
         if (user is null)
             throw new UnauthorizedAccessException("User not found.");
 
         var isTeacher = await _userManager.IsInRoleAsync(user, "Teacher");
-
         if (!isTeacher && document.UploadedById != userId)
-            throw new UnauthorizedAccessException(
-                "Du kan bara ta bort dokument som du själv har laddat upp.");
+            throw new UnauthorizedAccessException("Du kan bara ta bort dokument som du själv har laddat upp.");
 
-        var notifications = await _uow.NotificationRepository
-            .GetByDocumentIdAsync(id, trackChanges: true);
-
+        var notifications = await _uow.NotificationRepository.GetByDocumentIdAsync(id, trackChanges: true);
         if (notifications.Any())
-        {
             _uow.NotificationRepository.DeleteRange(notifications);
-        }
-
-        await _fileStorage.DeleteAsync(document.StoredFileName);
 
         _uow.DocumentRepository.Delete(document);
         await _uow.SaveChangesAsync();
+
+        try
+        {
+            await _fileStorage.DeleteAsync(document.StoredFileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to delete physical file {document.StoredFileName}: {ex.Message}");
+        }
     }
 
     private static DocumentDto MapToDto(Document document)
