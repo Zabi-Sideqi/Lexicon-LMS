@@ -256,7 +256,7 @@ public class DocumentService : IDocumentService
             var activityName = document.Activity?.Name;
 
             if (courseName is not null && moduleName is not null && activityName is not null)
-                attachPath = $"Aktivitet: {courseName} / {moduleName} / {activityName}";
+                attachPath = $"Activity: {courseName} / {moduleName} / {activityName}";
         }
         else if (document.ModuleId.HasValue)
         {
@@ -264,12 +264,12 @@ public class DocumentService : IDocumentService
             var moduleName = document.Module?.Name;
 
             if (courseName is not null && moduleName is not null)
-                attachPath = $"Modul: {courseName} / {moduleName}";
+                attachPath = $"Module: {courseName} / {moduleName}";
         }
         else if (document.CourseId.HasValue)
         {
             if (document.Course?.Name is not null)
-                attachPath = $"Kurs: {document.Course.Name}";
+                attachPath = $"Course: {document.Course.Name}";
         }
 
         return new DocumentDto(
