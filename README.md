@@ -279,3 +279,33 @@ Vi använder bland annat:
 * **GitHub Issues** – User Stories och Development Tasks
 * **Azure** – deployment
 * **CI/CD** – automatiserad build och deployment
+
+---
+
+## Local demo data
+
+In Development, the API creates demo users and sample data in English. Seeding is idempotent and creates courses, modules, activities, course documents, seven submissions, five feedback entries, and eleven notifications. Assignment examples cover all statuses: submitted on time, not submitted before the deadline, submitted late, and overdue without a submission. Two submitted assignments intentionally have no feedback yet, so the teacher can review them.
+
+To reset the local database before creating a clean demo environment, temporarily enable reset mode:
+
+```powershell
+dotnet user-secrets set "Seed:ResetOnStartup" "true" --project LMS.API
+dotnet run --project LMS.API
+```
+
+When the log confirms that seeding is complete, stop the API and disable reset mode so data is not deleted on the next startup:
+
+```powershell
+dotnet user-secrets set "Seed:ResetOnStartup" "false" --project LMS.API
+```
+
+**Warning:** Reset deletes all users, roles, courses, and related records from the database configured by the API's current connection string. Verify the connection string first; do not run this against a shared or production database. Uploaded physical files are not deleted.
+
+Demo accounts:
+
+* Teacher: `teacher@lms.test`
+* Erik: `erik@lms.test`
+* Maja: `maja@lms.test`
+* Linnea: `linnea@lms.test`
+
+All seeded accounts use the password configured under `password`.
