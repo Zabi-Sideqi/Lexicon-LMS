@@ -1,4 +1,3 @@
-
 @page "/documents"
 @using System.ComponentModel.DataAnnotations
 @using LMS.Blazor.Client.Services.ApiProxy
@@ -38,8 +37,11 @@
             @if (uploadModel.CourseId is > 0)
             {
                 <div class="mb-3">
-                    <label>Module (optional)</label>
-                    <InputSelect @bind-Value="uploadModel.ModuleId" @bind-Value:after="OnModuleChanged" class="form-select">
+                    <label class="form-label" for="document-module-select">Module (optional)</label>
+                    <InputSelect id="document-module-select"
+                                 @bind-Value="uploadModel.ModuleId"
+                                 @bind-Value:after="OnModuleChanged"
+                                 class="form-select document-dependent-select">
                         <option value="">— No module —</option>
                         @foreach (var m in modules.Where(m => m.CourseId == uploadModel.CourseId))
                         {
@@ -52,8 +54,10 @@
             @if (uploadModel.ModuleId is > 0)
             {
                 <div class="mb-3">
-                    <label>Activity (optional)</label>
-                    <InputSelect @bind-Value="uploadModel.ActivityId" class="form-select">
+                    <label class="form-label" for="document-activity-select">Activity (optional)</label>
+                    <InputSelect id="document-activity-select"
+                                 @bind-Value="uploadModel.ActivityId"
+                                 class="form-select document-dependent-select">
                         <option value="">— No activity —</option>
                         @foreach (var a in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
                         {
