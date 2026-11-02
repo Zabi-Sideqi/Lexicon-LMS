@@ -24,72 +24,6 @@
         <span class="role-badge">Teacher</span>
     </div>
 
-    <div class="activity-card mb-3">
-        <div class="d-flex align-items-end gap-3">
-            <div>
-                <label for="statusFilter" class="form-label">
-                    Status
-                </label>
-
-                <select id="statusFilter"
-                        class="form-select"
-                        @bind="selectedStatus">
-                    <option value="">All Statuses</option>
-                    <option value="@nameof(SubmissionStatus.Submitted)">
-                        Submitted
-                    </option>
-                    <option value="@nameof(SubmissionStatus.SubmittedLate)">
-                        Submitted Late
-                    </option>
-                    <option value="@nameof(SubmissionStatus.Late)">
-                        Late
-                    </option>
-                    <option value="@nameof(SubmissionStatus.NotSubmitted)">
-                        Not Submitted
-                    </option>
-                </select>
-            </div>
-
-            <div>
-                <label for="courseFilter" class="form-label">Course</label>
-                <InputSelect id="courseFilter"
-                             class="form-select"
-                             @bind-Value="selectedCourseId">
-                    <option value="">All Courses</option>
-                    @foreach (var course in courses)
-                    {
-                        <option value="@course.Id">@course.Name</option>
-                    }
-                </InputSelect>
-            </div>
-
-            <div>
-                <label for="activityFilter" class="form-label">Assignment</label>
-                <InputSelect id="activityFilter"
-                             class="form-select"
-                             @bind-Value="selectedActivityId">
-                    <option value="">All Assignments</option>
-                    @foreach (var activity in activities)
-                    {
-                        <option value="@activity.Id">@activity.Name</option>
-                    }
-                </InputSelect>
-            </div>
-
-            <button class="btn btn-primary"
-                    type="button"
-                    @onclick="ApplyFilterAsync">
-                Apply Filters
-            </button>
-
-            <button class="btn btn-outline-secondary"
-                    type="button"
-                    @onclick="ResetFilterAsync">
-                Clear Filters
-            </button>
-        </div>
-    </div>
-
     @if (loading)
     {
         <Loading Message="Loading dashboard data..." Centered="true" />
@@ -298,6 +232,72 @@
                             Message="There are no late or missing submissions to review." />
             }
         </div>
+
+    <div class="activity-card mb-3 submission-filters">
+        <div class="d-flex align-items-end gap-3">
+            <div>
+                <label for="statusFilter" class="form-label">
+                    Status
+                </label>
+
+                <select id="statusFilter"
+                        class="form-select"
+                        @bind="selectedStatus">
+                    <option value="">All Statuses</option>
+                    <option value="@nameof(SubmissionStatus.Submitted)">
+                        Submitted
+                    </option>
+                    <option value="@nameof(SubmissionStatus.SubmittedLate)">
+                        Submitted Late
+                    </option>
+                    <option value="@nameof(SubmissionStatus.Late)">
+                        Late
+                    </option>
+                    <option value="@nameof(SubmissionStatus.NotSubmitted)">
+                        Not Submitted
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label for="courseFilter" class="form-label">Course</label>
+                <InputSelect id="courseFilter"
+                             class="form-select"
+                             @bind-Value="selectedCourseId">
+                    <option value="">All Courses</option>
+                    @foreach (var course in courses)
+                    {
+                        <option value="@course.Id">@course.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div>
+                <label for="activityFilter" class="form-label">Assignment</label>
+                <InputSelect id="activityFilter"
+                             class="form-select"
+                             @bind-Value="selectedActivityId">
+                    <option value="">All Assignments</option>
+                    @foreach (var activity in activities)
+                    {
+                        <option value="@activity.Id">@activity.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <button class="btn btn-primary"
+                    type="button"
+                    @onclick="ApplyFilterAsync">
+                Apply Filters
+            </button>
+
+            <button class="btn btn-outline-secondary"
+                    type="button"
+                    @onclick="ResetFilterAsync">
+                Clear Filters
+            </button>
+        </div>
+    </div>
 
         <div class="activity-card" id="pending-feedback">
             <div class="section-head">
