@@ -96,7 +96,7 @@
     margin: 0;
     table-layout: fixed;
     border-collapse: collapse;
-    font-size: clamp(0.9rem, 0.86rem + 0.12vw, 1.05rem);
+    font-size: clamp(0.95rem, 0.95rem + 0.16vw, 1.2rem);
 }
 
 .documents-col-file {
