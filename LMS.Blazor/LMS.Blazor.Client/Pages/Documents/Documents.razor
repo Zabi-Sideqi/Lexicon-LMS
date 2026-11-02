@@ -136,7 +136,7 @@ else
                         <td>@doc.AttachPath</td>
                         <td>@doc.ContentType</td>
                         <td>@(doc.FileSize / 1024) KB</td>
-                        <td>@doc.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@DateTime.SpecifyKind(doc.UploadedAt, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
                             <a href="/api/proxy/documents/@doc.Id/download"
                                class="btn btn-sm btn-secondary">
