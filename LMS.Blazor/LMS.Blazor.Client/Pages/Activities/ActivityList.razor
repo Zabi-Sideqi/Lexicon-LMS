@@ -89,7 +89,7 @@
             errorMessage = "This activity no longer exists. The list has been updated.";
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict) {
-            errorMessage = "This activity cannot be deleted because it is still linked to other records.";
+            errorMessage = "This activity has student submissions and cannot be deleted. Student submissions and feedback have been preserved.";
         }
         catch (HttpRequestException) {
             errorMessage = "The server could not delete this activity. Please try again.";
