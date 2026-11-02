@@ -600,8 +600,8 @@
             uploadMessage = $"Document '{document.FileName}' has been deleted.";
             uploadError = false;
 
-            if (uploadModel.CourseId is > 0)
-                await LoadDocuments(uploadModel.CourseId.Value);
+            // Ta bort dokumentet direkt från listan i UI (både för lärare och student)
+            documents?.RemoveAll(d => d.Id == document.Id);
         }
         catch (UnauthorizedAccessException)
         {
