@@ -1,0 +1,32 @@
+﻿@if (Visible)
+{
+    <div class="lms-toast lms-toast-@Type"
+         role="alert"
+         aria-live="assertive">
+
+        <div class="lms-toast-content">
+            <strong>@Title</strong>
+            <span>@Message</span>
+        </div>
+
+        <button type="button"
+                class="lms-toast-close"
+                aria-label="Close notification"
+                @onclick="Close">
+            &times;
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Notification";
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public string Type { get; set; } = "success";
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

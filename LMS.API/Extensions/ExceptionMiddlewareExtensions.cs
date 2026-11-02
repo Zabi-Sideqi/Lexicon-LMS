@@ -27,6 +27,9 @@ public static class ExceptionMiddlewareExtensions
                         TokenValidationException =>
                             (StatusCodes.Status401Unauthorized, "Unauthorized"),
 
+                        ConflictException ex =>
+                            (StatusCodes.Status409Conflict, ex.Message),
+
                         UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
 
                         ArgumentException =>
