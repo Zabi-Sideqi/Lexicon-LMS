@@ -575,6 +575,23 @@
             return "Your session has expired. Please log in again.";
         }
 
+        if (ex is HttpRequestException httpException)
+        {
+            return httpException.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Forbidden =>
+                    "You do not have permission to delete this activity.",
+                System.Net.HttpStatusCode.NotFound =>
+                    "This activity no longer exists. Refresh the calendar.",
+                System.Net.HttpStatusCode.Conflict =>
+                    "This activity has student submissions and cannot be deleted. Student submissions and feedback have been preserved.",
+                System.Net.HttpStatusCode.BadRequest =>
+                    "The activity could not be deleted because its data is invalid.",
+                _ =>
+                    "The server could not complete the request. Please try again."
+            };
+        }
+
         var message = ex.Message;
 
         if (string.IsNullOrWhiteSpace(message))
@@ -615,11 +632,6 @@
                 StringComparison.OrdinalIgnoreCase))
         {
             return "The activity must be scheduled within the module dates and times.";
-        }
-
-        if (ex is HttpRequestException)
-        {
-            return "The request could not be completed. Check the details and try again.";
         }
 
         return "An error occurred. Please try again.";
