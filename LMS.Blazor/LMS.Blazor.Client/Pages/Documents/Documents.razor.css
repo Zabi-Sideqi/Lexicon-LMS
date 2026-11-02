@@ -1,16 +1,21 @@
-/* CSS for Documents component */
-
 /* Documents page */
 .documents-page {
     width: 100%;
     min-width: 0;
 }
 
-/* Upload form */
+/* Upload form and all dependent dropdowns */
 .documents-upload {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    color: #27272a;
+}
+
+.documents-upload .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #27272a;
 }
 
 .documents-upload .form-control,
@@ -20,19 +25,11 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
-}
-
-/*
- * Keep native select text readable in both desktop and mobile browsers.
- * Some desktop browser/theme combinations inherit a light option text
- * color, making the unselected options appear blank on a white menu.
- */
-.documents-upload .course-select {
     color: #27272a;
     background-color: #fff;
 }
 
-.documents-upload .course-select option {
+.documents-upload .form-select option {
     color: #27272a;
     background-color: #fff;
 }
@@ -55,12 +52,10 @@
     overflow-wrap: anywhere;
 }
 
-/* File names and paths */
 .table-responsive td {
     max-width: 250px;
 }
 
-/* Download button */
 .table-responsive .btn {
     white-space: nowrap;
 }
