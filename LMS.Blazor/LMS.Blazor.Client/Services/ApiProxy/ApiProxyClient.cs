@@ -89,6 +89,11 @@ namespace LMS.Blazor.Client.Services.ApiProxy;
             _navigationManager.NavigateTo(
                 "Account/AccessDenied",
                 forceLoad: true);
+
+            throw new HttpRequestException(
+                "Access denied.",
+                null,
+                HttpStatusCode.Forbidden);
         }
     }
 
