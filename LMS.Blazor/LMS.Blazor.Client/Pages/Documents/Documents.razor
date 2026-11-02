@@ -21,16 +21,40 @@
             <ValidationSummary class="text-danger mb-3" />
             <div class="mb-3">
                 <label class="form-label" for="document-course-select">Course</label>
-                <InputSelect id="document-course-select"
-                             @bind-Value="uploadModel.CourseId"
-                             @bind-Value:after="OnCourseSelected"
-                             class="form-select course-select">
-                    <option value="">Select a course</option>
-                    @foreach (var c in courses)
+                <div class="documents-select">
+                    <button id="document-course-select"
+                            type="button"
+                            class="documents-select-trigger"
+                            aria-haspopup="listbox"
+                            aria-expanded="@isCourseDropdownOpen"
+                            aria-controls="document-course-options"
+                            @onclick="ToggleCourseDropdown">
+                        <span>@SelectedCourseName</span>
+                        <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                    </button>
+                    @if (isCourseDropdownOpen)
                     {
-                        <option value="@c.Id">@(string.IsNullOrWhiteSpace(c.Name) ? $"Course {c.Id}" : c.Name)</option>
+                        <div id="document-course-options" class="documents-select-options" role="listbox" aria-label="Course options">
+                            <button type="button"
+                                    class="documents-select-option @(uploadModel.CourseId is null ? "is-selected" : "")"
+                                    role="option"
+                                    aria-selected="@(uploadModel.CourseId is null)"
+                                    @onclick="() => SelectCourseAsync(null)">
+                                Select a course
+                            </button>
+                            @foreach (var course in courses)
+                            {
+                                <button type="button"
+                                        class="documents-select-option @(uploadModel.CourseId == course.Id ? "is-selected" : "")"
+                                        role="option"
+                                        aria-selected="@(uploadModel.CourseId == course.Id)"
+                                        @onclick="() => SelectCourseAsync(course.Id)">
+                                    @(string.IsNullOrWhiteSpace(course.Name) ? $"Course {course.Id}" : course.Name)
+                                </button>
+                            }
+                        </div>
                     }
-                </InputSelect>
+                </div>
                 <ValidationMessage For="() => uploadModel.CourseId" class="text-danger" />
             </div>
 
@@ -38,16 +62,40 @@
             {
                 <div class="mb-3">
                     <label class="form-label" for="document-module-select">Module (optional)</label>
-                    <InputSelect id="document-module-select"
-                                 @bind-Value="uploadModel.ModuleId"
-                                 @bind-Value:after="OnModuleChanged"
-                                 class="form-select document-dependent-select">
-                        <option value="">— No module —</option>
-                        @foreach (var m in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                    <div class="documents-select">
+                        <button id="document-module-select"
+                                type="button"
+                                class="documents-select-trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@isModuleDropdownOpen"
+                                aria-controls="document-module-options"
+                                @onclick="ToggleModuleDropdown">
+                            <span>@SelectedModuleName</span>
+                            <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                        </button>
+                        @if (isModuleDropdownOpen)
                         {
-                            <option value="@m.Id">@m.Name</option>
+                            <div id="document-module-options" class="documents-select-options" role="listbox" aria-label="Module options">
+                                <button type="button"
+                                        class="documents-select-option @(uploadModel.ModuleId is null ? "is-selected" : "")"
+                                        role="option"
+                                        aria-selected="@(uploadModel.ModuleId is null)"
+                                        @onclick="() => SelectModule(null)">
+                                    — No module —
+                                </button>
+                                @foreach (var module in modules.Where(m => m.CourseId == uploadModel.CourseId))
+                                {
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.ModuleId == module.Id ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.ModuleId == module.Id)"
+                                            @onclick="() => SelectModule(module.Id)">
+                                        @module.Name
+                                    </button>
+                                }
+                            </div>
                         }
-                    </InputSelect>
+                    </div>
                 </div>
             }
 
@@ -55,15 +103,40 @@
             {
                 <div class="mb-3">
                     <label class="form-label" for="document-activity-select">Activity (optional)</label>
-                    <InputSelect id="document-activity-select"
-                                 @bind-Value="uploadModel.ActivityId"
-                                 class="form-select document-dependent-select">
-                        <option value="">— No activity —</option>
-                        @foreach (var a in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
+                    <div class="documents-select">
+                        <button id="document-activity-select"
+                                type="button"
+                                class="documents-select-trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@isActivityDropdownOpen"
+                                aria-controls="document-activity-options"
+                                @onclick="ToggleActivityDropdown">
+                            <span>@SelectedActivityName</span>
+                            <span class="documents-select-chevron" aria-hidden="true">▾</span>
+                        </button>
+                        @if (isActivityDropdownOpen)
                         {
-                            <option value="@a.Id">@a.Name (@a.Type)</option>
+                            <div id="document-activity-options" class="documents-select-options" role="listbox" aria-label="Activity options">
+                                <button type="button"
+                                        class="documents-select-option @(uploadModel.ActivityId is null ? "is-selected" : "")"
+                                        role="option"
+                                        aria-selected="@(uploadModel.ActivityId is null)"
+                                        @onclick="() => SelectActivity(null)">
+                                    — No activity —
+                                </button>
+                                @foreach (var activity in activities.Where(a => a.ModuleId == uploadModel.ModuleId))
+                                {
+                                    <button type="button"
+                                            class="documents-select-option @(uploadModel.ActivityId == activity.Id ? "is-selected" : "")"
+                                            role="option"
+                                            aria-selected="@(uploadModel.ActivityId == activity.Id)"
+                                            @onclick="() => SelectActivity(activity.Id)">
+                                        @activity.Name (@activity.Type)
+                                    </button>
+                                }
+                            </div>
                         }
-                    </InputSelect>
+                    </div>
                 </div>
             }
 
@@ -176,6 +249,70 @@ else
     private string? uploadMessage;
     private bool uploadError;
     private bool isUploading;
+    private bool isCourseDropdownOpen;
+    private bool isModuleDropdownOpen;
+    private bool isActivityDropdownOpen;
+
+    private string SelectedCourseName =>
+        courses.FirstOrDefault(course => course.Id == uploadModel.CourseId)?.Name
+        ?? "Select a course";
+
+    private string SelectedModuleName =>
+        modules.FirstOrDefault(module => module.Id == uploadModel.ModuleId)?.Name
+        ?? "— No module —";
+
+    private string SelectedActivityName
+    {
+        get
+        {
+            var activity = activities.FirstOrDefault(item => item.Id == uploadModel.ActivityId);
+            return activity is null ? "— No activity —" : $"{activity.Name} ({activity.Type})";
+        }
+    }
+
+    private void ToggleCourseDropdown()
+    {
+        isCourseDropdownOpen = !isCourseDropdownOpen;
+        isModuleDropdownOpen = false;
+        isActivityDropdownOpen = false;
+    }
+
+    private void ToggleModuleDropdown()
+    {
+        isModuleDropdownOpen = !isModuleDropdownOpen;
+        isCourseDropdownOpen = false;
+        isActivityDropdownOpen = false;
+    }
+
+    private void ToggleActivityDropdown()
+    {
+        isActivityDropdownOpen = !isActivityDropdownOpen;
+        isCourseDropdownOpen = false;
+        isModuleDropdownOpen = false;
+    }
+
+    private async Task SelectCourseAsync(int? courseId)
+    {
+        uploadModel.CourseId = courseId;
+        isCourseDropdownOpen = false;
+        isModuleDropdownOpen = false;
+        isActivityDropdownOpen = false;
+        await OnCourseSelected();
+    }
+
+    private void SelectModule(int? moduleId)
+    {
+        uploadModel.ModuleId = moduleId;
+        uploadModel.ActivityId = null;
+        isModuleDropdownOpen = false;
+        isActivityDropdownOpen = false;
+    }
+
+    private void SelectActivity(int? activityId)
+    {
+        uploadModel.ActivityId = activityId;
+        isActivityDropdownOpen = false;
+    }
 
     protected override async Task OnInitializedAsync()
     {
