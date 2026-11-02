@@ -6,7 +6,7 @@
     max-width: 1500px;
     margin: 0 auto;
     padding: 8px 0 40px;
-    color: #27272a;
+    color: var(--lms-text, #27272a);
 }
 
 .page-head {
@@ -19,7 +19,7 @@
 
     .page-head h1 {
         margin: 0 0 8px;
-        color: #27272a;
+        color: var(--lms-text, #27272a);
         font-size: clamp(27px, 3vw, 36px);
         font-weight: 400;
         letter-spacing: -0.6px;
@@ -27,7 +27,7 @@
 
     .page-head p {
         margin: 0;
-        color: #6b6b72;
+        color: var(--lms-text-muted, #6b6b72);
         font-size: 15px;
         line-height: 1.6;
     }
