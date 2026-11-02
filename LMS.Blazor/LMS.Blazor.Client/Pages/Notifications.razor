@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Domain.Models.Entities
 @using LMS.Blazor.Client.Services.ApiProxy
-@attribute [Authorize(Roles = "Student,Teacher")]
+@attribute [Authorize(Policy = "StudentOrTeacher")]
 @inject IApiProxyClient Proxy
 
 <PageTitle>Mina notiser</PageTitle>

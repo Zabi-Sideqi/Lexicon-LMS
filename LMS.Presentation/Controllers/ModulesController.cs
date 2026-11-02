@@ -18,10 +18,12 @@ namespace LMS.Presentation.Controllers;
 [Authorize]
 public class ModulesController(
     IServiceManager serviceManager,
-    UserManager<ApplicationUser> userManager) : ControllerBase
+    UserManager<ApplicationUser> userManager,
+        IAuthorizationService authorizationService) : ControllerBase
 {
     private readonly IServiceManager _serviceManager = serviceManager;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IAuthorizationService _authorizationService = authorizationService;
 
     private bool IsTeacher =>
         User.IsInRole("Teacher");
@@ -39,7 +41,7 @@ public class ModulesController(
     }
 
     [HttpGet]
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Roles = "Teacher,Student")]
     [SwaggerOperation(Summary = "Get all modules")]
     [SwaggerResponse(StatusCodes.Status200OK, "Modules retrieved")]
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Access denied")]
@@ -80,9 +82,12 @@ public class ModulesController(
 
         if (!IsTeacher)
         {
-            var courseId = await GetStudentCourseIdAsync();
+            var authorizationResult = await _authorizationService.AuthorizeAsync(
+                User,
+                module.CourseId,
+                "SameCourse");
 
-            if (courseId is null || module.CourseId != courseId.Value)
+            if (!authorizationResult.Succeeded)
                 return Forbid();
         }
 
@@ -98,9 +103,12 @@ public class ModulesController(
     {
         if (!IsTeacher)
         {
-            var studentCourseId = await GetStudentCourseIdAsync();
+            var authorizationResult = await _authorizationService.AuthorizeAsync(
+                User,
+                courseId,
+                "SameCourse");
 
-            if (studentCourseId is null || studentCourseId.Value != courseId)
+            if (!authorizationResult.Succeeded)
                 return Forbid();
         }
 
